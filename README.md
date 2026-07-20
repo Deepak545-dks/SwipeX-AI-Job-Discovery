@@ -136,8 +136,8 @@ For instant testing, use the pre-seeded credentials:
 
 | Role | Email | Password |
 | :--- | :--- | :--- |
-| **Job Seeker** | `seeker@example.com` | `Password123!` |
-| **Recruiter** | `recruiter@example.com` | `Password123!` |
+| **Job Seeker** | `seeker@example.com` | ******** |
+| **Recruiter** | `recruiter@example.com` | `*******` |
 
 ---
 
