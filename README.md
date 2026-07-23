@@ -211,18 +211,6 @@ npm run build
 - Cloud Deployment
 - Advanced Analytics Dashboard
 
----
-
-# 👨‍💻 Author
-
-**Deepak Kumar Sahu**
-
-B.Tech CSE Student
-
-SOA University, ITER Bhubaneswar
-
-GitHub:
-https://github.com/Deepak545-dks
 
 ---
 
