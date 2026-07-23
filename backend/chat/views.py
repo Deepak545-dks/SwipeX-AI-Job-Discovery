@@ -13,7 +13,12 @@ class ChatRoomListCreateView(generics.ListCreateAPIView):
     def get_queryset(self):
         user = self.request.user
         # Retrieve rooms where user is either the seeker or the recruiter
-        return ChatRoom.objects.filter(Q(seeker=user) | Q(recruiter=user))
+        return ChatRoom.objects.filter(Q(seeker=user) | Q(recruiter=user)).select_related(
+            'seeker__profile',
+            'recruiter__profile',
+            'job__company',
+            'job__recruiter'
+        ).prefetch_related('messages')
 
     def create(self, request, *args, **kwargs):
         # Allow creating rooms
@@ -46,7 +51,7 @@ class MessageHistoryListView(generics.ListAPIView):
         if self.request.user != room.seeker and self.request.user != room.recruiter:
             self.permission_denied(self.request, message="You are not a member of this chat room.")
 
-        return Message.objects.filter(room=room)
+        return Message.objects.select_related('sender').filter(room=room)
 
 class MarkRoomMessagesReadView(APIView):
     permission_classes = (permissions.IsAuthenticated,)

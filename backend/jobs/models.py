@@ -63,7 +63,7 @@ class Job(models.Model):
     employment_type = models.CharField(max_length=20, choices=EMPLOYMENT_TYPE_CHOICES, default='full_time')
     experience_level = models.CharField(max_length=20, choices=EXPERIENCE_LEVEL_CHOICES, default='mid')
     skills_required = models.ManyToManyField('profiles.Skill', blank=True, related_name='jobs')
-    is_active = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=True, db_index=True)
     status = models.CharField(
         max_length=20,
         choices=(
@@ -71,7 +71,8 @@ class Job(models.Model):
             ('published', 'Published'),
             ('expired', 'Expired')
         ),
-        default='published'
+        default='published',
+        db_index=True
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -110,7 +111,7 @@ class Application(models.Model):
         blank=True,
         related_name='job_applications'
     )
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='applied')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='applied', db_index=True)
     cover_letter = models.TextField(blank=True, null=True)
     applied_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -167,9 +168,9 @@ class Interview(models.Model):
     )
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
-    start_time = models.DateTimeField()
+    start_time = models.DateTimeField(db_index=True)
     end_time = models.DateTimeField()
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', db_index=True)
     google_calendar_event_id = models.CharField(max_length=255, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

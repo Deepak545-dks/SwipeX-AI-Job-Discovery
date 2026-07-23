@@ -82,9 +82,24 @@ export default function VideoInterview() {
 
   // Connect to Django Channels CallConsumer signaling channel
   const connectSignaling = (stream) => {
-    const wsScheme = window.location.protocol === 'https:' ? 'wss' : 'ws';
-    const wsHost = window.location.host;
-    const socketUrl = `${wsScheme}://${wsHost}/ws/call/${roomId}/?token=${token}`;
+    let socketUrl;
+    const wsBase = import.meta.env.VITE_WS_BASE_URL;
+    if (wsBase) {
+      socketUrl = `${wsBase}/ws/call/${roomId}/?token=${token}`;
+    } else {
+      const apiBase = import.meta.env.VITE_API_BASE_URL;
+      if (apiBase && apiBase.startsWith('http')) {
+        const urlObj = new URL(apiBase);
+        const wsScheme = urlObj.protocol === 'https:' ? 'wss' : 'ws';
+        socketUrl = `${wsScheme}://${urlObj.host}/ws/call/${roomId}/?token=${token}`;
+      } else {
+        const wsScheme = window.location.protocol === 'https:' ? 'wss' : 'ws';
+        const wsHost = window.location.host.includes('localhost') || window.location.host.includes('127.0.0.1')
+          ? window.location.host.replace('5173', '8000')
+          : window.location.host;
+        socketUrl = `${wsScheme}://${wsHost}/ws/call/${roomId}/?token=${token}`;
+      }
+    }
     
     const socket = new WebSocket(socketUrl);
     socketRef.current = socket;

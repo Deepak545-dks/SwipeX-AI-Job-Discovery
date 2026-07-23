@@ -41,9 +41,9 @@ class RecruiterJobsListView(generics.ListAPIView):
     def get_queryset(self):
         # Admins can list all, recruiters only their own postings
         if self.request.user.role == 'admin':
-            queryset = Job.objects.all()
+            queryset = Job.objects.select_related('company', 'recruiter').prefetch_related('skills_required').all()
         else:
-            queryset = Job.objects.filter(recruiter=self.request.user)
+            queryset = Job.objects.select_related('company', 'recruiter').prefetch_related('skills_required').filter(recruiter=self.request.user)
             
         status_param = self.request.query_params.get('status')
         if status_param:
@@ -72,7 +72,7 @@ class JobApplicantsListView(generics.ListAPIView):
         if job.recruiter != self.request.user and self.request.user.role != 'admin':
             self.permission_denied(self.request, message="You are not authorized to view applicants for this job.")
             
-        return Application.objects.filter(job=job)
+        return Application.objects.select_related('job__company', 'job__recruiter', 'applicant__profile', 'resume').filter(job=job)
 
 class ApplicationStatusUpdateView(APIView):
     permission_classes = (IsRecruiterOrAdmin,)
@@ -147,7 +147,7 @@ class JobDeckView(generics.ListAPIView):
         swiped_ids = SwipeHistory.objects.filter(user=user).values_list('job_id', flat=True)
         
         # Filter active jobs not swiped
-        jobs = Job.objects.filter(is_active=True, status='published').exclude(id__in=swiped_ids)
+        jobs = Job.objects.select_related('company', 'recruiter').prefetch_related('skills_required').filter(is_active=True, status='published').exclude(id__in=swiped_ids)
         
         # Attempt AI Ranking recommendation if user seeker has a profile
         if hasattr(user, 'profile') and jobs.exists():
@@ -270,7 +270,7 @@ class JobSearchView(generics.ListAPIView):
     permission_classes = (permissions.IsAuthenticated,)
 
     def get_queryset(self):
-        queryset = Job.objects.filter(is_active=True, status='published')
+        queryset = Job.objects.select_related('company', 'recruiter').prefetch_related('skills_required').filter(is_active=True, status='published')
 
         q = self.request.query_params.get('q')
         if q:
@@ -340,7 +340,7 @@ class SeekerApplicationsListView(generics.ListAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        queryset = Application.objects.filter(applicant=user)
+        queryset = Application.objects.select_related('job__company', 'job__recruiter', 'applicant__profile', 'resume').filter(applicant=user)
         
         status_param = self.request.query_params.get('status')
         if status_param:
@@ -420,10 +420,15 @@ class MyInterviewsListView(generics.ListAPIView):
 
     def get_queryset(self):
         user = self.request.user
+        base_qs = Interview.objects.select_related(
+            'application__job__company',
+            'application__job__recruiter__profile',
+            'application__applicant__profile'
+        )
         if user.role == 'job_seeker':
-            return Interview.objects.filter(application__applicant=user)
+            return base_qs.filter(application__applicant=user)
         elif user.role == 'recruiter':
-            return Interview.objects.filter(application__job__recruiter=user)
+            return base_qs.filter(application__job__recruiter=user)
         return Interview.objects.none()
 
 from profiles.models import Profile, Skill, Experience, Education, Resume, Project
