@@ -40,27 +40,23 @@ class UserRegisterView(generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
-        
-        # Send Email Verification
-        token = generate_verification_token(user.email)
-        verify_url = f"{settings.FRONTEND_URL}/verify-email?token={token}"
-        
-        send_mail(
-            subject="Verify your SwipeX Account",
-            message=f"Hi there,\n\nPlease verify your account by clicking the link: {verify_url}\n\nThanks!",
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[user.email],
-            fail_silently=True
-        )
+
+        # Auto-login: Generate JWT tokens immediately
+        refresh = RefreshToken.for_user(user)
+        refresh['email'] = user.email
+        refresh['role'] = user.role
+        refresh['is_verified'] = user.is_verified
 
         headers = self.get_success_headers(serializer.data)
         user_data = UserSerializer(user).data
-        logger.info(f"New User Registered: {user.email} (Role: {user.role})")
+        logger.info(f"New User Registered and Auto-Logged In: {user.email} (Role: {user.role})")
+        
         return Response(
             {
+                "refresh": str(refresh),
+                "access": str(refresh.access_token),
                 "user": user_data,
-                "verification_token_dev": token,  # Return in dev mode for easy integration/testing
-                "message": "User registered successfully. Verification email sent."
+                "message": "User registered and logged in successfully."
             },
             status=status.HTTP_201_CREATED,
             headers=headers

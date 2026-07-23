@@ -28,9 +28,11 @@ class AuthenticationTests(APITestCase):
         response = self.client.post(self.register_url, self.user_data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertIn("user", response.data)
+        self.assertIn("access", response.data)
+        self.assertIn("refresh", response.data)
         self.assertEqual(response.data["user"]["email"], self.user_data["email"])
         self.assertEqual(response.data["user"]["role"], self.user_data["role"])
-        self.assertFalse(response.data["user"]["is_verified"])
+        self.assertTrue(response.data["user"]["is_verified"])
         
         # Verify user is created in database
         self.assertTrue(User.objects.filter(email=self.user_data["email"]).exists())
@@ -42,22 +44,15 @@ class AuthenticationTests(APITestCase):
         response = self.client.post(self.register_url, self.user_data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-    def test_email_verification(self):
+    def test_email_verification_is_immediate(self):
         # Register user
         register_resp = self.client.post(self.register_url, self.user_data)
-        token = register_resp.data["verification_token_dev"]
+        self.assertEqual(register_resp.status_code, status.HTTP_201_CREATED)
+        self.assertIn("access", register_resp.data)
         
-        # Call verification endpoint
-        verify_resp = self.client.post(self.verify_email_url, {"token": token})
-        self.assertEqual(verify_resp.status_code, status.HTTP_200_OK)
-        
-        # Check user is verified in DB
+        # Check user is verified in DB immediately
         user = User.objects.get(email=self.user_data["email"])
         self.assertTrue(user.is_verified)
-
-    def test_invalid_email_verification_fails(self):
-        response = self.client.post(self.verify_email_url, {"token": "invalidtoken123"})
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_user_login(self):
         # Create verified user

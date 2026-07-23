@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, Link } from 'react-router-dom';
-import { setLoading, setError } from '../store/slices/authSlice';
+import { setLoading, setError, setCredentials } from '../store/slices/authSlice';
 import api from '../utils/api';
-import { Loader2, Mail, Lock, User } from 'lucide-react';
+import { Loader2, Mail, Lock } from 'lucide-react';
 
 export default function Register() {
   const [email, setEmail] = useState('');
@@ -11,10 +11,9 @@ export default function Register() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [role, setRole] = useState('job_seeker');
   const [validationError, setValidationError] = useState('');
-  const [registered, setRegistered] = useState(false);
-  const [devToken, setDevToken] = useState('');
 
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { loading, error } = useSelector((state) => state.auth);
 
   const validateForm = () => {
@@ -46,9 +45,14 @@ export default function Register() {
     dispatch(setError(null));
     try {
       const response = await api.post('/auth/register/', { email, password, role });
-      setRegistered(true);
-      if (response.data.verification_token_dev) {
-        setDevToken(response.data.verification_token_dev);
+      dispatch(setCredentials(response.data));
+      
+      if (role === 'recruiter') {
+        navigate('/recruiter');
+      } else if (role === 'admin') {
+        navigate('/admin');
+      } else {
+        navigate('/swipe');
       }
     } catch (err) {
       const fieldErrors = err.response?.data;
@@ -61,36 +65,6 @@ export default function Register() {
       dispatch(setLoading(false));
     }
   };
-
-  if (registered) {
-    return (
-      <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
-        <div className="w-full max-w-md bg-slate-900/60 border border-slate-800 rounded-2xl p-8 backdrop-blur-xl shadow-2xl text-center">
-          <h2 className="text-3xl font-extrabold text-white tracking-tight">Check Your Email</h2>
-          <p className="text-slate-400 mt-4 text-sm leading-relaxed">
-            We have sent a verification link to <span className="text-white font-medium">{email}</span>. Please click the link to verify your account.
-          </p>
-          {devToken && (
-            <div className="mt-6 p-4 bg-slate-950/80 border border-violet-900/30 rounded-lg text-left">
-              <p className="text-xs text-violet-400 font-bold mb-2">DEVELOPER LOG / QUICK VERIFY LINK:</p>
-              <Link
-                to={`/verify-email?token=${devToken}`}
-                className="text-xs text-fuchsia-400 hover:underline break-all"
-              >
-                Click here to verify instantly (Dev Mode)
-              </Link>
-            </div>
-          )}
-          <Link
-            to="/login"
-            className="mt-8 inline-block w-full py-3 bg-slate-800 hover:bg-slate-700 rounded-lg text-white font-semibold text-sm transition-all"
-          >
-            Back to Sign In
-          </Link>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-[85vh] flex items-center justify-center px-4 py-12">

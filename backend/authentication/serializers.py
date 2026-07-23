@@ -19,6 +19,8 @@ class UserRegisterSerializer(serializers.ModelSerializer):
             password=validated_data['password'],
             role=validated_data['role']
         )
+        user.is_verified = True
+        user.save()
         return user
 
 class UserSerializer(serializers.ModelSerializer):
