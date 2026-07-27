@@ -4,10 +4,11 @@ import { useSelector } from 'react-redux';
 import { 
   Send, Loader2, User, Briefcase, MapPin, 
   Clock, Check, CheckCheck, Smile, Phone, Video, 
-  Info, AlertCircle, MessageSquare, ArrowLeft 
+  Info, AlertCircle, MessageSquare, ArrowLeft, Sparkles, AlertTriangle
 } from 'lucide-react';
 import api from '../utils/api';
 import PageTransition from '../components/PageTransition';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function ChatPanel() {
   const navigate = useNavigate();
@@ -226,22 +227,25 @@ export default function ChatPanel() {
 
   return (
     <PageTransition className="max-w-7xl mx-auto px-4 sm:px-6 py-8 h-[82vh] flex flex-col">
-      <div className="flex-grow grid lg:grid-cols-4 gap-6 bg-slate-900/40 border border-slate-850 rounded-2xl overflow-hidden shadow-2xl backdrop-blur-md">
+      <div className="flex-grow grid lg:grid-cols-4 gap-6 bg-slate-900/40 border border-white/5 rounded-3xl overflow-hidden shadow-2xl backdrop-blur-md">
         
         {/* Sidebar chats list */}
-        <div className={`lg:col-span-1 border-r border-slate-850 flex-col h-full bg-slate-950/20 ${selectedRoom ? 'hidden lg:flex' : 'flex'}`}>
-          <div className="p-5 border-b border-slate-850">
-            <h2 className="text-lg font-black text-white tracking-tight">Messages</h2>
-            <p className="text-slate-500 text-xxs mt-0.5 uppercase tracking-wider">Inbox Conversations</p>
+        <div className={`lg:col-span-1 border-r border-white/5 flex-col h-full bg-slate-950/20 ${selectedRoom ? 'hidden lg:flex' : 'flex'}`}>
+          <div className="p-5 border-b border-white/5">
+            <h2 className="text-base font-black text-white tracking-tight flex items-center gap-1.5">
+              <MessageSquare size={16} className="text-violet-400" />
+              <span>Inbox Chat</span>
+            </h2>
+            <p className="text-slate-500 text-[9px] mt-0.5 uppercase tracking-wider font-bold">Conversations</p>
           </div>
 
-          <div className="flex-grow overflow-y-auto p-4 space-y-2">
+          <div className="flex-grow overflow-y-auto p-4 space-y-1.5">
             {loadingRooms ? (
               <div className="flex justify-center py-10">
-                <Loader2 size={24} className="animate-spin text-violet-500" />
+                <Loader2 size={20} className="animate-spin text-violet-500" />
               </div>
             ) : rooms.length === 0 ? (
-              <p className="text-slate-500 text-xs text-center py-10">No active chat sessions started.</p>
+              <p className="text-slate-500 text-xxs text-center py-10">No active chat sessions found.</p>
             ) : (
               rooms.map((room) => {
                 const opponent = getOpponentDetails(room);
@@ -250,24 +254,28 @@ export default function ChatPanel() {
                   <button
                     key={room.id}
                     onClick={() => selectRoom(room)}
-                    className={`w-full flex items-center justify-between p-3.5 rounded-xl transition-all text-left ${
+                    className={`w-full flex items-center justify-between p-3.5 rounded-2xl transition-all text-left cursor-pointer ${
                       isSelected 
-                        ? 'bg-slate-800 border border-slate-700/50 shadow-md' 
-                        : 'hover:bg-slate-850/50 border border-transparent'
+                        ? 'bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-md' 
+                        : 'hover:bg-white/5 text-slate-350 hover:text-white'
                     }`}
                   >
                     <div className="flex items-center space-x-3 truncate">
-                      <div className="w-10 h-10 rounded-full bg-slate-950 border border-slate-800 flex items-center justify-center text-slate-400 relative">
-                        <User size={16} />
+                      <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-white font-extrabold text-xs relative ${
+                        isSelected ? 'bg-white/20' : 'bg-slate-950 border border-white/5'
+                      }`}>
+                        {opponent.name.charAt(0).toUpperCase()}
                         <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-slate-900" />
                       </div>
                       <div className="truncate">
-                        <p className="text-xs font-bold text-white truncate">{opponent.name}</p>
-                        <p className="text-slate-400 text-xxs truncate mt-0.5">{opponent.sub}</p>
+                        <p className={`text-xs font-bold truncate ${isSelected ? 'text-white' : 'text-white'}`}>{opponent.name}</p>
+                        <p className={`text-[10px] truncate mt-0.5 ${isSelected ? 'text-white/80' : 'text-slate-500'}`}>{opponent.sub}</p>
                       </div>
                     </div>
                     {room.unread_count > 0 && (
-                      <span className="px-2 py-0.5 rounded-full bg-violet-600 text-xxs font-black text-white">
+                      <span className={`px-2 py-0.5 rounded-full text-[9px] font-black shrink-0 ml-2 ${
+                        isSelected ? 'bg-white text-violet-650' : 'bg-violet-650 text-white'
+                      }`}>
                         {room.unread_count}
                       </span>
                     )}
@@ -283,80 +291,86 @@ export default function ChatPanel() {
           {selectedRoom ? (
             <>
               {/* Header details bar */}
-              <div className="p-4 sm:p-5 border-b border-slate-850 flex items-center justify-between bg-slate-900/30">
+              <div className="p-4 sm:p-5 border-b border-white/5 flex items-center justify-between bg-slate-900/10">
                 <div className="flex items-center space-x-3">
                   <button 
                     onClick={() => setSelectedRoom(null)}
-                    className="lg:hidden text-slate-400 hover:text-white p-1 rounded-lg border border-slate-800 transition-colors"
+                    className="lg:hidden text-slate-400 hover:text-white p-1 rounded-lg border border-white/5 transition-colors cursor-pointer"
                     title="Back to inbox"
                   >
                     <ArrowLeft size={16} />
                   </button>
-                  <div className="w-10 h-10 rounded-full bg-slate-950 border border-slate-800 flex items-center justify-center text-slate-400 relative shrink-0">
-                    <User size={18} />
+                  <div className="w-9 h-9 rounded-full bg-slate-950 border border-white/5 flex items-center justify-center text-violet-400 font-extrabold text-xs relative shrink-0">
+                    {getOpponentDetails(selectedRoom).name.charAt(0).toUpperCase()}
                     <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-slate-900" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                    <h3 className="text-xs font-black text-white flex items-center gap-1.5">
                       <span>{getOpponentDetails(selectedRoom).name}</span>
                     </h3>
-                    <div className="flex items-center space-x-1.5 mt-0.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                      <span className="text-[10px] text-emerald-400 font-semibold uppercase tracking-wider">Active Now</span>
-                      <span className="text-slate-600">&bull;</span>
-                      <p className="text-slate-400 text-[10px]">{getOpponentDetails(selectedRoom).sub}</p>
-                    </div>
+                    <p className="text-slate-500 text-[10px] tracking-wide mt-0.5">{getOpponentDetails(selectedRoom).sub}</p>
                   </div>
                 </div>
-                <div className="flex items-center space-x-4 text-slate-400">
-                  <button className="hover:text-white transition-colors"><Phone size={18} /></button>
-                  <button onClick={() => navigate(`/call/${selectedRoom.id}?opponent=${getOpponentDetails(selectedRoom).name}`)} className="hover:text-violet-400 transition-colors" title="Start Video Interview"><Video size={18} /></button>
-                  <button className="hover:text-white transition-colors"><Info size={18} /></button>
+
+                {/* Communication Room Actions */}
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => navigate('/calendar')}
+                    className="p-2 border border-white/5 bg-slate-950/40 hover:bg-white/5 text-slate-400 hover:text-white rounded-xl transition-all cursor-pointer"
+                    title="Schedule Interview"
+                  >
+                    <Clock size={16} />
+                  </button>
+                  <button
+                    onClick={() => navigate(`/call/room-${selectedRoom.id}`)}
+                    className="p-2 border border-white/5 bg-slate-950/40 hover:bg-white/5 text-slate-400 hover:text-white rounded-xl transition-all cursor-pointer"
+                    title="Join Video Room"
+                  >
+                    <Video size={16} />
+                  </button>
                 </div>
               </div>
 
-              {wsError && (
-                <div className="bg-amber-950/40 border-b border-amber-900/40 px-5 py-2.5 text-xs text-amber-400 flex items-center justify-between">
-                  <span className="flex items-center space-x-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
+              {/* Chat Thread Messages Area */}
+              <div className="flex-grow overflow-y-auto p-4 sm:p-6 space-y-4">
+                {wsError && (
+                  <div className="p-3 bg-red-955/20 border border-red-900/30 text-red-400 text-xxs rounded-xl text-center flex items-center justify-center space-x-2">
+                    <AlertTriangle size={14} />
                     <span>{wsError}</span>
-                  </span>
-                  <button 
-                    type="button" 
-                    onClick={() => selectRoom(selectedRoom)} 
-                    className="underline text-white font-bold hover:text-slate-200 text-xxs uppercase tracking-wider"
-                  >
-                    Reconnect
-                  </button>
-                </div>
-              )}
+                  </div>
+                )}
 
-              {/* Chat timeline feed */}
-              <div className="flex-grow overflow-y-auto p-6 space-y-4">
                 {loadingMessages ? (
-                  <div className="flex justify-center py-20">
-                    <Loader2 size={32} className="animate-spin text-violet-500" />
+                  <div className="flex justify-center py-10">
+                    <Loader2 size={20} className="animate-spin text-violet-500" />
+                  </div>
+                ) : messages.length === 0 ? (
+                  <div className="text-center py-16 space-y-2">
+                    <MessageSquare size={24} className="mx-auto text-slate-800" />
+                    <p className="text-slate-500 text-[10px]">No messages yet. Send a note to kickstart the conversation!</p>
                   </div>
                 ) : (
-                  messages.map((msg) => {
-                    const isMe = msg.sender === user.id;
+                  messages.map((m) => {
+                    const isMe = m.sender === user.id;
                     return (
                       <div 
-                        key={msg.id} 
-                        className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}
+                        key={m.id} 
+                        className={`flex ${isMe ? 'justify-end' : 'justify-start'} animate-fade-in`}
                       >
-                        <div className={`max-w-md p-3.5 rounded-2xl text-xs leading-relaxed shadow-lg ${
-                          isMe 
-                            ? 'bg-gradient-to-br from-violet-600 to-fuchsia-600 text-white rounded-br-none' 
-                            : 'bg-slate-900 border border-slate-850 text-slate-200 rounded-bl-none'
-                        }`}>
-                          <p>{msg.content}</p>
-                          <div className={`flex items-center justify-end space-x-1.5 mt-2.5 text-xxs ${
-                            isMe ? 'text-violet-200' : 'text-slate-505'
+                        <div className={`max-w-[70%] space-y-1`}>
+                          <div className={`px-4 py-3 rounded-2xl text-xs leading-relaxed ${
+                            isMe 
+                              ? 'bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-tr-none' 
+                              : 'bg-slate-900 border border-white/5 text-slate-200 rounded-tl-none'
                           }`}>
-                            <span>{new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                            <p>{m.content}</p>
+                          </div>
+                          <div className={`flex items-center space-x-1.5 text-[9px] text-slate-550 ${
+                            isMe ? 'justify-end' : 'justify-start'
+                          }`}>
+                            <span>{new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                             {isMe && (
-                              msg.is_read ? <CheckCheck size={14} className="text-emerald-400" /> : <Check size={14} />
+                              m.is_read ? <CheckCheck size={12} className="text-violet-400" /> : <Check size={12} />
                             )}
                           </div>
                         </div>
@@ -364,40 +378,34 @@ export default function ChatPanel() {
                     );
                   })
                 )}
-                
+
                 {isOpponentTyping && (
                   <div className="flex justify-start">
-                    <div className="bg-slate-900 border border-slate-850 text-slate-450 p-3.5 rounded-2xl rounded-bl-none text-xs flex items-center space-x-3 shadow-md">
-                      <span className="italic">{getOpponentDetails(selectedRoom).name} is typing</span>
-                      <span className="flex space-x-1 items-center h-2">
-                        <span className="w-1.5 h-1.5 bg-violet-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                        <span className="w-1.5 h-1.5 bg-violet-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                        <span className="w-1.5 h-1.5 bg-violet-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                      </span>
+                    <div className="bg-slate-900 border border-white/5 px-4 py-3 rounded-2xl rounded-tl-none flex items-center space-x-1.5">
+                      <div className="w-1.5 h-1.5 bg-slate-500 rounded-full animate-bounce" />
+                      <div className="w-1.5 h-1.5 bg-slate-500 rounded-full animate-bounce [animation-delay:0.2s]" />
+                      <div className="w-1.5 h-1.5 bg-slate-500 rounded-full animate-bounce [animation-delay:0.4s]" />
                     </div>
                   </div>
                 )}
-
+                
                 <div ref={chatEndRef} />
               </div>
 
-              {/* Bottom message composition bar */}
-              <form onSubmit={handleSendMessage} className="p-5 border-t border-slate-850 bg-slate-900/30 flex gap-4 items-center">
-                <button type="button" className="text-slate-400 hover:text-white transition-colors">
-                  <Smile size={20} />
-                </button>
+              {/* Compose Message Box Form */}
+              <form onSubmit={handleSendMessage} className="p-4 border-t border-white/5 bg-slate-900/10 flex items-center gap-2">
                 <input
                   type="text"
                   value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  onKeyDown={handleTypingKeydown}
-                  placeholder="Type a message..."
-                  className="flex-grow bg-slate-950/50 border border-slate-800 focus:border-violet-500 rounded-xl py-3 px-4 text-white text-xs outline-none transition-colors"
+                  onChange={(e) => { setNewMessage(e.target.value); handleTypingKeydown(); }}
+                  placeholder="Type your message here..."
+                  className="flex-grow bg-slate-950/50 border border-white/5 focus:border-violet-500/50 focus:bg-slate-950/75 focus:ring-4 focus:ring-violet-500/5 rounded-2xl py-3 px-4 text-xs text-white outline-none transition-all placeholder-slate-600"
                 />
                 <button
                   type="submit"
                   disabled={!newMessage.trim()}
-                  className="p-3 bg-violet-600 hover:bg-violet-500 disabled:bg-slate-800 disabled:text-slate-600 text-white rounded-xl transition-all shadow-lg shadow-violet-500/10"
+                  className="p-3 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white rounded-2xl transition-all shadow-md active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed shrink-0 cursor-pointer"
+                  title="Send Message"
                 >
                   <Send size={16} />
                 </button>
@@ -405,14 +413,12 @@ export default function ChatPanel() {
             </>
           ) : (
             <div className="flex-grow flex flex-col items-center justify-center text-center p-8 space-y-4">
-              <div className="w-16 h-16 rounded-2xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center text-violet-400 shadow-inner">
-                <MessageSquare size={32} className="animate-pulse" />
+              <div className="w-16 h-16 rounded-2xl bg-slate-900/50 border border-white/5 flex items-center justify-center text-slate-600">
+                <MessageSquare size={30} />
               </div>
               <div>
-                <h3 className="text-white font-bold text-base">Select a Conversation</h3>
-                <p className="text-slate-400 text-xs mt-1 max-w-xs leading-relaxed">
-                  Pick a contact from the inbox list to start messaging in real-time
-                </p>
+                <p className="text-white font-bold text-sm">Select a Conversation</p>
+                <p className="text-slate-500 text-xs mt-1">Open a chat room from the directory to trace real-time matching, cover notes, and plan calls.</p>
               </div>
             </div>
           )}

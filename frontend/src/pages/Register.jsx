@@ -3,12 +3,15 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, Link } from 'react-router-dom';
 import { setLoading, setError, setCredentials } from '../store/slices/authSlice';
 import api from '../utils/api';
-import { Loader2, Mail, Lock } from 'lucide-react';
+import { Loader2, Mail, Lock, ShieldCheck, Eye, EyeOff, Sparkles, UserCheck } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 export default function Register() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [role, setRole] = useState('job_seeker');
   const [validationError, setValidationError] = useState('');
 
@@ -67,31 +70,42 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-[85vh] flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md bg-slate-900/60 border border-slate-800 rounded-2xl p-8 backdrop-blur-xl shadow-2xl">
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-extrabold text-white tracking-tight">Create Account</h2>
-          <p className="text-slate-400 mt-2 text-sm">Join SwipeX and start exploring careers today</p>
+    <div className="min-h-[85vh] relative flex items-center justify-center px-4 py-16 overflow-hidden">
+      {/* Glow Rings */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[450px] h-[450px] bg-fuchsia-600/10 rounded-full blur-[100px] -z-10 animate-pulse" />
+
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+        className="w-full max-w-md bg-slate-900/45 border border-white/5 rounded-3xl p-8 backdrop-blur-xl shadow-2xl relative"
+      >
+        <div className="text-center mb-6">
+          <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-tr from-violet-600 to-fuchsia-600 shadow-md shadow-violet-500/20 mb-4">
+            <UserCheck size={20} className="text-white" />
+          </div>
+          <h2 className="text-2xl font-black text-white tracking-tight">Create Account</h2>
+          <p className="text-slate-400 mt-2 text-xs">Join SwipeX and start exploring careers today</p>
         </div>
 
         {error && (
-          <div className="mb-4 p-3 rounded-lg bg-red-950/50 border border-red-800 text-red-400 text-sm">
+          <div className="mb-5 p-3.5 rounded-xl bg-red-950/30 border border-red-900/40 text-red-400 text-xs font-medium">
             {error}
           </div>
         )}
 
         {validationError && (
-          <div className="mb-4 p-3 rounded-lg bg-yellow-950/50 border border-yellow-800 text-yellow-400 text-sm">
+          <div className="mb-5 p-3.5 rounded-xl bg-amber-950/30 border border-amber-900/40 text-amber-400 text-xs font-medium">
             {validationError}
           </div>
         )}
 
-        <form onSubmit={handleRegister} className="space-y-5">
+        <form onSubmit={handleRegister} className="space-y-4">
           <div>
-            <label className="block text-slate-300 text-xs font-semibold uppercase tracking-wider mb-2">Registering As</label>
-            <div className="grid grid-cols-3 gap-2">
+            <label className="block text-slate-350 text-[10px] font-bold uppercase tracking-wider mb-2">Registering As</label>
+            <div className="grid grid-cols-3 gap-2 p-1 bg-slate-950/50 rounded-xl border border-white/5">
               {[
-                { id: 'job_seeker', label: 'Job Seeker' },
+                { id: 'job_seeker', label: 'Seeker' },
                 { id: 'recruiter', label: 'Recruiter' },
                 { id: 'admin', label: 'Admin' },
               ].map((tab) => (
@@ -99,10 +113,10 @@ export default function Register() {
                   key={tab.id}
                   type="button"
                   onClick={() => setRole(tab.id)}
-                  className={`py-2 text-xs font-semibold rounded-lg border transition-all ${
+                  className={`py-2 text-[10px] font-bold rounded-lg transition-all cursor-pointer ${
                     role === tab.id
-                      ? 'border-violet-500 bg-violet-950/30 text-violet-400 shadow-md shadow-violet-500/5'
-                      : 'border-slate-800 hover:border-slate-700 text-slate-400 hover:text-slate-300'
+                      ? 'bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-md'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
                   }`}
                 >
                   {tab.label}
@@ -112,74 +126,88 @@ export default function Register() {
           </div>
 
           <div>
-            <label className="block text-slate-300 text-xs font-semibold uppercase tracking-wider mb-2">Email Address</label>
+            <label className="block text-slate-350 text-[10px] font-bold uppercase tracking-wider mb-2">Email Address</label>
             <div className="relative">
-              <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500">
-                <Mail size={18} />
+              <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500 pointer-events-none">
+                <Mail size={16} />
               </span>
               <input
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-slate-950/50 border border-slate-800 focus:border-violet-500 rounded-lg py-2.5 pl-10 pr-4 text-white text-sm outline-none transition-colors"
+                onChange={(e) => { setEmail(e.target.value); if (validationError) setValidationError(''); }}
+                className="w-full bg-slate-950/50 border border-white/5 focus:border-violet-500/50 focus:bg-slate-950/70 focus:ring-4 focus:ring-violet-500/10 rounded-xl py-3 pl-10 pr-4 text-white text-xs outline-none transition-all placeholder-slate-650"
                 placeholder="you@example.com"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-slate-300 text-xs font-semibold uppercase tracking-wider mb-2">Password</label>
+            <label className="block text-slate-350 text-[10px] font-bold uppercase tracking-wider mb-2">Password</label>
             <div className="relative">
-              <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500">
-                <Lock size={18} />
+              <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500 pointer-events-none">
+                <Lock size={16} />
               </span>
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-slate-950/50 border border-slate-800 focus:border-violet-500 rounded-lg py-2.5 pl-10 pr-4 text-white text-sm outline-none transition-colors"
+                onChange={(e) => { setPassword(e.target.value); if (validationError) setValidationError(''); }}
+                className="w-full bg-slate-950/50 border border-white/5 focus:border-violet-500/50 focus:bg-slate-950/70 focus:ring-4 focus:ring-violet-500/10 rounded-xl py-3 pl-10 pr-10 text-white text-xs outline-none transition-all placeholder-slate-650"
                 placeholder="Min. 8 characters"
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-500 hover:text-slate-350 transition-colors"
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
             </div>
           </div>
 
           <div>
-            <label className="block text-slate-300 text-xs font-semibold uppercase tracking-wider mb-2">Confirm Password</label>
+            <label className="block text-slate-350 text-[10px] font-bold uppercase tracking-wider mb-2">Confirm Password</label>
             <div className="relative">
-              <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500">
-                <Lock size={18} />
+              <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500 pointer-events-none">
+                <Lock size={16} />
               </span>
               <input
-                type="password"
+                type={showConfirmPassword ? 'text' : 'password'}
                 value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full bg-slate-950/50 border border-slate-800 focus:border-violet-500 rounded-lg py-2.5 pl-10 pr-4 text-white text-sm outline-none transition-colors"
-                placeholder="Confirm your password"
+                onChange={(e) => { setConfirmPassword(e.target.value); if (validationError) setValidationError(''); }}
+                className="w-full bg-slate-950/50 border border-white/5 focus:border-violet-500/50 focus:bg-slate-950/70 focus:ring-4 focus:ring-violet-500/10 rounded-xl py-3 pl-10 pr-10 text-white text-xs outline-none transition-all placeholder-slate-650"
+                placeholder="Confirm password"
               />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-500 hover:text-slate-350 transition-colors"
+              >
+                {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
             </div>
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full flex items-center justify-center py-3 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 rounded-lg text-white font-semibold text-sm transition-all focus:outline-none focus:ring-2 focus:ring-violet-500 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-violet-500/10"
+            className="w-full flex items-center justify-center py-3.5 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 rounded-xl text-white font-bold text-xs uppercase tracking-wider transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-violet-500/10 hover:scale-[1.01] active:scale-95 cursor-pointer pt-4"
           >
             {loading ? (
               <>
-                <Loader2 size={18} className="animate-spin mr-2" />
+                <Loader2 size={16} className="animate-spin mr-2" />
                 Creating account...
               </>
             ) : 'Sign Up'}
           </button>
         </form>
 
-        <p className="mt-8 text-center text-sm text-slate-400">
+        <p className="mt-8 text-center text-xs text-slate-400">
           Already have an account?{' '}
-          <Link to="/login" className="text-violet-400 hover:text-violet-300 font-semibold">
+          <Link to="/login" className="text-violet-400 hover:text-violet-300 font-bold">
             Sign In
           </Link>
         </p>
-      </div>
+      </motion.div>
     </div>
   );
 }

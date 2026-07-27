@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-import { LogOut, User, Compass, Briefcase, BarChart2, Bell, Search, MessageSquare, Calendar } from 'lucide-react';
+import { LogOut, User, Compass, Briefcase, BarChart2, Bell, Search, MessageSquare, Calendar, Shield, Sparkles } from 'lucide-react';
 import { clearCredentials } from '../store/slices/authSlice';
 import api from '../utils/api';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const formatRelativeTime = (dateString) => {
   try {
@@ -28,6 +29,7 @@ export default function Navbar() {
   const { isAuthenticated, user } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [notifications, setNotifications] = useState([]);
   const [showNotifDropdown, setShowNotifDropdown] = useState(false);
@@ -82,142 +84,236 @@ export default function Navbar() {
     }
   };
 
+  const isActive = (path) => location.pathname === path;
+
   return (
-    <nav className="border-b border-slate-800 bg-slate-950/80 backdrop-blur-md sticky top-0 z-50 px-6 py-4">
+    <nav className="sticky top-0 z-50 border-b border-white/5 bg-slate-950/70 backdrop-blur-xl px-6 py-4">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
-        <Link to="/" className="flex items-center space-x-2">
-          <span className="text-2xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-violet-500 to-fuchsia-500">
+        <Link to="/" className="flex items-center space-x-2 group">
+          <div className="relative flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-tr from-violet-600 to-fuchsia-600 shadow-md shadow-violet-500/20 group-hover:scale-105 transition-transform">
+            <Sparkles size={18} className="text-white animate-pulse" />
+          </div>
+          <span className="text-xl font-extrabold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-fuchsia-500 group-hover:from-violet-300 group-hover:to-fuchsia-400 transition-all">
             SwipeX
           </span>
         </Link>
 
-        <div className="flex items-center space-x-6">
+        <div className="flex items-center space-x-1 md:space-x-4">
           {isAuthenticated ? (
             <>
-              {user?.role === 'job_seeker' && (
-                <>
-                  <Link to="/swipe" className="flex items-center space-x-1 text-slate-300 hover:text-violet-400 transition-colors">
-                    <Compass size={18} />
-                    <span className="hidden sm:inline text-sm">Discover</span>
-                  </Link>
-                  <Link to="/search" className="flex items-center space-x-1 text-slate-300 hover:text-violet-400 transition-colors">
-                    <Search size={18} />
-                    <span className="hidden sm:inline text-sm">Search</span>
-                  </Link>
-                  <Link to="/applications" className="flex items-center space-x-1 text-slate-300 hover:text-violet-400 transition-colors">
-                    <Briefcase size={18} />
-                    <span className="hidden sm:inline text-sm">Applications</span>
-                  </Link>
-                </>
-              )}
+              <div className="hidden lg:flex items-center space-x-1">
+                {user?.role === 'job_seeker' && (
+                  <>
+                    <Link 
+                      to="/swipe" 
+                      className={`flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                        isActive('/swipe') 
+                          ? 'bg-violet-500/10 text-violet-400' 
+                          : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                      }`}
+                    >
+                      <Compass size={15} />
+                      <span>Discover</span>
+                    </Link>
+                    <Link 
+                      to="/search" 
+                      className={`flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                        isActive('/search') 
+                          ? 'bg-violet-500/10 text-violet-400' 
+                          : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                      }`}
+                    >
+                      <Search size={15} />
+                      <span>Search</span>
+                    </Link>
+                    <Link 
+                      to="/applications" 
+                      className={`flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                        isActive('/applications') 
+                          ? 'bg-violet-500/10 text-violet-400' 
+                          : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                      }`}
+                    >
+                      <Briefcase size={15} />
+                      <span>Applications</span>
+                    </Link>
+                  </>
+                )}
 
-              {user?.role === 'recruiter' && (
-                <Link to="/recruiter" className="flex items-center space-x-1 text-slate-300 hover:text-violet-400 transition-colors">
-                  <BarChart2 size={18} />
-                  <span className="hidden sm:inline text-sm">Recruiter Hub</span>
+                {user?.role === 'recruiter' && (
+                  <Link 
+                    to="/recruiter" 
+                    className={`flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                      isActive('/recruiter') 
+                        ? 'bg-violet-500/10 text-violet-400' 
+                        : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                    }`}
+                  >
+                    <BarChart2 size={15} />
+                    <span>Recruiter Hub</span>
+                  </Link>
+                )}
+
+                {user?.role === 'admin' && (
+                  <Link 
+                    to="/admin" 
+                    className={`flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                      isActive('/admin') 
+                        ? 'bg-violet-500/10 text-violet-400' 
+                        : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                    }`}
+                  >
+                    <Shield size={15} />
+                    <span>Admin Panel</span>
+                  </Link>
+                )}
+
+                <Link 
+                  to="/calendar" 
+                  className={`flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                    isActive('/calendar') 
+                      ? 'bg-violet-500/10 text-violet-400' 
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                  }`}
+                >
+                  <Calendar size={15} />
+                  <span>Calendar</span>
                 </Link>
-              )}
 
-              {user?.role === 'admin' && (
-                <Link to="/admin" className="flex items-center space-x-1 text-slate-300 hover:text-violet-400 transition-colors">
-                  <BarChart2 size={18} />
-                  <span className="hidden sm:inline text-sm">Admin Panel</span>
+                <Link 
+                  to="/messages" 
+                  className={`flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                    isActive('/messages') 
+                      ? 'bg-violet-500/10 text-violet-400' 
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                  }`}
+                >
+                  <MessageSquare size={15} />
+                  <span>Messages</span>
                 </Link>
-              )}
 
-              <Link to="/calendar" className="flex items-center space-x-1 text-slate-300 hover:text-violet-400 transition-colors">
-                <Calendar size={18} />
-                <span className="hidden sm:inline text-sm">Calendar</span>
-              </Link>
+                <Link 
+                  to="/profile" 
+                  className={`flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                    isActive('/profile') 
+                      ? 'bg-violet-500/10 text-violet-400' 
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                  }`}
+                >
+                  <User size={15} />
+                  <span>Profile</span>
+                </Link>
+              </div>
 
-              <Link to="/messages" className="flex items-center space-x-1 text-slate-300 hover:text-violet-400 transition-colors">
-                <MessageSquare size={18} />
-                <span className="hidden sm:inline text-sm">Messages</span>
-              </Link>
+              {/* Mobile Navigation Icons */}
+              <div className="flex lg:hidden items-center space-x-0.5">
+                {user?.role === 'job_seeker' && (
+                  <>
+                    <Link to="/swipe" className={`p-2 rounded-lg text-slate-400 hover:text-violet-400 hover:bg-white/5 ${isActive('/swipe') && 'text-violet-400 bg-violet-500/5'}`} title="Discover"><Compass size={18} /></Link>
+                    <Link to="/search" className={`p-2 rounded-lg text-slate-400 hover:text-violet-400 hover:bg-white/5 ${isActive('/search') && 'text-violet-400 bg-violet-500/5'}`} title="Search"><Search size={18} /></Link>
+                    <Link to="/applications" className={`p-2 rounded-lg text-slate-400 hover:text-violet-400 hover:bg-white/5 ${isActive('/applications') && 'text-violet-400 bg-violet-500/5'}`} title="Applications"><Briefcase size={18} /></Link>
+                  </>
+                )}
+                {user?.role === 'recruiter' && (
+                  <Link to="/recruiter" className={`p-2 rounded-lg text-slate-400 hover:text-violet-400 hover:bg-white/5 ${isActive('/recruiter') && 'text-violet-400 bg-violet-500/5'}`} title="Recruiter Hub"><BarChart2 size={18} /></Link>
+                )}
+                <Link to="/calendar" className={`p-2 rounded-lg text-slate-400 hover:text-violet-400 hover:bg-white/5 ${isActive('/calendar') && 'text-violet-400 bg-violet-500/5'}`} title="Calendar"><Calendar size={18} /></Link>
+                <Link to="/messages" className={`p-2 rounded-lg text-slate-400 hover:text-violet-400 hover:bg-white/5 ${isActive('/messages') && 'text-violet-400 bg-violet-500/5'}`} title="Messages"><MessageSquare size={18} /></Link>
+                <Link to="/profile" className={`p-2 rounded-lg text-slate-400 hover:text-violet-400 hover:bg-white/5 ${isActive('/profile') && 'text-violet-400 bg-violet-500/5'}`} title="Profile"><User size={18} /></Link>
+              </div>
 
-              <Link to="/profile" className="flex items-center space-x-1 text-slate-300 hover:text-violet-400 transition-colors">
-                <User size={18} />
-                <span className="hidden sm:inline text-sm">Profile</span>
-              </Link>
-
+              {/* Notifications Dropdown Toggle */}
               <div className="relative">
                 <button 
                   onClick={() => setShowNotifDropdown(!showNotifDropdown)}
-                  className="relative p-2 text-slate-300 hover:text-violet-400 transition-colors"
+                  className="relative p-2 rounded-xl text-slate-400 hover:text-violet-400 hover:bg-white/5 transition-all"
                   title="Notifications"
                 >
                   <Bell size={18} />
                   {unreadCount > 0 && (
-                    <span className="absolute top-1 right-1 w-2 h-2 bg-violet-500 rounded-full border border-slate-950 animate-pulse" />
+                    <span className="absolute top-2 right-2 w-2 h-2 bg-violet-500 rounded-full border-2 border-slate-950 animate-pulse" />
                   )}
                 </button>
 
-                {showNotifDropdown && (
-                  <div className="absolute right-0 mt-3 w-80 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-4 z-50 space-y-3">
-                    <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-                      <span className="text-xs font-bold text-white">Notifications</span>
-                      {unreadCount > 0 && (
-                        <button 
-                          onClick={markAllAsRead}
-                          className="text-violet-400 hover:text-violet-300 text-[10px] font-bold"
-                        >
-                          Mark all read
-                        </button>
-                      )}
-                    </div>
-                                        <div className="max-h-60 overflow-y-auto space-y-2">
-                      {notifications.length === 0 ? (
-                        <div className="text-center py-6 px-4 space-y-2">
-                          <Bell size={24} className="mx-auto text-slate-700 animate-pulse" />
-                          <p className="text-slate-500 text-[10px]">No new alerts or matching notifications.</p>
+                <AnimatePresence>
+                  {showNotifDropdown && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setShowNotifDropdown(false)} />
+                      <motion.div 
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        transition={{ duration: 0.15 }}
+                        className="absolute right-0 mt-3 w-80 bg-slate-900/95 border border-white/5 rounded-2xl shadow-2xl p-4 z-50 space-y-3 backdrop-blur-xl"
+                      >
+                        <div className="flex items-center justify-between border-b border-white/5 pb-2">
+                          <span className="text-xs font-bold text-white">Notifications</span>
+                          {unreadCount > 0 && (
+                            <button 
+                              onClick={markAllAsRead}
+                              className="text-violet-400 hover:text-violet-300 text-[10px] font-bold transition-colors"
+                            >
+                              Mark all read
+                            </button>
+                          )}
                         </div>
-                      ) : (
-                        notifications.map(n => (
-                          <div 
-                            key={n.id}
-                            onClick={() => markSingleAsRead(n.id)}
-                            className={`p-2.5 rounded-xl border text-[11px] leading-relaxed cursor-pointer transition-all ${
-                              n.is_read 
-                                ? 'bg-slate-950/20 border-transparent text-slate-400' 
-                                : 'bg-slate-950/60 border-slate-800 text-slate-200 hover:bg-slate-850'
-                            }`}
-                          >
-                            <div className="font-bold text-white flex items-center justify-between">
-                              <span>{n.title}</span>
-                              {!n.is_read && <span className="w-1.5 h-1.5 rounded-full bg-violet-500 shrink-0 ml-2" />}
+
+                        <div className="max-h-60 overflow-y-auto space-y-2 pr-1">
+                          {notifications.length === 0 ? (
+                            <div className="text-center py-8 space-y-2">
+                              <Bell size={24} className="mx-auto text-slate-700" />
+                              <p className="text-slate-500 text-[10px]">No notifications available.</p>
                             </div>
-                            <p className="mt-1">{n.message}</p>
-                            <span className="text-[9px] text-slate-500 block mt-1 font-semibold">
-                              {formatRelativeTime(n.created_at)}
-                            </span>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </div>
-                )}
+                          ) : (
+                            notifications.map(n => (
+                              <div 
+                                key={n.id}
+                                onClick={() => { markSingleAsRead(n.id); }}
+                                className={`p-2.5 rounded-xl border text-[11px] leading-relaxed cursor-pointer transition-all ${
+                                  n.is_read 
+                                    ? 'bg-transparent border-transparent text-slate-400' 
+                                    : 'bg-white/5 border-white/5 text-slate-200 hover:bg-white/10'
+                                }`}
+                              >
+                                <div className="font-bold text-white flex items-center justify-between">
+                                  <span>{n.title}</span>
+                                  {!n.is_read && <span className="w-1.5 h-1.5 rounded-full bg-violet-500 shrink-0 ml-2" />}
+                                </div>
+                                <p className="mt-1 text-slate-400">{n.message}</p>
+                                <span className="text-[9px] text-slate-500 block mt-1 font-semibold">
+                                  {formatRelativeTime(n.created_at)}
+                                </span>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </motion.div>
+                    </>
+                  )}
+                </AnimatePresence>
               </div>
 
+              {/* Logout Button */}
               <button
                 onClick={handleLogout}
-                className="flex items-center space-x-1 px-4 py-2 rounded-lg border border-slate-800 hover:bg-slate-900 text-slate-400 hover:text-red-400 transition-all text-sm"
+                className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl border border-white/5 hover:bg-red-500/10 text-slate-400 hover:text-red-400 transition-all text-xs font-semibold"
               >
-                <LogOut size={16} />
+                <LogOut size={14} />
                 <span className="hidden sm:inline">Logout</span>
               </button>
             </>
           ) : (
-            <>
-              <Link to="/login" className="text-slate-300 hover:text-violet-400 text-sm font-medium transition-colors">
+            <div className="flex items-center space-x-4">
+              <Link to="/login" className="text-slate-350 hover:text-violet-400 text-xs font-bold transition-colors">
                 Login
               </Link>
               <Link
                 to="/register"
-                className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-violet-600 to-fuchsia-600 rounded-lg hover:from-violet-500 hover:to-fuchsia-500 transition-all shadow-lg shadow-violet-500/20"
+                className="px-4 py-2 text-xs font-bold text-white bg-gradient-to-r from-violet-600 to-fuchsia-600 rounded-xl hover:scale-[1.02] active:scale-95 transition-all shadow-md shadow-violet-500/10"
               >
                 Sign Up
               </Link>
-            </>
+            </div>
           )}
         </div>
       </div>

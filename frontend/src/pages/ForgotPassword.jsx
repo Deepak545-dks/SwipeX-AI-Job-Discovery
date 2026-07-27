@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Mail, Loader2 } from 'lucide-react';
+import { Mail, Loader2, Sparkles, Key } from 'lucide-react';
 import api from '../utils/api';
 import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');
@@ -34,37 +35,48 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md bg-slate-900/60 border border-slate-800 rounded-2xl p-8 backdrop-blur-xl shadow-2xl">
+    <div className="min-h-[80vh] relative flex items-center justify-center px-4 py-12 overflow-hidden">
+      {/* Glow Rings */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-violet-600/10 rounded-full blur-[90px] -z-10 animate-pulse" />
+
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+        className="w-full max-w-md bg-slate-900/45 border border-white/5 rounded-3xl p-8 backdrop-blur-xl shadow-2xl relative"
+      >
         <div className="text-center mb-8">
-          <h2 className="text-3xl font-extrabold text-white tracking-tight">Reset Password</h2>
-          <p className="text-slate-400 mt-2 text-sm">Enter your email and we'll send you a password reset link</p>
+          <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-tr from-violet-600 to-fuchsia-600 shadow-md shadow-violet-500/20 mb-4">
+            <Key size={20} className="text-white animate-bounce" />
+          </div>
+          <h2 className="text-2xl font-black text-white tracking-tight">Reset Password</h2>
+          <p className="text-slate-400 mt-2 text-xs">Enter your email and we'll send you a password reset link</p>
         </div>
 
         {error && (
-          <div className="mb-4 p-3 rounded-lg bg-red-950/50 border border-red-800 text-red-400 text-sm">
+          <div className="mb-5 p-3.5 rounded-xl bg-red-950/30 border border-red-900/40 text-red-400 text-xs font-medium">
             {error}
           </div>
         )}
 
         {message && (
-          <div className="mb-4 p-3 rounded-lg bg-green-950/50 border border-green-800 text-green-400 text-sm">
+          <div className="mb-5 p-3.5 rounded-xl bg-green-950/30 border border-green-900/40 text-green-400 text-xs font-medium">
             {message}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-slate-300 text-xs font-semibold uppercase tracking-wider mb-2">Email Address</label>
+            <label className="block text-slate-350 text-[10px] font-bold uppercase tracking-wider mb-2">Email Address</label>
             <div className="relative">
-              <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500">
-                <Mail size={18} />
+              <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500 pointer-events-none">
+                <Mail size={16} />
               </span>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-slate-950/50 border border-slate-800 focus:border-violet-500 rounded-lg py-2.5 pl-10 pr-4 text-white text-sm outline-none transition-colors"
+                className="w-full bg-slate-950/50 border border-white/5 focus:border-violet-500/50 focus:bg-slate-950/70 focus:ring-4 focus:ring-violet-500/10 rounded-xl py-3 pl-10 pr-4 text-white text-xs outline-none transition-all placeholder-slate-650"
                 placeholder="you@example.com"
               />
             </div>
@@ -73,11 +85,11 @@ export default function ForgotPassword() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full flex items-center justify-center py-3 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 rounded-lg text-white font-semibold text-sm transition-all focus:outline-none focus:ring-2 focus:ring-violet-500 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-violet-500/10"
+            className="w-full flex items-center justify-center py-3.5 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 rounded-xl text-white font-bold text-xs uppercase tracking-wider transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-violet-500/10 hover:scale-[1.01] active:scale-95 cursor-pointer"
           >
             {loading ? (
               <>
-                <Loader2 size={18} className="animate-spin mr-2" />
+                <Loader2 size={16} className="animate-spin mr-2" />
                 Sending link...
               </>
             ) : 'Send Reset Link'}
@@ -85,23 +97,25 @@ export default function ForgotPassword() {
         </form>
 
         {devToken && (
-          <div className="mt-6 p-4 bg-slate-950/80 border border-violet-900/30 rounded-lg text-left">
-            <p className="text-xs text-violet-400 font-bold mb-2">DEVELOPER LOG / QUICK RESET LINK:</p>
+          <div className="mt-6 p-4 bg-slate-950/80 border border-violet-900/20 rounded-2xl text-left">
+            <p className="text-[10px] text-violet-400 font-bold uppercase tracking-wider mb-2 flex items-center gap-1.5">
+              <Sparkles size={12} /> Developer Log / Quick Reset:
+            </p>
             <Link
               to={`/reset-password?token=${devToken}`}
-              className="text-xs text-fuchsia-400 hover:underline break-all"
+              className="text-xxs text-fuchsia-400 hover:text-fuchsia-350 hover:underline break-all block"
             >
               Click here to reset password instantly (Dev Mode)
             </Link>
           </div>
         )}
 
-        <div className="mt-8 text-center text-sm text-slate-400">
-          <Link to="/login" className="text-violet-400 hover:text-violet-300 font-semibold">
+        <div className="mt-8 text-center text-xs">
+          <Link to="/login" className="text-violet-400 hover:text-violet-300 font-bold transition-colors">
             Back to Sign In
           </Link>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }

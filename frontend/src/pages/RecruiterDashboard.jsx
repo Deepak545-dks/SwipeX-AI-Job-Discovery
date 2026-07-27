@@ -3,8 +3,10 @@ import api from '../utils/api';
 import { 
   Plus, Trash2, Edit, Check, Star, Loader2, DollarSign, 
   MapPin, Calendar, Clock, Users, Briefcase, CheckCircle, 
-  ArrowRight, MessageSquare, AlertCircle, Building, Globe, Shield 
+  ArrowRight, MessageSquare, AlertCircle, Building, Globe, Shield, Sparkles, Inbox, RefreshCw, Landmark, Trash
 } from 'lucide-react';
+import PageTransition from '../components/PageTransition';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function RecruiterDashboard() {
   const [activeTab, setActiveTab] = useState('jobs');
@@ -210,35 +212,20 @@ export default function RecruiterDashboard() {
         setMessage('Job posting updated successfully!');
       } else {
         await api.post('/jobs/', payload);
-        setMessage('Job posted successfully!');
+        setMessage('New job posting published successfully!');
       }
-
       resetJobForm();
-      await loadAll();
-      
+      fetchJobs();
+      fetchAnalytics();
       setTimeout(() => {
         setActiveTab('jobs');
         setMessage('');
-      }, 2000);
+      }, 1500);
     } catch (err) {
-      setError('Failed to save job posting. Please check options.');
+      setError(err.response?.data?.error || 'Failed to save job listing.');
     } finally {
       setSubmitting(false);
     }
-  };
-
-  const resetJobForm = () => {
-    setEditingJobId(null);
-    setTitle('');
-    setCompanyName('');
-    setCompanyType('mnc');
-    setDescription('');
-    setRequirements('');
-    setSalaryMin('');
-    setSalaryMax('');
-    setLocation('');
-    setSkillsRequired([]);
-    setJobStatus('published');
   };
 
   const handleSaveCompany = async (e) => {
@@ -248,134 +235,154 @@ export default function RecruiterDashboard() {
     setSavingCompany(true);
     setError('');
     setMessage('');
+
+    const payload = {
+      name: companyName,
+      website: companyWebsite,
+      description: companyDescription,
+      logo_url: companyLogoUrl,
+      company_type: companyType,
+      industry: companyIndustry,
+      employee_count: companyEmployeeCount ? parseInt(companyEmployeeCount) : null,
+      headquarters: companyHeadquarters,
+      founded_year: companyFoundedYear ? parseInt(companyFoundedYear) : null
+    };
+
     try {
-      await api.put(`/jobs/companies/${companyId}/`, {
-        name: companyName,
-        website: companyWebsite,
-        description: companyDescription,
-        logo_url: companyLogoUrl,
-        company_type: companyType,
-        industry: companyIndustry,
-        employee_count: companyEmployeeCount ? parseInt(companyEmployeeCount) : null,
-        headquarters: companyHeadquarters,
-        founded_year: companyFoundedYear ? parseInt(companyFoundedYear) : null
-      });
-      setMessage('Company profile updated successfully.');
-      await loadAll();
+      await api.put(`/jobs/companies/${companyId}/`, payload);
+      setMessage('Company details updated successfully!');
+      fetchJobs();
+      setTimeout(() => setMessage(''), 3000);
     } catch (err) {
-      setError('Failed to update company details.');
+      setError('Failed to update company credentials.');
     } finally {
       setSavingCompany(false);
     }
   };
 
-  // Local status filtering
+  const resetJobForm = () => {
+    setEditingJobId(null);
+    setTitle('');
+    setDescription('');
+    setRequirements('');
+    setSalaryMin('');
+    setSalaryMax('');
+    setLocation('');
+    setJobType('onsite');
+    setEmploymentType('full_time');
+    setExperienceLevel('mid');
+    setSkillsRequired([]);
+    setJobStatus('published');
+  };
+
+  // Filter jobs based on status selection
   const filteredJobs = jobs.filter(job => {
     if (statusFilter === 'all') return true;
     return job.status === statusFilter;
   });
 
-  if (loading) {
-    return (
-      <div className="min-h-[80vh] flex items-center justify-center">
-        <Loader2 size={48} className="animate-spin text-violet-500" />
-      </div>
-    );
-  }
-
   return (
-    <div className="max-w-7xl mx-auto px-6 py-12 space-y-8">
+    <PageTransition className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
       {/* Upper header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 pb-6 border-b border-slate-850">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
         <div>
-          <h1 className="text-3xl font-black text-white">Recruiter Control Hub</h1>
-          <p className="text-slate-400 text-sm mt-1">Manage listings, review candidates, and monitor corporate profiles</p>
+          <h2 className="text-3xl font-black text-white tracking-tight flex items-center gap-2">
+            <Building className="text-violet-400" />
+            <span>Recruiter Console</span>
+          </h2>
+          <p className="text-slate-400 text-xs mt-1">Publish job openings, audit candidate matching, and coordinate interview loops.</p>
         </div>
-        <div className="flex flex-wrap gap-3">
+        <div className="flex gap-3">
           <button
-            onClick={() => { resetJobForm(); setActiveTab('create-job'); setError(''); setMessage(''); }}
-            className="flex items-center space-x-2 px-5 py-3 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white font-semibold text-sm rounded-xl transition-all shadow-lg shadow-violet-500/20"
+            onClick={() => { resetJobForm(); setActiveTab('create-job'); }}
+            className="flex items-center space-x-1.5 px-4 py-2.5 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white text-xs font-bold rounded-xl transition-all shadow-md active:scale-95 cursor-pointer"
           >
-            <Plus size={16} />
+            <Plus size={14} />
             <span>Post New Job</span>
           </button>
-          <button
-            onClick={() => { setActiveTab('jobs'); setError(''); setMessage(''); }}
-            className={`px-5 py-3 border font-semibold text-sm rounded-xl transition-all ${
-              activeTab === 'jobs' ? 'bg-slate-900 border-slate-700 text-white' : 'border-slate-800 hover:bg-slate-900 text-slate-300'
-            }`}
-          >
-            View Listings
-          </button>
-          {companyId && (
-            <button
-              onClick={() => { setActiveTab('company-profile'); setError(''); setMessage(''); }}
-              className={`px-5 py-3 border font-semibold text-sm rounded-xl transition-all ${
-                activeTab === 'company-profile' ? 'bg-slate-900 border-slate-700 text-white' : 'border-slate-800 hover:bg-slate-900 text-slate-300'
-              }`}
-            >
-              Company Profile
-            </button>
-          )}
         </div>
       </div>
 
-      {/* Analytics widgets */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* Analytics stat cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
         {[
-          { label: 'Total Listings', value: stats.total_jobs, icon: Briefcase, color: 'text-violet-400' },
-          { label: 'Active Listings', value: stats.active_jobs, icon: Clock, color: 'text-emerald-400' },
-          { label: 'Total Applicants', value: stats.total_applicants, icon: Users, color: 'text-fuchsia-400' },
-          { label: 'Hire Rate', value: `${stats.hire_rate}%`, icon: CheckCircle, color: 'text-sky-400' }
-        ].map((widget, i) => {
-          const Icon = widget.icon;
+          { label: 'Total Postings', val: stats.total_jobs || 0, icon: Briefcase, color: 'text-violet-400 bg-violet-500/5' },
+          { label: 'Published active', val: stats.active_jobs || 0, icon: CheckCircle, color: 'text-emerald-400 bg-emerald-500/5' },
+          { label: 'Talent Matches', val: stats.total_applicants || 0, icon: Users, color: 'text-indigo-400 bg-indigo-500/5' },
+          { label: 'Interview Rate', val: `${stats.hire_rate || 0}%`, icon: Clock, color: 'text-fuchsia-400 bg-fuchsia-500/5' }
+        ].map((st, i) => {
+          const Icon = st.icon;
           return (
-            <div key={i} className="bg-slate-900/60 border border-slate-800 p-6 rounded-2xl backdrop-blur-xl flex items-center justify-between shadow-xl">
-              <div>
-                <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider">{widget.label}</p>
-                <p className="text-3xl font-bold text-white mt-2">{widget.value}</p>
+            <div key={i} className={`p-6 rounded-2xl border border-white/5 bg-slate-900/40 backdrop-blur-md relative overflow-hidden group`}>
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{st.label}</span>
+                <div className={`p-2 rounded-lg ${st.color}`}>
+                  <Icon size={14} />
+                </div>
               </div>
-              <div className={`w-12 h-12 rounded-xl bg-slate-950/80 border border-slate-800 flex items-center justify-center ${widget.color}`}>
-                <Icon size={22} />
-              </div>
+              <span className="text-2xl font-black text-white">{st.val}</span>
             </div>
           );
         })}
       </div>
 
+      {/* Primary tabs buttons navigation */}
+      <div className="flex border-b border-white/5 mb-8 overflow-x-auto whitespace-nowrap">
+        {[
+          { id: 'jobs', label: 'Job Listings' },
+          { id: 'applicants', label: 'Candidate Pipeline', disabled: !selectedJob },
+          { id: 'create-job', label: editingJobId ? 'Edit Job Posting' : 'Post New Job' },
+          { id: 'company-profile', label: 'Company Info' }
+        ].map(tab => (
+          <button
+            key={tab.id}
+            disabled={tab.disabled}
+            onClick={() => { setActiveTab(tab.id); setError(''); setMessage(''); }}
+            className={`py-3.5 px-6 text-xs font-bold border-b-2 transition-all cursor-pointer ${
+              tab.disabled ? 'opacity-30 cursor-not-allowed' : ''
+            } ${
+              activeTab === tab.id
+                ? 'border-violet-500 text-violet-400 font-extrabold'
+                : 'border-transparent text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
       {error && (
-        <div className="p-4 rounded-xl bg-red-950/40 border border-red-900/40 text-red-400 text-sm flex items-center space-x-2">
-          <AlertCircle size={18} />
-          <span>{error}</span>
+        <div className="mb-6 p-4 rounded-xl bg-red-950/30 border border-red-900/40 text-red-400 text-xs font-medium">
+          {error}
         </div>
       )}
 
       {message && (
-        <div className="p-4 rounded-xl bg-green-950/40 border border-green-900/40 text-green-400 text-sm flex items-center space-x-2">
-          <CheckCircle size={18} />
+        <div className="mb-6 p-4 rounded-xl bg-green-950/30 border border-green-900/40 text-green-400 text-xs font-medium flex items-center space-x-2 animate-pulse">
+          <CheckCircle size={14} />
           <span>{message}</span>
         </div>
       )}
 
       {/* Main Tab Panels */}
-      <div className="bg-slate-900/40 border border-slate-800/85 rounded-2xl p-8 backdrop-blur-md min-h-[40vh] shadow-xl">
+      <div className="bg-slate-900/40 border border-white/5 rounded-3xl p-6 sm:p-8 backdrop-blur-md min-h-[40vh] shadow-xl">
         
         {/* PANEL 1: Job listings */}
         {activeTab === 'jobs' && (
           <div>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-              <h3 className="text-xl font-bold text-white">Posted Jobs Directory</h3>
+              <h3 className="text-base font-black text-white tracking-tight">Active Postings Directory</h3>
               
               {/* Filter controls */}
-              <div className="flex gap-2">
+              <div className="flex gap-1.5 p-1 bg-slate-950/50 border border-white/5 rounded-xl self-start sm:self-auto">
                 {['all', 'published', 'draft', 'expired'].map(statusKey => (
                   <button
                     key={statusKey}
                     onClick={() => setStatusFilter(statusKey)}
-                    className={`px-3 py-1.5 rounded-lg text-xxs font-bold uppercase tracking-wider transition-all border ${
+                    className={`px-3 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-wider transition-all cursor-pointer ${
                       statusFilter === statusKey
-                        ? 'bg-violet-600 border-violet-500 text-white'
-                        : 'bg-slate-950/40 border-slate-800 text-slate-400 hover:text-slate-200'
+                        ? 'bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white'
+                        : 'text-slate-400 hover:text-white'
                     }`}
                   >
                     {statusKey}
@@ -385,51 +392,51 @@ export default function RecruiterDashboard() {
             </div>
 
             {filteredJobs.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-slate-500 text-sm">No job posts match this filter.</p>
+              <div className="text-center py-16 bg-slate-950/20 rounded-2xl border border-dashed border-white/5">
+                <p className="text-slate-500 text-xs">No job posts match this filter.</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm text-slate-300">
-                  <thead className="text-xs uppercase tracking-wider text-slate-400 border-b border-slate-800">
+                <table className="w-full text-left text-xs text-slate-350">
+                  <thead className="text-[10px] uppercase tracking-wider text-slate-500 border-b border-white/5">
                     <tr>
-                      <th className="py-4 px-4">Title</th>
-                      <th className="py-4 px-4">Company</th>
-                      <th className="py-4 px-4">Location</th>
-                      <th className="py-4 px-4">Salary</th>
-                      <th className="py-4 px-4">Status</th>
-                      <th className="py-4 px-4 text-right">Actions</th>
+                      <th className="py-4 px-4 font-bold">Title</th>
+                      <th className="py-4 px-4 font-bold">Company</th>
+                      <th className="py-4 px-4 font-bold">Location</th>
+                      <th className="py-4 px-4 font-bold">Salary</th>
+                      <th className="py-4 px-4 font-bold">Status</th>
+                      <th className="py-4 px-4 text-right font-bold">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-800/60">
+                  <tbody className="divide-y divide-white/5">
                     {filteredJobs.map((job) => {
                       const isDraft = job.status === 'draft';
                       const isExpired = job.status === 'expired';
                       const isPub = job.status === 'published';
 
                       return (
-                        <tr key={job.id} className="hover:bg-slate-850/20 transition-colors">
+                        <tr key={job.id} className="hover:bg-white/5 transition-colors">
                           <td className="py-4 px-4 font-bold text-white cursor-pointer hover:text-violet-400" onClick={() => handleSelectJob(job)}>
                             {job.title}
                           </td>
-                          <td className="py-4 px-4">{job.company.name}</td>
+                          <td className="py-4 px-4 text-slate-400">{job.company.name}</td>
                           <td className="py-4 px-4">
                             <span className="flex items-center gap-1.5">
                               <MapPin size={12} className="text-slate-500" />
                               <span>{job.location}</span>
                             </span>
                           </td>
-                          <td className="py-4 px-4 font-mono text-xs">
-                            {job.salary_min ? `$${job.salary_min.toLocaleString()}` : 'N/A'}
-                            {job.salary_max ? ` - $${job.salary_max.toLocaleString()}` : ''}
+                          <td className="py-4 px-4 font-semibold text-slate-300">
+                            {job.salary_min ? `$${(job.salary_min/1000)}k` : 'N/A'}
+                            {job.salary_max ? ` - $${(job.salary_max/1000)}k` : ''}
                           </td>
                           <td className="py-4 px-4">
-                            <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xxs font-black uppercase tracking-wider ${
+                            <span className={`inline-flex px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border ${
                               isPub 
-                                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
+                                ? 'bg-emerald-950/40 border-emerald-900/50 text-emerald-400' 
                                 : isDraft 
-                                  ? 'bg-slate-800/50 text-slate-400 border border-slate-700' 
-                                  : 'bg-red-500/10 text-red-400 border border-red-500/20'
+                                  ? 'bg-slate-900 border-white/5 text-slate-400' 
+                                  : 'bg-red-950/40 border-red-900/50 text-red-400'
                             }`}>
                               {job.status || (job.is_active ? 'published' : 'closed')}
                             </span>
@@ -438,23 +445,23 @@ export default function RecruiterDashboard() {
                             <div className="flex justify-end items-center space-x-3">
                               <button
                                 onClick={() => handleSelectJob(job)}
-                                className="text-violet-400 hover:text-violet-300 text-xs font-semibold"
+                                className="text-violet-400 hover:text-violet-300 text-xs font-bold cursor-pointer"
                               >
-                                Applicants
+                                Candidates
                               </button>
                               <button
                                 onClick={() => handleEditJob(job)}
-                                className="text-slate-500 hover:text-violet-400 p-1"
+                                className="text-slate-500 hover:text-violet-400 p-1 cursor-pointer"
                                 title="Edit Job Details"
                               >
-                                <Edit size={14} />
+                                <Edit size={13} />
                               </button>
                               <button
                                 onClick={() => handleDeleteJob(job.id)}
-                                className="text-slate-500 hover:text-red-400 p-1"
+                                className="text-slate-500 hover:text-red-400 p-1 cursor-pointer"
                                 title="Delete Listing"
                               >
-                                <Trash2 size={14} />
+                                <Trash size={13} />
                               </button>
                             </div>
                           </td>
@@ -473,81 +480,83 @@ export default function RecruiterDashboard() {
           <div>
             <div className="flex justify-between items-center mb-6">
               <div>
-                <h3 className="text-xl font-bold text-white">Candidates for {selectedJob.title}</h3>
-                <p className="text-slate-500 text-xs mt-1">Review right-swiped matches and application timeline logs</p>
+                <h3 className="text-base font-black text-white tracking-tight">Candidates for {selectedJob.title}</h3>
+                <p className="text-slate-500 text-xs mt-0.5">Review right-swiped matches and application timeline logs</p>
               </div>
               <button
                 onClick={() => setActiveTab('jobs')}
-                className="px-4 py-2 border border-slate-800 hover:bg-slate-900 rounded-lg text-slate-400 text-xs font-semibold"
+                className="px-3 py-1.5 border border-white/5 hover:bg-white/5 rounded-xl text-slate-400 hover:text-white text-xs font-bold cursor-pointer"
               >
-                Back to Listings
+                Back
               </button>
             </div>
 
             {loadingApplicants ? (
-              <div className="flex justify-center py-10">
-                <Loader2 size={32} className="animate-spin text-violet-500" />
+              <div className="flex justify-center py-12">
+                <Loader2 size={24} className="animate-spin text-violet-500" />
               </div>
             ) : applicants.length === 0 ? (
-              <p className="text-slate-500 text-sm">No seekers have applied or matched this posting yet.</p>
+              <div className="text-center py-16 bg-slate-950/20 border border-dashed border-white/5 rounded-2xl">
+                <p className="text-slate-500 text-xs">No seekers have applied or matched this posting yet.</p>
+              </div>
             ) : (
               <div className="space-y-4">
                 {applicants.map((app) => (
-                  <div key={app.id} className="p-6 bg-slate-950/40 border border-slate-850 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div key={app.id} className="p-6 bg-slate-955/20 border border-white/5 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="space-y-2">
                       <div className="flex items-center space-x-3">
                         <h4 className="text-sm font-bold text-white">
                           {app.applicant_profile?.full_name || app.applicant?.email}
                         </h4>
-                        <span className={`px-2.5 py-0.5 rounded-full text-xxs font-black uppercase tracking-wider ${
-                          app.status === 'accepted' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
-                          app.status === 'rejected' ? 'bg-red-500/10 text-red-400 border border-red-500/20' :
-                          app.status === 'shortlisted' ? 'bg-violet-500/10 text-violet-400 border border-violet-500/20' :
-                          'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                        <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase border ${
+                          app.status === 'accepted' ? 'bg-emerald-950/30 border-emerald-900/50 text-emerald-400' :
+                          app.status === 'rejected' ? 'bg-red-950/30 border-red-900/50 text-red-400' :
+                          app.status === 'shortlisted' ? 'bg-indigo-950/30 border-indigo-900/50 text-indigo-400' :
+                          'bg-amber-955/30 border-amber-900/50 text-amber-400'
                         }`}>
                           {app.status}
                         </span>
                       </div>
                       <p className="text-slate-400 text-xxs">{app.applicant?.email} {app.applicant_profile?.phone && `• ${app.applicant_profile.phone}`}</p>
                       {app.applicant_profile?.bio && (
-                        <p className="text-slate-400 text-xs mt-1 leading-relaxed max-w-2xl">{app.applicant_profile.bio}</p>
+                        <p className="text-slate-350 text-xs mt-1 leading-relaxed max-w-2xl bg-slate-950/20 border border-white/5 p-3 rounded-xl">{app.applicant_profile.bio}</p>
                       )}
                       
                       {app.cover_letter && (
-                        <div className="p-3 bg-slate-950 border border-slate-900 rounded-xl text-xxs text-slate-400 max-w-2xl">
+                        <div className="p-3 bg-slate-950/50 border border-white/5 rounded-xl text-xxs text-slate-400 max-w-2xl">
                           <span className="font-bold text-white block mb-1">Cover Note:</span>
                           {app.cover_letter}
                         </div>
                       )}
                     </div>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 self-end md:self-auto">
                       {app.resume && (
                         <a
                           href={app.resume_details?.file}
                           target="_blank"
                           rel="noreferrer"
-                          className="px-4 py-2 border border-slate-800 hover:bg-slate-900 rounded-lg text-slate-300 text-xs font-semibold flex items-center space-x-1"
+                          className="px-4 py-2 border border-white/5 hover:bg-white/5 rounded-xl text-slate-300 hover:text-white text-xs font-bold flex items-center space-x-1"
                         >
-                          <FileText size={14} />
+                          <FileText size={13} />
                           <span>CV v{app.resume_details?.version}</span>
                         </a>
                       )}
                       
-                      <div className="flex items-center space-x-2 border-l border-slate-800 pl-3">
+                      <div className="flex items-center space-x-2 border-l border-white/5 pl-3">
                         {app.status !== 'rejected' && (
                           <button
                             onClick={() => handleUpdateStatus(app.id, 'rejected')}
-                            className="p-2 bg-red-650 hover:bg-red-550 text-white rounded-lg transition-colors"
+                            className="p-2 border border-white/5 hover:bg-red-500/10 text-slate-450 hover:text-red-400 rounded-xl transition-colors cursor-pointer"
                             title="Reject Candidate"
                           >
-                            <Trash2 size={14} />
+                            <Trash2 size={13} />
                           </button>
                         )}
                         {app.status !== 'shortlisted' && app.status !== 'accepted' && (
                           <button
                             onClick={() => handleUpdateStatus(app.id, 'shortlisted')}
-                            className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-semibold"
+                            className="px-3 py-2 bg-slate-950 hover:bg-white/5 border border-white/5 text-slate-300 hover:text-white rounded-xl text-xs font-bold cursor-pointer"
                           >
                             Shortlist
                           </button>
@@ -555,10 +564,10 @@ export default function RecruiterDashboard() {
                         {app.status !== 'accepted' && (
                           <button
                             onClick={() => handleUpdateStatus(app.id, 'accepted')}
-                            className="p-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg transition-colors"
+                            className="p-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl transition-colors cursor-pointer"
                             title="Accept Application"
                           >
-                            <Check size={14} />
+                            <Check size={13} />
                           </button>
                         )}
                       </div>
@@ -573,60 +582,60 @@ export default function RecruiterDashboard() {
         {/* PANEL 3: Company Profile editor */}
         {activeTab === 'company-profile' && companyId && (
           <div>
-            <h3 className="text-xl font-bold text-white mb-2">Company Details</h3>
+            <h3 className="text-base font-black text-white tracking-tight mb-1">Company Details</h3>
             <p className="text-slate-400 text-xs mb-6">Manage corporate data and directory information</p>
 
-            <form onSubmit={handleSaveCompany} className="space-y-6 max-w-4xl">
-              <div className="grid sm:grid-cols-2 gap-6">
+            <form onSubmit={handleSaveCompany} className="space-y-5 max-w-4xl">
+              <div className="grid sm:grid-cols-2 gap-5">
                 <div>
-                  <label className="block text-slate-300 text-xs font-semibold uppercase tracking-wider mb-2">Company Name *</label>
+                  <label className="block text-slate-350 text-[10px] font-bold uppercase tracking-wider mb-2">Company Name *</label>
                   <input
                     type="text"
                     required
                     value={companyName}
                     onChange={(e) => setCompanyName(e.target.value)}
-                    className="w-full bg-slate-950/50 border border-slate-800 focus:border-violet-500 rounded-lg py-2.5 px-4 text-white text-sm outline-none"
+                    className="w-full bg-slate-950/50 border border-white/5 focus:border-violet-500/50 focus:bg-slate-950/70 focus:ring-4 focus:ring-violet-500/5 rounded-xl py-3 px-4 text-white text-xs outline-none transition-all"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-300 text-xs font-semibold uppercase tracking-wider mb-2">Website URL</label>
+                  <label className="block text-slate-355 text-[10px] font-bold uppercase tracking-wider mb-2">Website URL</label>
                   <input
                     type="url"
                     value={companyWebsite}
                     onChange={(e) => setCompanyWebsite(e.target.value)}
-                    className="w-full bg-slate-950/50 border border-slate-800 focus:border-violet-500 rounded-lg py-2.5 px-4 text-white text-sm outline-none"
+                    className="w-full bg-slate-950/50 border border-white/5 focus:border-violet-500/50 focus:bg-slate-950/70 focus:ring-4 focus:ring-violet-500/5 rounded-xl py-3 px-4 text-white text-xs outline-none transition-all"
                     placeholder="https://mycompany.com"
                   />
                 </div>
               </div>
 
-              <div className="grid sm:grid-cols-3 gap-6">
+              <div className="grid sm:grid-cols-3 gap-5">
                 <div>
-                  <label className="block text-slate-300 text-xs font-semibold uppercase tracking-wider mb-2">Industry</label>
+                  <label className="block text-slate-350 text-[10px] font-bold uppercase tracking-wider mb-2">Industry</label>
                   <input
                     type="text"
                     value={companyIndustry}
                     onChange={(e) => setCompanyIndustry(e.target.value)}
-                    className="w-full bg-slate-950/50 border border-slate-800 focus:border-violet-500 rounded-lg py-2.5 px-4 text-white text-sm outline-none"
+                    className="w-full bg-slate-950/50 border border-white/5 focus:border-violet-500/50 focus:bg-slate-950/70 focus:ring-4 focus:ring-violet-500/5 rounded-xl py-3 px-4 text-white text-xs outline-none transition-all"
                     placeholder="e.g. Fintech, Healthcare"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-300 text-xs font-semibold uppercase tracking-wider mb-2">Headquarters</label>
+                  <label className="block text-slate-350 text-[10px] font-bold uppercase tracking-wider mb-2">Headquarters</label>
                   <input
                     type="text"
                     value={companyHeadquarters}
                     onChange={(e) => setCompanyHeadquarters(e.target.value)}
-                    className="w-full bg-slate-950/50 border border-slate-800 focus:border-violet-500 rounded-lg py-2.5 px-4 text-white text-sm outline-none"
+                    className="w-full bg-slate-950/50 border border-white/5 focus:border-violet-500/50 focus:bg-slate-950/70 focus:ring-4 focus:ring-violet-500/5 rounded-xl py-3 px-4 text-white text-xs outline-none transition-all"
                     placeholder="e.g. London, UK"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-300 text-xs font-semibold uppercase tracking-wider mb-2">Company Type</label>
+                  <label className="block text-slate-350 text-[10px] font-bold uppercase tracking-wider mb-2">Company Type</label>
                   <select
                     value={companyType}
                     onChange={(e) => setCompanyType(e.target.value)}
-                    className="w-full bg-slate-950/50 border border-slate-800 focus:border-violet-500 rounded-lg py-2.5 px-4 text-white text-sm outline-none"
+                    className="w-full bg-slate-950/50 border border-white/5 focus:border-violet-500/50 focus:bg-slate-950/70 focus:ring-4 focus:ring-violet-500/5 rounded-xl py-3 px-4 text-white text-xs outline-none transition-all"
                   >
                     <option value="startup">Startup</option>
                     <option value="mnc">MNC</option>
@@ -634,46 +643,46 @@ export default function RecruiterDashboard() {
                 </div>
               </div>
 
-              <div className="grid sm:grid-cols-3 gap-6">
+              <div className="grid sm:grid-cols-3 gap-5">
                 <div>
-                  <label className="block text-slate-300 text-xs font-semibold uppercase tracking-wider mb-2">Employees Count</label>
+                  <label className="block text-slate-350 text-[10px] font-bold uppercase tracking-wider mb-2">Employees Count</label>
                   <input
                     type="number"
                     value={companyEmployeeCount}
                     onChange={(e) => setCompanyEmployeeCount(e.target.value)}
-                    className="w-full bg-slate-950/50 border border-slate-800 focus:border-violet-500 rounded-lg py-2.5 px-4 text-white text-sm outline-none"
+                    className="w-full bg-slate-950/50 border border-white/5 focus:border-violet-500/50 focus:bg-slate-950/70 focus:ring-4 focus:ring-violet-500/5 rounded-xl py-3 px-4 text-white text-xs outline-none transition-all"
                     placeholder="e.g. 250"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-300 text-xs font-semibold uppercase tracking-wider mb-2">Founded Year</label>
+                  <label className="block text-slate-350 text-[10px] font-bold uppercase tracking-wider mb-2">Founded Year</label>
                   <input
                     type="number"
                     value={companyFoundedYear}
                     onChange={(e) => setCompanyFoundedYear(e.target.value)}
-                    className="w-full bg-slate-950/50 border border-slate-800 focus:border-violet-500 rounded-lg py-2.5 px-4 text-white text-sm outline-none"
+                    className="w-full bg-slate-950/50 border border-white/5 focus:border-violet-500/50 focus:bg-slate-950/70 focus:ring-4 focus:ring-violet-500/5 rounded-xl py-3 px-4 text-white text-xs outline-none transition-all"
                     placeholder="e.g. 2018"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-300 text-xs font-semibold uppercase tracking-wider mb-2">Logo Image URL</label>
+                  <label className="block text-slate-355 text-[10px] font-bold uppercase tracking-wider mb-2">Logo Image URL</label>
                   <input
                     type="url"
                     value={companyLogoUrl}
                     onChange={(e) => setCompanyLogoUrl(e.target.value)}
-                    className="w-full bg-slate-950/50 border border-slate-800 focus:border-violet-500 rounded-lg py-2.5 px-4 text-white text-sm outline-none"
+                    className="w-full bg-slate-950/50 border border-white/5 focus:border-violet-500/50 focus:bg-slate-950/70 focus:ring-4 focus:ring-violet-500/5 rounded-xl py-3 px-4 text-white text-xs outline-none transition-all"
                     placeholder="https://logo.url/logo.png"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-slate-300 text-xs font-semibold uppercase tracking-wider mb-2">About Description</label>
+                <label className="block text-slate-350 text-[10px] font-bold uppercase tracking-wider mb-2">About Description</label>
                 <textarea
                   value={companyDescription}
                   onChange={(e) => setCompanyDescription(e.target.value)}
                   rows={4}
-                  className="w-full bg-slate-950/50 border border-slate-800 focus:border-violet-500 rounded-lg py-2.5 px-4 text-white text-sm outline-none resize-none"
+                  className="w-full bg-slate-950/50 border border-white/5 focus:border-violet-500/50 focus:bg-slate-950/70 focus:ring-4 focus:ring-violet-500/5 rounded-xl py-3 px-4 text-white text-xs outline-none resize-none transition-all"
                   placeholder="Describe your organization's vision..."
                 />
               </div>
@@ -681,7 +690,7 @@ export default function RecruiterDashboard() {
               <button
                 type="submit"
                 disabled={savingCompany}
-                className="px-6 py-3 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white font-semibold text-sm rounded-lg disabled:opacity-30 shadow-lg shadow-violet-500/10"
+                className="px-6 py-3 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl disabled:opacity-30 shadow-md shadow-violet-500/10 cursor-pointer"
               >
                 {savingCompany ? 'Saving...' : 'Save Corporate Profile'}
               </button>
@@ -692,39 +701,39 @@ export default function RecruiterDashboard() {
         {/* PANEL 4: Create/Edit Job wizard */}
         {activeTab === 'create-job' && (
           <div>
-            <h3 className="text-xl font-bold text-white mb-6">
+            <h3 className="text-base font-black text-white tracking-tight mb-5">
               {editingJobId ? 'Edit Job Posting' : 'Post New Job'}
             </h3>
-            <form onSubmit={handleCreateJob} className="space-y-6">
-              <div className="grid sm:grid-cols-3 gap-6">
+            <form onSubmit={handleCreateJob} className="space-y-5">
+              <div className="grid sm:grid-cols-3 gap-5">
                 <div>
-                  <label className="block text-slate-300 text-xs font-semibold uppercase tracking-wider mb-2">Job Title *</label>
+                  <label className="block text-slate-350 text-[10px] font-bold uppercase tracking-wider mb-2">Job Title *</label>
                   <input
                     type="text"
                     required
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    className="w-full bg-slate-950/50 border border-slate-800 focus:border-violet-500 rounded-lg py-2.5 px-4 text-white text-sm outline-none"
+                    className="w-full bg-slate-950/50 border border-white/5 focus:border-violet-500/50 focus:bg-slate-950/70 focus:ring-4 focus:ring-violet-500/5 rounded-xl py-3 px-4 text-white text-xs outline-none transition-all"
                     placeholder="e.g. Senior Frontend Engineer"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-300 text-xs font-semibold uppercase tracking-wider mb-2">Company Name *</label>
+                  <label className="block text-slate-350 text-[10px] font-bold uppercase tracking-wider mb-2">Company Name *</label>
                   <input
                     type="text"
                     required
                     value={companyName}
                     onChange={(e) => setCompanyName(e.target.value)}
-                    className="w-full bg-slate-950/50 border border-slate-800 focus:border-violet-500 rounded-lg py-2.5 px-4 text-white text-sm outline-none"
+                    className="w-full bg-slate-950/50 border border-white/5 focus:border-violet-500/50 focus:bg-slate-950/70 focus:ring-4 focus:ring-violet-500/5 rounded-xl py-3 px-4 text-white text-xs outline-none transition-all"
                     placeholder="e.g. Acme Corp"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-300 text-xs font-semibold uppercase tracking-wider mb-2">Company Category</label>
+                  <label className="block text-slate-350 text-[10px] font-bold uppercase tracking-wider mb-2">Company Category</label>
                   <select
                     value={companyType}
                     onChange={(e) => setCompanyType(e.target.value)}
-                    className="w-full bg-slate-950/50 border border-slate-800 focus:border-violet-500 rounded-lg py-2.5 px-4 text-white text-sm outline-none"
+                    className="w-full bg-slate-950/50 border border-white/5 focus:border-violet-500/50 focus:bg-slate-950/70 focus:ring-4 focus:ring-violet-500/5 rounded-xl py-3 px-4 text-white text-xs outline-none transition-all"
                   >
                     <option value="startup">Startup</option>
                     <option value="mnc">MNC</option>
@@ -732,13 +741,13 @@ export default function RecruiterDashboard() {
                 </div>
               </div>
 
-              <div className="grid sm:grid-cols-4 gap-6">
+              <div className="grid sm:grid-cols-4 gap-5">
                 <div>
-                  <label className="block text-slate-300 text-xs font-semibold uppercase tracking-wider mb-2">Job Type</label>
+                  <label className="block text-slate-350 text-[10px] font-bold uppercase tracking-wider mb-2">Job Type</label>
                   <select
                     value={jobType}
                     onChange={(e) => setJobType(e.target.value)}
-                    className="w-full bg-slate-950/50 border border-slate-800 focus:border-violet-500 rounded-lg py-2.5 px-4 text-white text-sm outline-none"
+                    className="w-full bg-slate-950/50 border border-white/5 focus:border-violet-500/50 focus:bg-slate-950/70 focus:ring-4 focus:ring-violet-500/5 rounded-xl py-3 px-4 text-white text-xs outline-none transition-all"
                   >
                     <option value="onsite">Onsite</option>
                     <option value="hybrid">Hybrid</option>
@@ -746,11 +755,11 @@ export default function RecruiterDashboard() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-slate-300 text-xs font-semibold uppercase tracking-wider mb-2">Employment Type</label>
+                  <label className="block text-slate-350 text-[10px] font-bold uppercase tracking-wider mb-2">Employment Type</label>
                   <select
                     value={employmentType}
                     onChange={(e) => setEmploymentType(e.target.value)}
-                    className="w-full bg-slate-950/50 border border-slate-800 focus:border-violet-500 rounded-lg py-2.5 px-4 text-white text-sm outline-none"
+                    className="w-full bg-slate-950/50 border border-white/5 focus:border-violet-500/50 focus:bg-slate-950/70 focus:ring-4 focus:ring-violet-500/5 rounded-xl py-3 px-4 text-white text-xs outline-none transition-all"
                   >
                     <option value="full_time">Full-time</option>
                     <option value="part_time">Part-time</option>
@@ -759,11 +768,11 @@ export default function RecruiterDashboard() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-slate-300 text-xs font-semibold uppercase tracking-wider mb-2">Experience level</label>
+                  <label className="block text-slate-350 text-[10px] font-bold uppercase tracking-wider mb-2">Experience level</label>
                   <select
                     value={experienceLevel}
                     onChange={(e) => setExperienceLevel(e.target.value)}
-                    className="w-full bg-slate-950/50 border border-slate-800 focus:border-violet-500 rounded-lg py-2.5 px-4 text-white text-sm outline-none"
+                    className="w-full bg-slate-950/50 border border-white/5 focus:border-violet-500/50 focus:bg-slate-950/70 focus:ring-4 focus:ring-violet-500/5 rounded-xl py-3 px-4 text-white text-xs outline-none transition-all"
                   >
                     <option value="fresher">Fresher</option>
                     <option value="junior">Junior</option>
@@ -773,11 +782,11 @@ export default function RecruiterDashboard() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-slate-300 text-xs font-semibold uppercase tracking-wider mb-2">Posting status</label>
+                  <label className="block text-slate-350 text-[10px] font-bold uppercase tracking-wider mb-2">Posting status</label>
                   <select
                     value={jobStatus}
                     onChange={(e) => setJobStatus(e.target.value)}
-                    className="w-full bg-slate-950/50 border border-slate-800 focus:border-violet-500 rounded-lg py-2.5 px-4 text-white text-sm outline-none"
+                    className="w-full bg-slate-950/50 border border-white/5 focus:border-violet-500/50 focus:bg-slate-950/70 focus:ring-4 focus:ring-violet-500/5 rounded-xl py-3 px-4 text-white text-xs outline-none transition-all"
                   >
                     <option value="published">Published</option>
                     <option value="draft">Draft</option>
@@ -786,87 +795,87 @@ export default function RecruiterDashboard() {
                 </div>
               </div>
 
-              <div className="grid sm:grid-cols-3 gap-6">
+              <div className="grid sm:grid-cols-3 gap-5">
                 <div>
-                  <label className="block text-slate-300 text-xs font-semibold uppercase tracking-wider mb-2">Location *</label>
+                  <label className="block text-slate-350 text-[10px] font-bold uppercase tracking-wider mb-2">Location *</label>
                   <input
                     type="text"
                     required
                     value={location}
                     onChange={(e) => setLocation(e.target.value)}
-                    className="w-full bg-slate-950/50 border border-slate-800 focus:border-violet-500 rounded-lg py-2.5 px-4 text-white text-sm outline-none"
+                    className="w-full bg-slate-950/50 border border-white/5 focus:border-violet-500/50 focus:bg-slate-950/70 focus:ring-4 focus:ring-violet-500/5 rounded-xl py-3 px-4 text-white text-xs outline-none transition-all"
                     placeholder="e.g. San Francisco, CA / Remote"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-300 text-xs font-semibold uppercase tracking-wider mb-2">Min Salary ($)</label>
+                  <label className="block text-slate-350 text-[10px] font-bold uppercase tracking-wider mb-2">Min Salary ($)</label>
                   <input
                     type="number"
                     value={salaryMin}
                     onChange={(e) => setSalaryMin(e.target.value)}
-                    className="w-full bg-slate-950/50 border border-slate-800 focus:border-violet-500 rounded-lg py-2.5 px-4 text-white text-sm outline-none"
+                    className="w-full bg-slate-955/50 border border-white/5 focus:border-violet-500/50 focus:bg-slate-950/70 focus:ring-4 focus:ring-violet-500/5 rounded-xl py-3 px-4 text-white text-xs outline-none transition-all"
                     placeholder="e.g. 90000"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-300 text-xs font-semibold uppercase tracking-wider mb-2">Max Salary ($)</label>
+                  <label className="block text-slate-350 text-[10px] font-bold uppercase tracking-wider mb-2">Max Salary ($)</label>
                   <input
                     type="number"
                     value={salaryMax}
                     onChange={(e) => setSalaryMax(e.target.value)}
-                    className="w-full bg-slate-950/50 border border-slate-800 focus:border-violet-500 rounded-lg py-2.5 px-4 text-white text-sm outline-none"
+                    className="w-full bg-slate-955/50 border border-white/5 focus:border-violet-500/50 focus:bg-slate-955/70 focus:ring-4 focus:ring-violet-500/5 rounded-xl py-3 px-4 text-white text-xs outline-none transition-all"
                     placeholder="e.g. 140000"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-slate-300 text-xs font-semibold uppercase tracking-wider mb-2">Job Description *</label>
+                <label className="block text-slate-350 text-[10px] font-bold uppercase tracking-wider mb-2">Job Description *</label>
                 <textarea
                   required
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   rows={5}
-                  className="w-full bg-slate-950/50 border border-slate-800 focus:border-violet-500 rounded-lg py-2.5 px-4 text-white text-sm outline-none resize-none"
+                  className="w-full bg-slate-950/50 border border-white/5 focus:border-violet-500/50 focus:bg-slate-950/70 focus:ring-4 focus:ring-violet-500/5 rounded-xl py-3 px-4 text-white text-xs outline-none resize-none transition-all"
                   placeholder="Outline responsibilities and role context..."
                 />
               </div>
 
               <div>
-                <label className="block text-slate-300 text-xs font-semibold uppercase tracking-wider mb-2">Requirements / Duties Summary</label>
+                <label className="block text-slate-350 text-[10px] font-bold uppercase tracking-wider mb-2">Requirements / Duties Summary</label>
                 <textarea
                   value={requirements}
                   onChange={(e) => setRequirements(e.target.value)}
                   rows={3}
-                  className="w-full bg-slate-950/50 border border-slate-800 focus:border-violet-500 rounded-lg py-2.5 px-4 text-white text-sm outline-none resize-none"
+                  className="w-full bg-slate-955/50 border border-white/5 focus:border-violet-500/50 focus:bg-slate-950/70 focus:ring-4 focus:ring-violet-500/5 rounded-xl py-3 px-4 text-white text-xs outline-none resize-none transition-all"
                   placeholder="bulleted requirements or responsibilities list..."
                 />
               </div>
 
               {/* Required Skills list tag input */}
               <div>
-                <label className="block text-slate-300 text-xs font-semibold uppercase tracking-wider mb-2">Required Skills Stack</label>
+                <label className="block text-slate-350 text-[10px] font-bold uppercase tracking-wider mb-2">Required Skills Stack</label>
                 <div className="flex gap-4 mb-4">
                   <input
                     type="text"
                     value={skillInput}
                     onChange={(e) => setSkillInput(e.target.value)}
-                    className="flex-grow bg-slate-950/50 border border-slate-800 focus:border-violet-500 rounded-lg py-2.5 px-4 text-white text-sm outline-none"
+                    className="flex-grow bg-slate-955/50 border border-white/5 focus:border-violet-500/50 focus:bg-slate-950/70 focus:ring-4 focus:ring-violet-500/5 rounded-xl py-3 px-4 text-white text-xs outline-none transition-all"
                     placeholder="e.g. Python, Docker, React"
                   />
                   <button
                     type="button"
                     onClick={handleAddSkillTag}
-                    className="px-6 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-750 text-white font-semibold text-sm rounded-lg"
+                    className="px-6 py-3 bg-slate-950 hover:bg-white/5 border border-white/5 text-white font-bold text-xs uppercase tracking-wider rounded-xl cursor-pointer"
                   >
                     Add Tag
                   </button>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {skillsRequired.map((tag) => (
-                    <span key={tag} className="inline-flex items-center space-x-1.5 px-3 py-1 rounded bg-slate-900 border border-slate-800 text-xs text-slate-300">
+                    <span key={tag} className="inline-flex items-center space-x-1.5 px-3 py-1 rounded bg-slate-950 border border-white/5 text-xxs font-bold text-slate-300">
                       <span>{tag}</span>
-                      <button type="button" onClick={() => handleRemoveSkillTag(tag)} className="text-slate-500 hover:text-red-400">
+                      <button type="button" onClick={() => handleRemoveSkillTag(tag)} className="text-slate-500 hover:text-red-400 cursor-pointer">
                         &times;
                       </button>
                     </span>
@@ -878,14 +887,14 @@ export default function RecruiterDashboard() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-6 py-3 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white font-semibold text-sm rounded-lg disabled:opacity-30 shadow-lg shadow-violet-500/10"
+                  className="px-6 py-3.5 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl disabled:opacity-30 shadow-md shadow-violet-500/10 cursor-pointer"
                 >
                   {submitting ? 'Saving...' : editingJobId ? 'Save Changes' : 'Post Listing'}
                 </button>
                 <button
                   type="button"
                   onClick={() => { resetJobForm(); setActiveTab('jobs'); }}
-                  className="px-6 py-3 border border-slate-800 hover:bg-slate-900 text-slate-400 hover:text-white rounded-lg text-sm font-semibold"
+                  className="px-6 py-3.5 border border-white/5 hover:bg-white/5 text-slate-400 hover:text-white rounded-xl text-xs font-bold uppercase tracking-wider cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -894,6 +903,6 @@ export default function RecruiterDashboard() {
           </div>
         )}
       </div>
-    </div>
+    </PageTransition>
   );
 }

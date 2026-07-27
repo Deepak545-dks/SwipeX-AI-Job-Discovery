@@ -4,8 +4,10 @@ import { useSelector } from 'react-redux';
 import { 
   Mic, MicOff, Video, VideoOff, ScreenShare, 
   PhoneOff, Edit3, Trash2, ShieldAlert, Users, 
-  Maximize2, Share2, Palette, Sparkles, Loader2 
+  Maximize2, Share2, Palette, Sparkles, Loader2, Play
 } from 'lucide-react';
+import PageTransition from '../components/PageTransition';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function VideoInterview() {
   const { roomId } = useParams();
@@ -149,18 +151,18 @@ export default function VideoInterview() {
         renderRemoteDrawing(payload);
       } else if (type === 'clear_board') {
         clearCanvasLocalOnly();
-      } else if (type === 'hangup') {
+      } else if (type === 'end_call') {
         setCallStatus('ended');
-        setTimeout(() => navigate('/messages'), 1500);
+        cleanupCallLocalOnly();
       }
     };
 
     socket.onclose = () => {
-      console.log("Signaling WebSocket closed.");
+      console.log("Signaling socket closed");
     };
   };
 
-  // Configure Peer Connection and add local media tracks
+  // Setup WebRTC connection and attach media tracks
   const initiateWebRTCPeerConnection = (stream) => {
     const pc = new RTCPeerConnection(iceConfiguration);
     peerConnectionRef.current = pc;
@@ -170,16 +172,17 @@ export default function VideoInterview() {
       pc.addTrack(track, stream);
     });
 
-    // Handle incoming remote media stream tracks
+    // Handle remote track events
     pc.ontrack = (event) => {
-      setRemoteStream(event.streams[0]);
+      console.log("Attached remote stream track");
+      const remote = event.streams[0];
+      setRemoteStream(remote);
       if (remoteVideoRef.current) {
-        remoteVideoRef.current.srcObject = event.streams[0];
+        remoteVideoRef.current.srcObject = remote;
       }
-      setCallStatus('active');
     };
 
-    // Emit ICE candidates via signaling WS
+    // Handle ICE Candidate generation events
     pc.onicecandidate = (event) => {
       if (event.candidate && socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
         socketRef.current.send(JSON.stringify({
@@ -189,7 +192,7 @@ export default function VideoInterview() {
       }
     };
 
-    // If recruiter, create and send SDP offer
+    // If candidate initiator, create SDP offer
     if (user.role === 'recruiter') {
       pc.onnegotiationneeded = async () => {
         try {
@@ -200,13 +203,13 @@ export default function VideoInterview() {
             sdp: offer
           }));
         } catch (e) {
-          console.error("Error generating offer:", e);
+          console.error("Error creating SDP Offer:", e);
         }
       };
     }
   };
 
-  // Call Control modifiers
+  // Toggle Audio Mute Track
   const toggleMute = () => {
     if (localStream) {
       const audioTrack = localStream.getAudioTracks()[0];
@@ -217,6 +220,7 @@ export default function VideoInterview() {
     }
   };
 
+  // Toggle Video Camera Track
   const toggleCamera = () => {
     if (localStream) {
       const videoTrack = localStream.getVideoTracks()[0];
@@ -227,13 +231,15 @@ export default function VideoInterview() {
     }
   };
 
+  // Toggle Screen Sharing Track
   const toggleScreenShare = async () => {
     if (!isScreenSharing) {
       try {
         const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
         const screenTrack = stream.getVideoTracks()[0];
         screenTrackRef.current = screenTrack;
-
+        
+        // Replace video track in peer connection sender
         if (peerConnectionRef.current) {
           const senders = peerConnectionRef.current.getSenders();
           const videoSender = senders.find(s => s.track.kind === 'video');
@@ -242,14 +248,19 @@ export default function VideoInterview() {
           }
         }
 
-        // Binds stop callback
+        // Swap local video display object
+        if (localVideoRef.current) {
+          localVideoRef.current.srcObject = stream;
+        }
+
+        // Handle stream stop by browser native toolbar
         screenTrack.onended = () => {
           stopScreenSharing();
         };
 
         setIsScreenSharing(true);
       } catch (err) {
-        console.error("Failed to share screen:", err);
+        console.error("Screen share access denied:", err);
       }
     } else {
       stopScreenSharing();
@@ -259,30 +270,43 @@ export default function VideoInterview() {
   const stopScreenSharing = () => {
     if (screenTrackRef.current) {
       screenTrackRef.current.stop();
-      screenTrackRef.current = null;
     }
-
+    
+    // Restore default camera track
     if (localStream && peerConnectionRef.current) {
-      const videoTrack = localStream.getVideoTracks()[0];
+      const cameraTrack = localStream.getVideoTracks()[0];
       const senders = peerConnectionRef.current.getSenders();
       const videoSender = senders.find(s => s.track.kind === 'video');
-      if (videoSender && videoTrack) {
-        videoSender.replaceTrack(videoTrack);
+      if (videoSender && cameraTrack) {
+        videoSender.replaceTrack(cameraTrack);
       }
     }
 
+    if (localVideoRef.current) {
+      localVideoRef.current.srcObject = localStream;
+    }
+    
     setIsScreenSharing(false);
   };
 
-  const handleHangup = () => {
+  // Gracefully clear current call sessions
+  const handleEndCall = () => {
     if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
-      socketRef.current.send(JSON.stringify({ type: 'hangup' }));
+      socketRef.current.send(JSON.stringify({ type: 'end_call' }));
     }
     setCallStatus('ended');
-    setTimeout(() => navigate('/messages'), 1000);
+    cleanupCall();
+    navigate('/messages');
   };
 
   const cleanupCall = () => {
+    cleanupCallLocalOnly();
+    if (socketRef.current) {
+      socketRef.current.close();
+    }
+  };
+
+  const cleanupCallLocalOnly = () => {
     if (localStream) {
       localStream.getTracks().forEach(track => track.stop());
     }
@@ -292,34 +316,35 @@ export default function VideoInterview() {
     if (peerConnectionRef.current) {
       peerConnectionRef.current.close();
     }
-    if (socketRef.current) {
-      socketRef.current.close();
-    }
+    setLocalStream(null);
+    setRemoteStream(null);
   };
 
-  // Interactive Whiteboard drawing stream handlers
+  // Canvas Whiteboard Drawing Handlers
   useEffect(() => {
     if (showWhiteboard && canvasRef.current) {
-      initCanvas();
+      initializeWhiteboardCanvas();
     }
   }, [showWhiteboard]);
 
-  const initCanvas = () => {
+  const initializeWhiteboardCanvas = () => {
     const canvas = canvasRef.current;
-    canvas.width = canvas.parentElement.clientWidth * 2;
-    canvas.height = canvas.parentElement.clientHeight * 2;
-    canvas.style.width = `${canvas.parentElement.clientWidth}px`;
-    canvas.style.height = `${canvas.parentElement.clientHeight}px`;
+    
+    // Scale for high resolution display pixel ratios
+    canvas.width = canvas.parentElement.offsetWidth * 2;
+    canvas.height = canvas.parentElement.offsetHeight * 2;
+    canvas.style.width = `${canvas.parentElement.offsetWidth}px`;
+    canvas.style.height = `${canvas.parentElement.offsetHeight}px`;
 
-    const context = canvas.getContext("2d");
+    const context = canvas.getContext('2d');
     context.scale(2, 2);
-    context.lineCap = "round";
+    context.lineCap = 'round';
     context.strokeStyle = brushColor;
     context.lineWidth = brushSize;
     contextRef.current = context;
   };
 
-  // Update brush values
+  // Update canvas brush properties dynamically
   useEffect(() => {
     if (contextRef.current) {
       contextRef.current.strokeStyle = brushColor;
@@ -327,22 +352,24 @@ export default function VideoInterview() {
     }
   }, [brushColor, brushSize]);
 
-  const startDrawing = ({ nativeEvent }) => {
-    const { offsetX, offsetY } = getCanvasCoordinates(nativeEvent);
+  const startDrawing = (e) => {
+    const { offsetX, offsetY } = getCanvasCoordinates(e);
     contextRef.current.beginPath();
     contextRef.current.moveTo(offsetX, offsetY);
     isDrawingRef.current = true;
 
     emitDrawEvent(offsetX, offsetY, 'start');
+    e.preventDefault();
   };
 
-  const draw = ({ nativeEvent }) => {
+  const draw = (e) => {
     if (!isDrawingRef.current) return;
-    const { offsetX, offsetY } = getCanvasCoordinates(nativeEvent);
+    const { offsetX, offsetY } = getCanvasCoordinates(e);
     contextRef.current.lineTo(offsetX, offsetY);
     contextRef.current.stroke();
 
     emitDrawEvent(offsetX, offsetY, 'drag');
+    e.preventDefault();
   };
 
   const stopDrawing = () => {
@@ -427,19 +454,19 @@ export default function VideoInterview() {
     <div className="max-w-7xl mx-auto px-6 py-6 h-[85vh] flex flex-col space-y-4">
       
       {/* Upper Status Notifications */}
-      <div className="bg-slate-900/60 border border-slate-850 px-5 py-3 rounded-2xl flex items-center justify-between backdrop-blur-md">
+      <div className="bg-slate-900/40 border border-white/5 px-5 py-3 rounded-2xl flex items-center justify-between backdrop-blur-md">
         <div className="flex items-center space-x-3">
-          <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping" />
-          <p className="text-xs font-black text-white tracking-wider uppercase">
-            {callStatus === 'waiting' && 'Waiting for opponent to connect...'}
-            {callStatus === 'active' && 'Call connected • Live Interview'}
-            {callStatus === 'connecting' && 'Opening camera streams...'}
-            {callStatus === 'ended' && 'Meeting Ended'}
-            {callStatus === 'failed' && 'Media Device Permissions Failed'}
+          <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+          <p className="text-[10px] font-bold text-white tracking-widest uppercase">
+            {callStatus === 'waiting' && 'Waiting for candidate to join...'}
+            {callStatus === 'active' && 'Meeting active • live session'}
+            {callStatus === 'connecting' && 'Starting camera feed...'}
+            {callStatus === 'ended' && 'Call disconnected'}
+            {callStatus === 'failed' && 'Media Device Access Error'}
           </p>
         </div>
-        <div className="flex items-center space-x-2 text-slate-400 text-xxs font-bold">
-          <Users size={14} />
+        <div className="flex items-center space-x-2 text-slate-500 text-[10px] font-bold uppercase tracking-wider">
+          <Users size={12} />
           <span>Room: {roomId.slice(0, 8)}</span>
         </div>
       </div>
@@ -448,90 +475,89 @@ export default function VideoInterview() {
       <div className="flex-grow grid lg:grid-cols-12 gap-6 min-h-0">
         
         {/* Collaborative Whiteboard */}
-        {showWhiteboard && (
-          <div className="lg:col-span-6 bg-slate-950/80 border border-slate-850 rounded-3xl overflow-hidden flex flex-col shadow-2xl relative">
-            <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/40">
-              <div className="flex items-center space-x-2">
-                <Edit3 size={16} className="text-violet-400" />
-                <span className="text-xs font-bold text-white">Interactive Whiteboard</span>
-              </div>
-              <div className="flex items-center space-x-3">
-                
-                {/* Palette picker */}
-                <div className="flex items-center space-x-1.5 bg-slate-900 px-2.5 py-1 rounded-full border border-slate-800">
-                  {['#8b5cf6', '#ef4444', '#10b981', '#f59e0b', '#ffffff'].map(c => (
-                    <button
-                      key={c}
-                      onClick={() => setBrushColor(c)}
-                      className={`w-4.5 h-4.5 rounded-full border transition-all ${
-                        brushColor === c ? 'scale-125 border-white' : 'border-transparent'
-                      }`}
-                      style={{ backgroundColor: c }}
-                    />
-                  ))}
+        <AnimatePresence>
+          {showWhiteboard && (
+            <motion.div 
+              initial={{ opacity: 0, x: -30 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -30 }}
+              className="lg:col-span-6 bg-slate-950/80 border border-white/5 rounded-3xl overflow-hidden flex flex-col shadow-2xl relative"
+            >
+              <div className="p-4 border-b border-white/5 flex items-center justify-between bg-slate-905/30">
+                <div className="flex items-center space-x-2">
+                  <Edit3 size={15} className="text-violet-400" />
+                  <span className="text-xs font-bold text-white">Whiteboard Sandbox</span>
                 </div>
+                <div className="flex items-center space-x-3">
+                  
+                  {/* Palette picker */}
+                  <div className="flex items-center space-x-1.5 bg-slate-900 px-2.5 py-1 rounded-full border border-white/5">
+                    {['#8b5cf6', '#ef4444', '#10b981', '#ffffff'].map(c => (
+                      <button
+                        key={c}
+                        onClick={() => setBrushColor(c)}
+                        className={`w-3.5 h-3.5 rounded-full border transition-all cursor-pointer ${
+                          brushColor === c ? 'scale-125 border-white' : 'border-transparent'
+                        }`}
+                        style={{ backgroundColor: c }}
+                      />
+                    ))}
+                  </div>
 
-                <button 
-                  onClick={clearCanvas}
-                  className="p-2 text-slate-400 hover:text-red-400 transition-colors"
-                  title="Clear Whiteboard"
-                >
-                  <Trash2 size={16} />
-                </button>
+                  <button 
+                    onClick={clearCanvas}
+                    className="p-1.5 text-slate-500 hover:text-red-400 transition-colors cursor-pointer"
+                    title="Clear Board"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
               </div>
-            </div>
 
-            {/* Drawing Canvas */}
-            <div className="flex-grow bg-white/95 relative min-h-0 cursor-crosshair">
-              <canvas
-                ref={canvasRef}
-                onMouseDown={startDrawing}
-                onMouseMove={draw}
-                onMouseUp={stopDrawing}
-                onMouseLeave={stopDrawing}
-                onTouchStart={startDrawing}
-                onTouchMove={draw}
-                onTouchEnd={stopDrawing}
-                className="absolute inset-0 w-full h-full"
-              />
-            </div>
-          </div>
-        )}
-
-        {/* Video Streams panel */}
-        <div className={`flex flex-col min-h-0 bg-slate-900/30 border border-slate-850 rounded-3xl overflow-hidden shadow-2xl ${
-          showWhiteboard ? 'lg:col-span-6' : 'lg:col-span-12'
-        }`}>
-          
-          <div className="flex-grow grid grid-rows-2 sm:grid-rows-1 sm:grid-cols-2 gap-4 p-4 min-h-0 relative">
-            
-            {/* Remote Opponent Stream */}
-            <div className="bg-slate-950 border border-slate-850 rounded-2xl overflow-hidden relative flex items-center justify-center">
-              {remoteStream ? (
-                <video
-                  ref={remoteVideoRef}
-                  autoPlay
-                  playsInline
-                  className="w-full h-full object-cover"
+              {/* Drawing Canvas */}
+              <div className="flex-grow bg-slate-950 relative min-h-0 cursor-crosshair">
+                <canvas
+                  ref={canvasRef}
+                  onMouseDown={startDrawing}
+                  onMouseMove={draw}
+                  onMouseUp={stopDrawing}
+                  onMouseLeave={stopDrawing}
+                  onTouchStart={startDrawing}
+                  onTouchMove={draw}
+                  onTouchEnd={stopDrawing}
+                  className="absolute inset-0 w-full h-full bg-slate-950"
                 />
-              ) : (
-                <div className="text-center p-6 space-y-3">
-                  <div className="w-14 h-14 bg-slate-900 rounded-full flex items-center justify-center mx-auto text-slate-500 border border-slate-800 animate-pulse">
-                    <Loader2 size={24} className="animate-spin text-violet-500" />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Video feed column */}
+        <div className={`h-full flex flex-col justify-between gap-6 ${showWhiteboard ? 'lg:col-span-6' : 'lg:col-span-12'}`}>
+          <div className="flex-grow grid grid-cols-1 sm:grid-cols-2 gap-6 min-h-0">
+            {/* Remote camera viewport */}
+            <div className="bg-slate-900/60 border border-white/5 rounded-3xl overflow-hidden relative shadow-md flex items-center justify-center">
+              <video
+                ref={remoteVideoRef}
+                autoPlay
+                playsInline
+                className="w-full h-full object-cover"
+              />
+              {!remoteStream && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/80 space-y-3 z-10">
+                  <div className="w-10 h-10 rounded-full bg-violet-650/10 border border-violet-500/25 flex items-center justify-center text-violet-400">
+                    <Loader2 size={16} className="animate-spin" />
                   </div>
-                  <div>
-                    <h4 className="text-white font-bold text-xs">{opponentName}</h4>
-                    <p className="text-slate-500 text-xxs mt-0.5">Awaiting WebRTC signaling link...</p>
-                  </div>
+                  <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Awaiting opponent media feed...</span>
                 </div>
               )}
-              <span className="absolute bottom-4 left-4 bg-slate-950/80 px-3 py-1 rounded-full border border-slate-850 text-xxs font-bold text-slate-300">
-                {opponentName}
+              <span className="absolute bottom-4 left-4 px-3 py-1 bg-slate-950/70 border border-white/5 rounded-lg text-xxs font-bold text-white uppercase tracking-wider backdrop-blur-sm z-20">
+                {opponentName} (Remote)
               </span>
             </div>
 
-            {/* Local Video Stream */}
-            <div className="bg-slate-950 border border-slate-850 rounded-2xl overflow-hidden relative flex items-center justify-center">
+            {/* Local camera viewport */}
+            <div className="bg-slate-900/60 border border-white/5 rounded-3xl overflow-hidden relative shadow-md flex items-center justify-center">
               <video
                 ref={localVideoRef}
                 autoPlay
@@ -540,78 +566,77 @@ export default function VideoInterview() {
                 className="w-full h-full object-cover"
               />
               {isCameraOff && (
-                <div className="absolute inset-0 bg-slate-950 flex items-center justify-center text-slate-500">
-                  <VideoOff size={32} />
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/90 z-10">
+                  <VideoOff size={24} className="text-slate-600" />
+                  <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mt-2">Camera stream off</span>
                 </div>
               )}
-              <span className="absolute bottom-4 left-4 bg-slate-950/80 px-3 py-1 rounded-full border border-slate-850 text-xxs font-bold text-slate-300">
-                You {isMuted && '• Muted'}
+              <span className="absolute bottom-4 left-4 px-3 py-1 bg-slate-950/70 border border-white/5 rounded-lg text-xxs font-bold text-white uppercase tracking-wider backdrop-blur-sm z-20">
+                {user.email} (You)
               </span>
             </div>
-
           </div>
 
-          {/* Bottom Meeting Control Panel */}
-          <div className="p-5 border-t border-slate-850 bg-slate-950/50 flex flex-wrap items-center justify-center gap-4">
-            
-            <button
-              onClick={toggleMute}
-              className={`p-3.5 rounded-xl border transition-all ${
-                isMuted 
-                  ? 'bg-red-500/20 border-red-500/30 text-red-400 hover:bg-red-500/30' 
-                  : 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800 hover:text-white'
-              }`}
-              title={isMuted ? "Unmute Mic" : "Mute Mic"}
-            >
-              {isMuted ? <MicOff size={20} /> : <Mic size={20} />}
-            </button>
-
-            <button
-              onClick={toggleCamera}
-              className={`p-3.5 rounded-xl border transition-all ${
-                isCameraOff 
-                  ? 'bg-red-500/20 border-red-500/30 text-red-400 hover:bg-red-500/30' 
-                  : 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800 hover:text-white'
-              }`}
-              title={isCameraOff ? "Turn Video On" : "Turn Video Off"}
-            >
-              {isCameraOff ? <VideoOff size={20} /> : <Video size={20} />}
-            </button>
-
-            <button
-              onClick={toggleScreenShare}
-              className={`p-3.5 rounded-xl border transition-all ${
-                isScreenSharing 
-                  ? 'bg-violet-600 border-violet-500 text-white hover:bg-violet-500' 
-                  : 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800 hover:text-white'
-              }`}
-              title="Share Screen"
-            >
-              <ScreenShare size={20} />
-            </button>
-
+          {/* Controls Bar Row */}
+          <div className="p-4 bg-slate-900/40 border border-white/5 rounded-3xl flex items-center justify-between backdrop-blur-md shadow-lg">
             <button
               onClick={() => setShowWhiteboard(!showWhiteboard)}
-              className={`p-3.5 rounded-xl border transition-all ${
+              className={`px-4 py-2.5 rounded-xl border text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
                 showWhiteboard 
-                  ? 'bg-violet-600 border-violet-500 text-white hover:bg-violet-500' 
-                  : 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800 hover:text-white'
+                  ? 'bg-violet-600 border-violet-500 text-white' 
+                  : 'border-white/5 bg-slate-950/40 text-slate-400 hover:text-white'
               }`}
-              title="Toggle Whiteboard"
             >
-              <Edit3 size={20} />
+              <Edit3 size={14} />
+              <span>{showWhiteboard ? 'Close Board' : 'Open Whiteboard'}</span>
             </button>
 
-            <div className="w-px h-8 bg-slate-800 mx-2" />
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={toggleMute}
+                className={`p-3 rounded-xl border transition-all cursor-pointer ${
+                  isMuted 
+                    ? 'bg-red-500/10 border-red-500/20 text-red-400' 
+                    : 'bg-slate-950/40 border-white/5 text-slate-400 hover:text-white'
+                }`}
+                title={isMuted ? 'Unmute microphone' : 'Mute microphone'}
+              >
+                {isMuted ? <MicOff size={16} /> : <Mic size={16} />}
+              </button>
+
+              <button
+                onClick={toggleCamera}
+                className={`p-3 rounded-xl border transition-all cursor-pointer ${
+                  isCameraOff 
+                    ? 'bg-red-500/10 border-red-500/20 text-red-400' 
+                    : 'bg-slate-950/40 border-white/5 text-slate-400 hover:text-white'
+                }`}
+                title={isCameraOff ? 'Turn camera on' : 'Turn camera off'}
+              >
+                {isCameraOff ? <VideoOff size={16} /> : <Video size={16} />}
+              </button>
+
+              <button
+                onClick={toggleScreenShare}
+                disabled={callStatus !== 'active'}
+                className={`p-3 rounded-xl border transition-all cursor-pointer ${
+                  isScreenSharing 
+                    ? 'bg-violet-600 border-violet-500 text-white' 
+                    : 'bg-slate-950/40 border-white/5 text-slate-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed'
+                }`}
+                title="Screen Share"
+              >
+                <ScreenShare size={16} />
+              </button>
+            </div>
 
             <button
-              onClick={handleHangup}
-              className="p-3.5 bg-red-650 hover:bg-red-550 border border-red-600/30 text-white rounded-xl transition-all shadow-lg shadow-red-500/10"
-              title="Hang Up"
+              onClick={handleEndCall}
+              className="px-5 py-2.5 bg-red-600 hover:bg-red-550 text-white text-xs font-bold uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center space-x-1.5 cursor-pointer"
             >
-              <PhoneOff size={20} />
+              <PhoneOff size={14} />
+              <span>Leave Room</span>
             </button>
-
           </div>
 
         </div>

@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   X, Star, Heart, RotateCcw, Loader2, MapPin, DollarSign, 
-  Briefcase, GraduationCap, FileText, ChevronUp, AlertCircle, CheckCircle, Sparkles, Info, Building, Check, RefreshCw, Copy 
+  Briefcase, GraduationCap, FileText, ChevronUp, AlertCircle, CheckCircle, Sparkles, Info, Building, Check, RefreshCw, Copy, Keyboard
 } from 'lucide-react';
 import api from '../utils/api';
 import { Link } from 'react-router-dom';
@@ -17,7 +17,7 @@ const CompanyLogo = ({ company, className = "w-12 h-12" }) => {
   
   if (!company.logo_url || error) {
     return (
-      <div className={`${className} rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-center text-violet-400 font-extrabold text-sm uppercase shrink-0 shadow-inner`}>
+      <div className={`${className} rounded-2xl bg-slate-950 border border-white/5 flex items-center justify-center text-violet-400 font-extrabold text-sm uppercase shrink-0 shadow-inner`}>
         {company.name ? company.name.charAt(0) : 'C'}
       </div>
     );
@@ -28,7 +28,7 @@ const CompanyLogo = ({ company, className = "w-12 h-12" }) => {
       src={company.logo_url}
       alt={company.name}
       onError={() => setError(true)}
-      className={`${className} rounded-xl object-contain bg-white/5 p-1 border border-slate-800 shrink-0`}
+      className={`${className} rounded-2xl object-contain bg-white/5 p-1.5 border border-white/5 shrink-0`}
     />
   );
 };
@@ -220,7 +220,7 @@ export default function SwipeDiscovery() {
   if (loading) {
     return (
       <PageTransition className="min-h-[85vh] flex flex-col items-center justify-center py-10 px-4">
-        <div className="w-full max-w-sm h-[520px] bg-slate-900/40 border border-slate-800 rounded-3xl p-6 flex flex-col justify-between backdrop-blur-xl shadow-2xl relative overflow-hidden">
+        <div className="w-full max-w-sm h-[540px] bg-slate-900/40 border border-white/5 rounded-3xl p-6 flex flex-col justify-between backdrop-blur-xl shadow-2xl relative overflow-hidden">
           <div className="space-y-6">
             <div className="flex justify-between items-start gap-4">
               <div className="space-y-3 flex-grow">
@@ -228,9 +228,9 @@ export default function SwipeDiscovery() {
                 <div className="h-7 rounded-md w-3/4 animate-shimmer" />
                 <div className="h-4 rounded-md w-1/2 animate-shimmer" />
               </div>
-              <div className="w-12 h-12 rounded-xl shrink-0 animate-shimmer" />
+              <div className="w-12 h-12 rounded-2xl shrink-0 animate-shimmer" />
             </div>
-            <div className="space-y-3 pt-6 border-t border-slate-850">
+            <div className="space-y-3 pt-6 border-t border-white/5">
               <div className="h-3.5 rounded w-5/6 animate-shimmer" />
               <div className="h-3.5 rounded w-full animate-shimmer" />
               <div className="h-3.5 rounded w-2/3 animate-shimmer" />
@@ -255,53 +255,53 @@ export default function SwipeDiscovery() {
   return (
     <PageTransition className="min-h-[85vh] relative flex flex-col items-center justify-center py-10 px-4 overflow-hidden">
       {/* Background radial glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-violet-600/10 rounded-full blur-3xl -z-10" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] bg-violet-600/10 rounded-full blur-[110px] -z-10 animate-pulse" />
 
       {deck.length === 0 ? (
-        <div className="text-center p-8 sm:p-10 bg-slate-900/50 border border-slate-800 rounded-3xl max-w-sm w-full backdrop-blur-xl shadow-2xl space-y-6 animate-fade-in">
-          <div className="w-20 h-20 mx-auto rounded-3xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center text-violet-400 shadow-inner">
-            <Sparkles className="animate-pulse" size={38} />
+        <div className="text-center p-8 sm:p-10 bg-slate-900/40 border border-white/5 rounded-3xl max-w-sm w-full backdrop-blur-xl shadow-2xl space-y-6">
+          <div className="w-16 h-16 mx-auto rounded-2xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center text-violet-400 shadow-inner">
+            <Sparkles className="animate-pulse" size={32} />
           </div>
           <div>
-            <h3 className="text-xl font-bold text-white">No More Jobs in Deck</h3>
+            <h3 className="text-lg font-black text-white tracking-tight">No More Jobs in Deck</h3>
             <p className="text-slate-400 text-xs mt-2 leading-relaxed">
               You've swiped through all matching roles. Check back later or refresh recommendations to start discovering again!
             </p>
           </div>
           
           {!hasResume && (
-            <div className="p-3.5 bg-amber-950/30 border border-amber-900/40 rounded-xl text-xs text-amber-400 text-left flex items-start space-x-2.5">
+            <div className="p-3.5 bg-amber-950/20 border border-amber-900/30 rounded-xl text-xxs text-amber-400 text-left flex items-start space-x-2.5">
               <AlertCircle size={16} className="shrink-0 mt-0.5" />
               <div>
                 <span className="font-bold">Missing Resume: </span>
                 Please upload your resume in settings to enable direct applications.
-                <Link to="/profile" className="text-white underline font-semibold block mt-1.5 hover:text-slate-200 focus-visible:ring-2 focus-visible:ring-violet-500 rounded">
+                <Link to="/profile" className="text-white underline font-semibold block mt-1.5 hover:text-slate-200">
                   Upload Resume &rarr;
                 </Link>
               </div>
             </div>
           )}
 
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-2.5">
             <button
               onClick={handleResetSwipes}
               disabled={resetting}
-              className="flex items-center justify-center space-x-2 py-3 px-4 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-violet-500/10 active:scale-95 focus-visible:ring-2 focus-visible:ring-violet-500 disabled:opacity-50"
+              className="flex items-center justify-center space-x-2 py-3 px-4 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-violet-500/10 active:scale-95 disabled:opacity-50 cursor-pointer"
             >
-              {resetting ? <Loader2 size={16} className="animate-spin" /> : <span>Refresh Recommendations (Reset Swipes)</span>}
+              {resetting ? <Loader2 size={14} className="animate-spin" /> : <span>Refresh Recommendations</span>}
             </button>
             <div className="grid grid-cols-2 gap-2">
               <Link
                 to="/profile"
-                className="flex items-center justify-center py-2.5 bg-slate-850 hover:bg-slate-800 text-slate-300 hover:text-white rounded-xl text-xs font-semibold transition-all border border-slate-800 active:scale-95 focus-visible:ring-2 focus-visible:ring-violet-500"
+                className="flex items-center justify-center py-2.5 bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white rounded-xl text-xs font-bold transition-all border border-white/5 active:scale-95"
               >
                 Update Skills
               </Link>
               <button
                 onClick={handleUndo}
-                className="flex items-center justify-center space-x-1.5 py-2.5 border border-slate-850 hover:bg-slate-900 text-slate-350 hover:text-white rounded-xl text-xs font-semibold transition-all active:scale-95 focus-visible:ring-2 focus-visible:ring-violet-500"
+                className="flex items-center justify-center space-x-1.5 py-2.5 border border-white/5 bg-white/5 hover:bg-white/10 text-slate-350 hover:text-white rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer"
               >
-                <RotateCcw size={14} />
+                <RotateCcw size={12} />
                 <span>Undo Swipe</span>
               </button>
             </div>
@@ -310,8 +310,14 @@ export default function SwipeDiscovery() {
       ) : (
         <div className="relative w-full max-w-sm h-[620px] flex flex-col justify-between items-center">
           
+          {/* Keyboard Shortcuts Notice Indicator */}
+          <div className="hidden sm:flex items-center space-x-2 text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-4">
+            <Keyboard size={12} />
+            <span>Use Arrow Keys to Swipe</span>
+          </div>
+
           {/* Tinder Cards Stack */}
-          <div className="relative w-full h-[500px]">
+          <div className="relative w-full h-[480px]">
             <AnimatePresence>
               {deck.slice(0, 3).reverse().map((job, idx, arr) => {
                 const isTop = idx === arr.length - 1;
@@ -326,32 +332,32 @@ export default function SwipeDiscovery() {
                     onDrag={isTop ? handleDrag : undefined}
                     onDragEnd={(e, info) => handleDragEnd(e, info, job.id)}
                     animate={{
-                      scale: isTop ? 1 : 1 - (arr.length - 1 - idx) * 0.05,
-                      y: isTop ? 0 : (arr.length - 1 - idx) * 12,
+                      scale: isTop ? 1 : 1 - (arr.length - 1 - idx) * 0.04,
+                      y: isTop ? 0 : (arr.length - 1 - idx) * 10,
                       zIndex: idx
                     }}
                     exit={{ x: dragX > 0 ? 500 : -500, opacity: 0 }}
                     transition={{ duration: 0.2 }}
-                    className={`absolute w-full h-full bg-slate-900/95 border border-slate-800 rounded-3xl p-6 backdrop-blur-xl shadow-2xl flex flex-col justify-between cursor-grab active:cursor-grabbing select-none`}
+                    className="absolute w-full h-full bg-slate-900/95 border border-white/5 rounded-3xl p-6 backdrop-blur-xl shadow-2xl flex flex-col justify-between cursor-grab active:cursor-grabbing select-none"
                   >
                     {/* Drag overlays inside top card */}
                     {isTop && (
                       <>
                         <div 
                           style={{ opacity: likeOpacity }}
-                          className="absolute top-8 left-8 border-4 border-emerald-500 text-emerald-500 text-2xl font-black uppercase rounded-lg px-4 py-1 rotate-[-12deg] pointer-events-none z-30 tracking-wider shadow-lg"
+                          className="absolute top-8 left-8 border-4 border-emerald-500 text-emerald-500 text-xl font-black uppercase rounded-xl px-4 py-1.5 rotate-[-12deg] pointer-events-none z-30 tracking-wider shadow-lg"
                         >
                           LIKE
                         </div>
                         <div 
                           style={{ opacity: nopeOpacity }}
-                          className="absolute top-8 right-8 border-4 border-red-500 text-red-500 text-2xl font-black uppercase rounded-lg px-4 py-1 rotate-[12deg] pointer-events-none z-30 tracking-wider shadow-lg"
+                          className="absolute top-8 right-8 border-4 border-red-500 text-red-500 text-xl font-black uppercase rounded-xl px-4 py-1.5 rotate-[12deg] pointer-events-none z-30 tracking-wider shadow-lg"
                         >
                           NOPE
                         </div>
                         <div 
                           style={{ opacity: saveOpacity }}
-                          className="absolute bottom-16 left-1/2 -translate-x-1/2 border-4 border-violet-500 text-violet-500 text-2xl font-black uppercase rounded-lg px-4 py-1 pointer-events-none z-30 tracking-wider shadow-lg"
+                          className="absolute bottom-16 left-1/2 -translate-x-1/2 border-4 border-violet-500 text-violet-500 text-xl font-black uppercase rounded-xl px-4 py-1.5 pointer-events-none z-30 tracking-wider shadow-lg"
                         >
                           SAVE
                         </div>
@@ -361,44 +367,44 @@ export default function SwipeDiscovery() {
                     <div>
                       <div className="flex justify-between items-start gap-4">
                         <div className="min-w-0">
-                          <span className="inline-flex px-2 py-0.5 bg-violet-600/10 border border-violet-500/20 rounded-md text-xxs font-extrabold uppercase text-violet-400 tracking-wider">
+                          <span className="inline-flex px-2 py-0.5 bg-violet-650/15 border border-violet-550/20 rounded-md text-[9px] font-extrabold uppercase text-violet-400 tracking-wider">
                             {job.job_type}
                           </span>
-                          <h2 className="text-xl font-black text-white tracking-tight mt-2.5 leading-snug truncate">{job.title}</h2>
-                          <p className="text-slate-300 text-sm font-semibold mt-0.5 truncate">{job.company.name}</p>
+                          <h2 className="text-lg font-black text-white tracking-tight mt-2 leading-snug truncate">{job.title}</h2>
+                          <p className="text-slate-350 text-xs font-semibold mt-0.5 truncate">{job.company.name}</p>
                         </div>
-                        <CompanyLogo company={job.company} className="w-12 h-12 shrink-0" />
+                        <CompanyLogo company={job.company} className="w-11 h-11 shrink-0" />
                       </div>
 
-                      <div className="space-y-2 mt-6">
-                        <div className="flex items-center space-x-2 text-xs text-slate-400">
-                          <MapPin size={14} className="text-slate-500" />
+                      <div className="space-y-2 mt-5 border-t border-white/5 pt-4">
+                        <div className="flex items-center space-x-2 text-xxs text-slate-400">
+                          <MapPin size={13} className="text-slate-500" />
                           <span className="truncate">{job.location}</span>
                         </div>
-                        <div className="flex items-center space-x-2 text-xs text-slate-400">
-                          <DollarSign size={14} className="text-slate-500" />
-                          <span className="font-semibold text-white">
+                        <div className="flex items-center space-x-2 text-xxs text-slate-400">
+                          <DollarSign size={13} className="text-slate-500" />
+                          <span className="font-bold text-white">
                             {job.salary_min ? `$${job.salary_min.toLocaleString()}` : 'Negotiable'}
                             {job.salary_max ? ` - $${job.salary_max.toLocaleString()}` : ''}
                           </span>
                         </div>
-                        <div className="flex items-center space-x-2 text-xs text-slate-400">
-                          <Briefcase size={14} className="text-slate-500" />
+                        <div className="flex items-center space-x-2 text-xxs text-slate-400">
+                          <Briefcase size={13} className="text-slate-500" />
                           <span className="capitalize">{job.employment_type.replace('_', ' ')}</span>
                         </div>
                       </div>
 
                       {/* Required Skills stack list */}
-                      <div className="mt-6">
-                        <p className="text-xxs font-semibold uppercase tracking-wider text-slate-500">Required Skills</p>
-                        <div className="flex flex-wrap gap-1.5 mt-2 max-h-[85px] overflow-hidden">
+                      <div className="mt-5 pt-3 border-t border-white/5">
+                        <p className="text-[9px] font-bold uppercase tracking-wider text-slate-500">Required Skills</p>
+                        <div className="flex flex-wrap gap-1.5 mt-2.5 max-h-[80px] overflow-hidden">
                           {job.skills_required.slice(0, 4).map((skill) => (
-                            <span key={skill} className="px-2 py-0.5 rounded bg-slate-950/60 border border-slate-850 text-slate-400 text-xxs font-medium">
+                            <span key={skill} className="px-2 py-0.5 rounded bg-slate-950/60 border border-white/5 text-slate-400 text-xxs font-semibold">
                               {skill}
                             </span>
                           ))}
                           {job.skills_required.length > 4 && (
-                            <span className="px-2 py-0.5 text-slate-500 text-xxs font-bold">
+                            <span className="px-2 py-0.5 text-slate-500 text-xxs font-extrabold">
                               +{job.skills_required.length - 4} more
                             </span>
                           )}
@@ -409,10 +415,10 @@ export default function SwipeDiscovery() {
                     {/* Card Footer: details drawer expand trigger */}
                     <button
                       onClick={() => setDrawerJob(job)}
-                      className="w-full flex flex-col items-center py-2 text-slate-400 hover:text-white transition-colors focus-visible:ring-2 focus-visible:ring-violet-500 rounded-lg"
+                      className="w-full flex flex-col items-center py-1 text-slate-400 hover:text-white transition-colors focus-visible:ring-2 focus-visible:ring-violet-500 rounded-lg cursor-pointer"
                     >
-                      <ChevronUp size={16} className="animate-bounce" />
-                      <span className="text-xxs font-semibold uppercase tracking-widest mt-0.5">Details</span>
+                      <ChevronUp size={14} className="animate-bounce" />
+                      <span className="text-[9px] font-extrabold uppercase tracking-widest mt-0.5">View Details</span>
                     </button>
                   </motion.div>
                 );
@@ -424,37 +430,37 @@ export default function SwipeDiscovery() {
           <div className="flex items-center space-x-4 z-10 pt-4">
             <button
               onClick={handleUndo}
-              className="w-12 h-12 rounded-full bg-slate-900 border border-slate-850 hover:border-slate-700 flex items-center justify-center text-slate-500 hover:text-slate-350 transition-all shadow-lg hover:scale-105 active:scale-95 focus-visible:ring-2 focus-visible:ring-violet-500"
+              className="w-11 h-11 rounded-full bg-slate-900 border border-white/5 hover:border-white/10 hover:bg-white/5 flex items-center justify-center text-slate-500 hover:text-slate-300 transition-all shadow-md active:scale-90 cursor-pointer"
               title="Undo Last Swipe"
               aria-label="Undo Last Swipe"
             >
-              <RotateCcw size={18} />
+              <RotateCcw size={16} />
             </button>
             <button
               onClick={() => handleSwipe(activeCard.id, 'dislike')}
-              className="w-14 h-14 rounded-full bg-slate-900 border border-slate-850 hover:border-red-500/50 flex items-center justify-center text-slate-400 hover:text-red-400 transition-all shadow-lg hover:scale-105 active:scale-95 focus-visible:ring-2 focus-visible:ring-red-500"
+              className="w-14 h-14 rounded-full bg-slate-900 border border-white/5 hover:border-red-500/40 hover:bg-red-500/10 flex items-center justify-center text-slate-400 hover:text-red-400 transition-all shadow-lg hover:scale-105 active:scale-90 cursor-pointer"
               title="Pass (Left Arrow)"
               aria-label="Pass Job"
             >
-              <X size={24} />
+              <X size={22} />
             </button>
             
             <button
               onClick={() => handleSwipe(activeCard.id, 'save')}
-              className="w-12 h-12 rounded-full bg-slate-900 border border-slate-850 hover:border-violet-500/50 flex items-center justify-center text-slate-400 hover:text-violet-400 transition-all shadow-lg hover:scale-105 active:scale-95 focus-visible:ring-2 focus-visible:ring-violet-500"
+              className="w-12 h-12 rounded-full bg-slate-900 border border-white/5 hover:border-violet-500/40 hover:bg-violet-500/10 flex items-center justify-center text-slate-400 hover:text-violet-400 transition-all shadow-md hover:scale-105 active:scale-90 cursor-pointer"
               title="Favorite / Save (Up Arrow)"
               aria-label="Save Job"
             >
-              <Star size={20} />
+              <Star size={18} />
             </button>
 
             <button
               onClick={() => handleSwipe(activeCard.id, 'like')}
-              className="w-14 h-14 rounded-full bg-slate-900 border border-slate-850 hover:border-emerald-500/50 flex items-center justify-center text-slate-400 hover:text-emerald-400 transition-all shadow-lg hover:scale-105 active:scale-95 focus-visible:ring-2 focus-visible:ring-emerald-500"
+              className="w-14 h-14 rounded-full bg-slate-900 border border-white/5 hover:border-emerald-500/40 hover:bg-emerald-500/10 flex items-center justify-center text-slate-400 hover:text-emerald-400 transition-all shadow-lg hover:scale-105 active:scale-90 cursor-pointer"
               title="Apply Now (Right Arrow)"
               aria-label="Apply to Job"
             >
-              <Heart size={24} />
+              <Heart size={22} />
             </button>
           </div>
 
@@ -471,60 +477,60 @@ export default function SwipeDiscovery() {
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-              className="relative w-full max-w-lg bg-slate-900 border-t border-slate-800 rounded-t-3xl p-6 sm:p-8 z-50 max-h-[85vh] overflow-y-auto space-y-6 shadow-2xl"
+              className="relative w-full max-w-lg bg-slate-900 border-t border-white/5 rounded-t-3xl p-6 sm:p-8 z-50 max-h-[85vh] overflow-y-auto space-y-6 shadow-2xl"
             >
               <div className="flex justify-between items-start gap-4">
                 <div className="min-w-0">
-                  <h3 className="text-2xl font-black text-white leading-tight truncate">{drawerJob.title}</h3>
-                  <p className="text-slate-300 font-bold text-base mt-1 truncate">{drawerJob.company.name}</p>
+                  <h3 className="text-xl font-black text-white leading-tight truncate">{drawerJob.title}</h3>
+                  <p className="text-slate-350 font-bold text-sm mt-1 truncate">{drawerJob.company.name}</p>
                 </div>
                 <button
                   onClick={() => setDrawerJob(null)}
-                  className="p-1.5 rounded-lg border border-slate-800 hover:bg-slate-850 text-slate-400 hover:text-white shrink-0 focus-visible:ring-2 focus-visible:ring-violet-500"
+                  className="p-1.5 rounded-lg border border-white/5 hover:bg-white/5 text-slate-400 hover:text-white shrink-0 focus-visible:ring-2 focus-visible:ring-violet-500 cursor-pointer"
                 >
-                  <X size={18} />
+                  <X size={16} />
                 </button>
               </div>
 
-              <div className="flex flex-wrap gap-4 text-xs text-slate-400 border-y border-slate-800 py-4">
+              <div className="grid grid-cols-2 gap-4 text-xs text-slate-400 border-y border-white/5 py-4">
                 <div className="flex items-center space-x-1.5">
-                  <MapPin size={15} />
+                  <MapPin size={14} className="text-slate-500" />
                   <span>{drawerJob.location}</span>
                 </div>
                 <div className="flex items-center space-x-1.5 text-white font-bold">
-                  <DollarSign size={15} />
+                  <DollarSign size={14} className="text-slate-500" />
                   <span>
                     {drawerJob.salary_min ? `$${drawerJob.salary_min.toLocaleString()}` : 'Negotiable'}
                     {drawerJob.salary_max ? ` - $${drawerJob.salary_max.toLocaleString()}` : ''}
                   </span>
                 </div>
                 <div className="flex items-center space-x-1.5 capitalize">
-                  <Briefcase size={15} />
+                  <Briefcase size={14} className="text-slate-500" />
                   <span>{drawerJob.employment_type.replace('_', ' ')} ({drawerJob.job_type})</span>
                 </div>
                 <div className="flex items-center space-x-1.5 capitalize">
-                  <GraduationCap size={15} />
+                  <GraduationCap size={14} className="text-slate-500" />
                   <span>{drawerJob.experience_level.replace('_', ' ')}</span>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <h4 className="text-sm font-bold uppercase tracking-wider text-slate-400">About the Role</h4>
-                <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-line">{drawerJob.description}</p>
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">About the Role</h4>
+                <p className="text-slate-300 text-xs leading-relaxed whitespace-pre-line bg-slate-950/20 p-4 rounded-xl border border-white/5">{drawerJob.description}</p>
               </div>
 
               {drawerJob.requirements && (
                 <div className="space-y-2">
-                  <h4 className="text-sm font-bold uppercase tracking-wider text-slate-400">Key Requirements</h4>
-                  <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-line">{drawerJob.requirements}</p>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">Key Requirements</h4>
+                  <p className="text-slate-300 text-xs leading-relaxed whitespace-pre-line bg-slate-950/20 p-4 rounded-xl border border-white/5">{drawerJob.requirements}</p>
                 </div>
               )}
 
-              <div className="space-y-3">
-                <h4 className="text-sm font-bold uppercase tracking-wider text-slate-400">Full Skills Stack</h4>
-                <div className="flex flex-wrap gap-2">
+              <div className="space-y-2">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">Skills Stack</h4>
+                <div className="flex flex-wrap gap-1.5">
                   {drawerJob.skills_required.map((skill) => (
-                    <span key={skill} className="px-3 py-1 rounded-full bg-slate-950 border border-slate-800 text-slate-300 text-xs font-semibold">
+                    <span key={skill} className="px-2.5 py-1 rounded-lg bg-slate-950 border border-white/5 text-slate-300 text-xxs font-semibold">
                       {skill}
                     </span>
                   ))}
@@ -535,42 +541,42 @@ export default function SwipeDiscovery() {
               <AiSkillGapWidget jobId={drawerJob.id} />
 
               {/* AI Tools Bar */}
-              <div className="p-5 rounded-2xl bg-slate-950/70 border border-slate-850 space-y-4">
+              <div className="p-5 rounded-2xl bg-slate-950/60 border border-white/5 space-y-4">
                 <div className="flex flex-col sm:flex-row gap-3 justify-between items-center">
                   <button
                     onClick={handleGenerateCoverLetter}
                     disabled={generatingCoverLetter}
-                    className="w-full sm:w-auto px-4 py-2.5 bg-slate-900 hover:bg-slate-850 border border-slate-800 text-violet-400 text-xs font-bold rounded-xl transition-all flex items-center justify-center space-x-2 active:scale-95 focus-visible:ring-2 focus-visible:ring-violet-500 disabled:opacity-50"
+                    className="w-full sm:w-auto px-4 py-2.5 bg-slate-900 hover:bg-slate-850 border border-white/5 text-violet-400 text-xs font-bold rounded-xl transition-all flex items-center justify-center space-x-2 active:scale-95 disabled:opacity-50 cursor-pointer"
                   >
                     {generatingCoverLetter ? (
                       <>
-                        <Loader2 size={14} className="animate-spin" />
+                        <Loader2 size={12} className="animate-spin" />
                         <span>Writing Cover Letter...</span>
                       </>
                     ) : (
                       <>
-                        <Sparkles size={14} />
-                        <span>{coverLetter ? 'Regenerate AI Cover Letter' : 'Generate AI Cover Letter'}</span>
+                        <Sparkles size={12} />
+                        <span>{coverLetter ? 'Regenerate AI Cover Letter' : 'Generate Cover Letter'}</span>
                       </>
                     )}
                   </button>
 
                   <button
                     onClick={() => setShowInterviewModal(true)}
-                    className="w-full sm:w-auto px-4 py-2.5 bg-slate-900 hover:bg-slate-850 border border-slate-800 text-violet-400 text-xs font-bold rounded-xl transition-all flex items-center justify-center space-x-2 active:scale-95 focus-visible:ring-2 focus-visible:ring-violet-500"
+                    className="w-full sm:w-auto px-4 py-2.5 bg-slate-900 hover:bg-slate-850 border border-white/5 text-violet-400 text-xs font-bold rounded-xl transition-all flex items-center justify-center space-x-2 active:scale-95 cursor-pointer"
                   >
-                    <Sparkles size={14} />
-                    <span>Practice Interview Questions</span>
+                    <Sparkles size={12} />
+                    <span>Practice Questions</span>
                   </button>
                 </div>
 
                 {coverLetter && (
-                  <div className="space-y-2 pt-2 border-t border-slate-850/60 animate-fade-in">
+                  <div className="space-y-2 pt-2 border-t border-white/5 animate-fade-in">
                     <div className="flex justify-between items-center">
-                      <span className="text-xxs font-bold uppercase tracking-wider text-slate-400">Generated Cover Letter</span>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Generated Cover Letter</span>
                       <button
                         onClick={handleCopyCoverLetter}
-                        className="text-xs text-violet-400 hover:underline flex items-center gap-1 font-bold focus-visible:ring-2 focus-visible:ring-violet-500 rounded"
+                        className="text-xs text-violet-400 hover:underline flex items-center gap-1 font-bold cursor-pointer"
                       >
                         <Copy size={12} />
                         <span>Copy</span>
@@ -580,20 +586,20 @@ export default function SwipeDiscovery() {
                       value={coverLetter}
                       onChange={(e) => setCoverLetter(e.target.value)}
                       rows={6}
-                      className="w-full p-3 rounded-xl bg-slate-900/90 border border-slate-800 text-slate-300 text-xs leading-relaxed outline-none focus:border-violet-500 transition-colors"
+                      className="w-full p-3.5 rounded-xl bg-slate-900 border border-white/5 text-slate-350 text-xs leading-relaxed outline-none focus:border-violet-500/50 focus:ring-4 focus:ring-violet-500/5 transition-all"
                     />
                   </div>
                 )}
               </div>
 
               {/* Action buttons inside drawer */}
-              <div className="pt-6 border-t border-slate-800 flex justify-end gap-3">
+              <div className="pt-6 border-t border-white/5 flex justify-end gap-3">
                 <button
                   onClick={() => {
                     handleSwipe(drawerJob.id, 'dislike');
                     setDrawerJob(null);
                   }}
-                  className="px-4 py-2.5 border border-slate-850 hover:bg-slate-850 hover:text-white text-slate-400 font-semibold text-xs rounded-xl transition-all active:scale-95 focus-visible:ring-2 focus-visible:ring-violet-500"
+                  className="px-4 py-2.5 border border-white/5 hover:bg-white/5 text-slate-400 hover:text-white font-bold text-xs rounded-xl transition-all active:scale-95 cursor-pointer"
                 >
                   Pass
                 </button>
@@ -602,7 +608,7 @@ export default function SwipeDiscovery() {
                     handleSwipe(drawerJob.id, 'like');
                     setDrawerJob(null);
                   }}
-                  className="px-6 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs rounded-xl transition-all shadow-lg shadow-emerald-500/10 flex items-center space-x-1.5 active:scale-95 focus-visible:ring-2 focus-visible:ring-emerald-500"
+                  className="px-6 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs rounded-xl transition-all shadow-lg shadow-emerald-500/10 flex items-center space-x-1.5 active:scale-95 cursor-pointer"
                 >
                   <Heart size={14} />
                   <span>Apply Now</span>
