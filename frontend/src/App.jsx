@@ -40,9 +40,19 @@ const PageLoader = () => (
 export default function App() {
   return (
     <Router>
-      <div className="flex flex-col min-h-screen bg-slate-950 text-slate-100 selection:bg-violet-500/30 selection:text-violet-200">
+      <div className="flex flex-col min-h-screen bg-slate-950 text-slate-100 selection:bg-violet-500/30 selection:text-violet-200 relative">
+        {/* Premium Aurora floating gradient background */}
+        <div className="aurora-bg-container">
+          <div className="aurora-shape aurora-purple" />
+          <div className="aurora-shape aurora-blue" />
+          <div className="aurora-shape aurora-cyan" />
+          <div className="aurora-shape aurora-pink" />
+          <div className="aurora-shape aurora-emerald" />
+          <div className="aurora-shape aurora-orange" />
+        </div>
         <Navbar />
         <main className="flex-grow">
+
           <ErrorBoundary>
             <Suspense fallback={<PageLoader />}>
               <Routes>
