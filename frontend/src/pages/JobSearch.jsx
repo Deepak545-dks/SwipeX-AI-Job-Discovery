@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { 
   Search, MapPin, DollarSign, Briefcase, Clock, 
   GraduationCap, Loader2, Sparkles, Filter, ChevronDown, 
-  X, Check, AlertCircle, FileText, Copy, Inbox, Calendar
+  X, Check, AlertCircle, FileText, Copy, Inbox, Calendar, ArrowRight
 } from 'lucide-react';
 import api from '../utils/api';
 import { Link, useSearchParams } from 'react-router-dom';

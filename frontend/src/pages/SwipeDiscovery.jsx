@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   X, Star, Heart, RotateCcw, Loader2, MapPin, DollarSign, 
-  Briefcase, GraduationCap, FileText, ChevronUp, AlertCircle, CheckCircle, Sparkles, Info, Building, Check, RefreshCw, Copy, Keyboard
+  Briefcase, GraduationCap, FileText, ChevronUp, AlertCircle, CheckCircle, Sparkles, Info, Building, Check, RefreshCw, Copy, Keyboard, ArrowRight
 } from 'lucide-react';
 import api from '../utils/api';
 import { Link } from 'react-router-dom';
