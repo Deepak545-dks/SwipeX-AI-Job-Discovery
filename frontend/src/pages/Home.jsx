@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { 
   Compass, Briefcase, FileText, CheckCircle2, ChevronRight, 
   Star, Sparkles, ShieldCheck, Flame, Heart, X, MessageSquare, Award, Orbit, Cpu, Zap, ChevronDown, Check, Users, Terminal, Play, Bell,
-  User, CheckCircle, Database, Phone, Mail, Globe, ArrowRight, Shield, ZapOff, CheckSquare
+  User, CheckCircle, Database, Phone, Mail, Globe, ArrowRight, Shield, ZapOff, CheckSquare, Clock
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
