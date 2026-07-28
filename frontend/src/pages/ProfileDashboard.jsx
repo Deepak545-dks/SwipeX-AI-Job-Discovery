@@ -1309,8 +1309,9 @@ export default function ProfileDashboard() {
                   </div>
                 )}
               </div>
+            </div>
+          )}
         </div>
-      </div>
       </div>
       </div>
     </PageTransition>
