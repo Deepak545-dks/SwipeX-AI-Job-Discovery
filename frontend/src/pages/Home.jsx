@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Compass, Briefcase, FileText, CheckCircle2, ChevronRight, 
-  Star, Sparkles, ShieldCheck, Flame, Heart, X, MessageSquare, Award, Orbit, Cpu, Zap, ChevronDown, Check, Users
+  Star, Sparkles, ShieldCheck, Flame, Heart, X, MessageSquare, Award, Orbit, Cpu, Zap, ChevronDown, Check, Users, Shield, Terminal
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -11,6 +11,22 @@ export default function Home() {
   const [swipeDirection, setSwipeDirection] = useState(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [faqOpen, setFaqOpen] = useState(null);
+
+  // AI assistant preview mock states
+  const [aiMessageIndex, setAiMessageIndex] = useState(0);
+  const aiMessages = [
+    { sender: 'assistant', text: "Analyzing your profile... I found a 98% match for 'Lead AI Platform Engineer' at NVIDIA." },
+    { sender: 'user', text: "Wow, that's high! Does my resume highlight enough CUDA experience?" },
+    { sender: 'assistant', text: "Yes! Your resume has 3 years of CUDA and PyTorch optimization work. Swiping right now..." },
+    { sender: 'assistant', text: "Match confirmed! NVIDIA's recruiter just sent you a calendar link. Let's schedule the call." }
+  ];
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setAiMessageIndex(prev => (prev + 1) % aiMessages.length);
+    }, 4500);
+    return () => clearInterval(timer);
+  }, []);
 
   // Mouse Parallax coordinates tracker
   useEffect(() => {
@@ -57,16 +73,16 @@ export default function Home() {
   ];
 
   return (
-    <div className="relative min-h-screen pb-32 overflow-hidden pt-16 selection:bg-fuchsia-500/30">
+    <div className="relative min-h-screen pb-32 overflow-hidden pt-16 selection:bg-violet-500/30 text-left">
       
-      {/* Dynamic Parallax Glow Spotlight */}
+      {/* Dynamic Parallax Glow Spotlights (Landing Theme: Purple + Blue) */}
       <motion.div 
         animate={{ 
           x: mousePos.x * -1.2, 
           y: mousePos.y * -1.2 
         }}
         transition={{ type: 'tween', ease: 'easeOut', duration: 0.5 }}
-        className="absolute top-[6%] left-1/4 w-[600px] h-[600px] bg-gradient-to-r from-violet-600/15 via-fuchsia-500/10 to-transparent rounded-full blur-[140px] -z-10 pointer-events-none"
+        className="absolute top-[6%] left-1/4 w-[600px] h-[600px] bg-gradient-to-r from-violet-600/15 via-blue-500/10 to-transparent rounded-full blur-[140px] -z-10 pointer-events-none"
       />
       <motion.div 
         animate={{ 
@@ -74,7 +90,7 @@ export default function Home() {
           y: mousePos.y * 1.4 
         }}
         transition={{ type: 'tween', ease: 'easeOut', duration: 0.5 }}
-        className="absolute bottom-[25%] right-1/4 w-[500px] h-[500px] bg-gradient-to-r from-cyan-600/15 via-emerald-500/10 to-transparent rounded-full blur-[140px] -z-10 pointer-events-none"
+        className="absolute bottom-[25%] right-1/4 w-[500px] h-[500px] bg-gradient-to-r from-blue-600/15 via-violet-500/10 to-transparent rounded-full blur-[140px] -z-10 pointer-events-none"
       />
 
       {/* Floating Interactive Glow Particles */}
@@ -93,7 +109,7 @@ export default function Home() {
             ease: 'easeInOut'
           }}
           style={{ top: p.top, left: p.left }}
-          className={`absolute ${p.size} rounded-full bg-gradient-to-tr from-violet-400 via-pink-400 to-cyan-400 blur-[1px] pointer-events-none -z-5`}
+          className={`absolute ${p.size} rounded-full bg-gradient-to-tr from-violet-500 to-blue-400 blur-[1px] pointer-events-none -z-5`}
         />
       ))}
 
@@ -103,15 +119,15 @@ export default function Home() {
       {/* Hero Header */}
       <div className="max-w-6xl mx-auto px-6 text-center space-y-10 relative z-10">
         
-        {/* Animated Pill Logo Tag */}
+        {/* Animated Pill Tag */}
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.6 }}
-          className="inline-flex items-center space-x-2 px-5 py-2.5 rounded-full bg-slate-950/80 border border-white/10 text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-fuchsia-400 via-pink-400 to-cyan-400 text-xs font-black uppercase tracking-widest shadow-[0_0_30px_rgba(139,92,246,0.15)] backdrop-blur-md hover:border-white/20 transition-all duration-300"
+          className="inline-flex items-center space-x-2 px-5 py-2.5 rounded-full bg-slate-950/80 border border-white/10 text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-blue-400 to-violet-300 text-xs font-black uppercase tracking-widest shadow-[0_0_30px_rgba(139,92,246,0.15)] backdrop-blur-md hover:border-white/20 transition-all duration-300"
         >
           <Zap size={13} className="text-violet-400 animate-bounce mr-1 shrink-0" />
-          <span>Intelligent Swipe Matching Ecosystem</span>
+          <span>The Future of AI Job Discovery</span>
         </motion.div>
 
         {/* Brand Mission Title */}
@@ -119,11 +135,11 @@ export default function Home() {
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-          className="text-6xl sm:text-7xl md:text-9xl font-black text-white leading-[0.95] tracking-tight max-w-5xl mx-auto"
+          className="text-6xl sm:text-7xl md:text-8xl font-black text-white leading-[0.95] tracking-tight max-w-5xl mx-auto"
         >
-          Swipe Right,{' '}
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-fuchsia-450 via-pink-400 via-cyan-400 to-emerald-400 drop-shadow-[0_0_40px_rgba(168,85,247,0.15)]">
-            Hire Instantly.
+          Swipe Your Way to Your{' '}
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-450 via-blue-450 to-violet-400 drop-shadow-[0_0_40px_rgba(139,92,246,0.15)]">
+            Dream Career.
           </span>
         </motion.h1>
 
@@ -132,9 +148,9 @@ export default function Home() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
-          className="text-slate-405 text-base sm:text-xl max-w-3xl mx-auto leading-relaxed font-semibold"
+          className="text-slate-400 text-base sm:text-lg max-w-3xl mx-auto leading-relaxed font-semibold"
         >
-          No cover letters. No ghosting. SwipeX aligns enterprise-ready engineering talent straight to recruiters' calendars using algorithmic matching.
+          Bypass the resume black hole. SwipeX leverages algorithmic matching to align your tech stack directly with enterprise recruiters' calendars.
         </motion.p>
 
         {/* CTAs */}
@@ -146,9 +162,9 @@ export default function Home() {
         >
           <Link
             to="/register"
-            className="flex items-center space-x-2.5 px-9 py-5 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-cyan-500 hover:from-violet-500 hover:via-fuchsia-500 hover:to-cyan-400 text-white font-black text-xs rounded-full transition-all shadow-[0_0_35px_rgba(139,92,246,0.3)] hover:scale-[1.03] active:scale-95 group uppercase tracking-widest"
+            className="flex items-center space-x-2.5 px-9 py-5 bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white font-black text-xs rounded-full transition-all shadow-[0_0_35px_rgba(139,92,246,0.25)] hover:scale-[1.03] active:scale-95 group uppercase tracking-widest"
           >
-            <span>Launch Discovery</span>
+            <span>Get Started</span>
             <ChevronRight size={15} className="group-hover:translate-x-1 transition-transform" />
           </Link>
           <Link
@@ -160,175 +176,230 @@ export default function Home() {
         </motion.div>
       </div>
 
-      {/* Interactive Tinder Demo Widget */}
-      <div className="mt-24 max-w-xl mx-auto px-6 relative z-10">
+      {/* Main Grid: Interactive Swiper + AI Assistant Preview */}
+      <div className="max-w-6xl mx-auto px-6 mt-24 grid lg:grid-cols-2 gap-12 items-center relative z-10">
         
-        {/* Decorative orbits */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[110%] h-[110%] rounded-full border border-dashed border-white/5 pointer-events-none -z-10 animate-spin duration-[60000ms]" />
+        {/* Left Side: Interactive Swiper Widget */}
+        <div className="relative">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[110%] h-[110%] rounded-full border border-dashed border-white/5 pointer-events-none -z-10 animate-spin duration-[60000ms]" />
 
-        <motion.div
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.4 }}
-          className="w-full relative p-[1px] rounded-[38px] overflow-hidden bg-gradient-to-tr from-violet-500/30 via-fuchsia-500/30 to-cyan-500/35 shadow-[0_0_60px_rgba(139,92,246,0.25)]"
-        >
-          <div className="w-full h-[470px] bg-slate-955/95 backdrop-blur-3xl rounded-[37px] p-8 flex flex-col justify-between overflow-hidden relative">
-            <div className="absolute top-0 left-0 right-0 h-44 bg-gradient-to-b from-violet-600/10 to-transparent -z-10" />
+          <motion.div
+            initial={{ opacity: 0, x: -30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+            className="w-full relative p-[1px] rounded-[38px] overflow-hidden bg-gradient-to-tr from-violet-500/30 to-blue-500/30 shadow-[0_0_50px_rgba(139,92,246,0.2)]"
+          >
+            <div className="w-full h-[470px] bg-slate-955/95 backdrop-blur-3xl rounded-[37px] p-8 flex flex-col justify-between overflow-hidden relative">
+              <div className="absolute top-0 left-0 right-0 h-44 bg-gradient-to-b from-violet-600/10 to-transparent -z-10" />
 
-            <AnimatePresence mode="wait">
-              {demoState === 'swipe' && (
-                <motion.div
-                  key="demo-deck"
-                  initial={{ opacity: 0 }}
-                  animate={{ 
-                    opacity: 1, 
-                    x: swipeDirection === 'right' ? 320 : swipeDirection === 'left' ? -320 : 0,
-                    rotate: swipeDirection === 'right' ? 14 : swipeDirection === 'left' ? -14 : 0
-                  }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.25 }}
-                  className="h-full flex flex-col justify-between"
-                >
-                  <div className="text-left">
-                    <div className="flex justify-between items-start mb-4">
-                      <span className="px-3 py-1 rounded bg-violet-605/10 border border-violet-500/20 text-violet-400 text-[10px] font-black uppercase tracking-widest">
-                        Full-Time
-                      </span>
-                      <span className="px-3 py-1 rounded bg-cyan-600/10 border border-cyan-500/20 text-cyan-400 text-[10px] font-black uppercase tracking-widest flex items-center gap-1">
-                        <Cpu size={10} className="animate-pulse" />
-                        <span>98% AI MATCH</span>
-                      </span>
-                    </div>
-
-                    <h3 className="text-2xl font-black text-white leading-tight">Lead AI Platform Engineer</h3>
-                    <p className="text-violet-400 text-xs font-black mt-1">NVIDIA Inc.</p>
-
-                    <div className="flex items-center space-x-2 text-slate-500 text-xxs mt-3 font-extrabold uppercase tracking-wider">
-                      <span className="text-white">$230,000 - $280,000</span>
-                      <span>•</span>
-                      <span>Santa Clara, CA (Hybrid)</span>
-                    </div>
-
-                    <p className="text-slate-405 text-xs leading-relaxed mt-4 line-clamp-3 font-semibold">
-                      Orchestrate high-performance ML inference clusters. Optimize CUDA compiler configurations and GPU streaming grids for generative agent pipelines.
-                    </p>
-                  </div>
-
-                  <div>
-                    <div className="flex flex-wrap gap-1.5 mt-2">
-                      {['CUDA', 'PyTorch', 'System Design', 'C++'].map(skill => (
-                        <span key={skill} className="px-3 py-1 rounded-xl bg-white/5 border border-white/5 text-[10px] font-extrabold text-slate-300">
-                          {skill}
+              <AnimatePresence mode="wait">
+                {demoState === 'swipe' && (
+                  <motion.div
+                    key="demo-deck"
+                    initial={{ opacity: 0 }}
+                    animate={{ 
+                      opacity: 1, 
+                      x: swipeDirection === 'right' ? 320 : swipeDirection === 'left' ? -320 : 0,
+                      rotate: swipeDirection === 'right' ? 14 : swipeDirection === 'left' ? -14 : 0
+                    }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.25 }}
+                    className="h-full flex flex-col justify-between"
+                  >
+                    <div>
+                      <div className="flex justify-between items-start mb-4">
+                        <span className="px-3 py-1 rounded bg-violet-600/10 border border-violet-500/20 text-violet-400 text-[10px] font-black uppercase tracking-widest">
+                          Full-Time
                         </span>
-                      ))}
-                    </div>
-                  </div>
+                        <span className="px-3 py-1 rounded bg-blue-600/10 border border-blue-500/20 text-blue-400 text-[10px] font-black uppercase tracking-widest flex items-center gap-1">
+                          <Cpu size={10} className="animate-pulse" />
+                          <span>98% AI MATCH</span>
+                        </span>
+                      </div>
 
-                  {/* Mock Swiping Controller Bar */}
-                  <div className="flex justify-center items-center space-x-6 pt-4 border-t border-white/5">
-                    <button 
-                      onClick={() => handleDemoAction('dislike')}
-                      className="w-12 h-12 rounded-full bg-slate-900 border border-rose-500/20 hover:border-rose-500/60 hover:bg-rose-950/20 flex items-center justify-center text-rose-500 shadow-md hover:scale-110 active:scale-95 transition-all cursor-pointer"
-                    >
-                      <X size={18} />
-                    </button>
-                    <button 
-                      onClick={() => handleDemoAction('like')}
-                      className="w-14 h-14 rounded-full bg-gradient-to-r from-violet-600 via-fuchsia-600 to-indigo-650 hover:from-violet-500 hover:via-fuchsia-500 hover:to-indigo-550 flex items-center justify-center text-white shadow-xl shadow-indigo-650/20 hover:scale-110 active:scale-95 transition-all cursor-pointer"
-                    >
-                      <Heart size={22} className="fill-white animate-pulse" />
-                    </button>
-                  </div>
-                </motion.div>
-              )}
+                      <h3 className="text-2xl font-black text-white leading-tight">Lead AI Platform Engineer</h3>
+                      <p className="text-violet-400 text-xs font-black mt-1">NVIDIA Inc.</p>
 
-              {demoState === 'match' && (
-                <motion.div
-                  key="demo-match"
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="h-full flex flex-col justify-between items-center text-center py-6"
-                >
-                  <div className="space-y-3">
-                    <div className="inline-flex p-4 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 animate-bounce shadow-[0_0_20px_rgba(16,185,129,0.2)]">
-                      <Sparkles size={32} />
-                    </div>
-                    <h4 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400 tracking-tight">It's a Match!</h4>
-                    <p className="text-slate-450 text-xs leading-relaxed max-w-[280px] mx-auto font-bold">
-                      NVIDIA's tech recruitment squad approved your stack. Direct chat is unlocked!
-                    </p>
-                  </div>
+                      <div className="flex items-center space-x-2 text-slate-500 text-xxs mt-3 font-extrabold uppercase tracking-wider">
+                        <span className="text-white">$230,000 - $280,000</span>
+                        <span>•</span>
+                        <span>Santa Clara, CA (Hybrid)</span>
+                      </div>
 
-                  <div className="flex items-center justify-center -space-x-3 my-4">
-                    <div className="w-12 h-12 rounded-full border-2 border-slate-950 bg-gradient-to-tr from-violet-600 to-fuchsia-600 flex items-center justify-center font-black text-xs text-white shadow-lg">
-                      YOU
+                      <p className="text-slate-400 text-xs leading-relaxed mt-4 line-clamp-3 font-semibold">
+                        Orchestrate high-performance ML inference clusters. Optimize CUDA compiler configurations and GPU streaming grids for generative agent pipelines.
+                      </p>
                     </div>
-                    <div className="w-12 h-12 rounded-full border-2 border-slate-950 bg-slate-900 flex items-center justify-center font-black text-[9px] text-violet-400 border-white/10 shadow-lg">
-                      NVDA
-                    </div>
-                  </div>
 
-                  <button 
-                    onClick={resetDemo}
-                    className="w-full py-3.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-350 font-extrabold text-xs transition-all border border-white/10 uppercase tracking-widest cursor-pointer"
+                    <div>
+                      <div className="flex flex-wrap gap-1.5 mt-2">
+                        {['CUDA', 'PyTorch', 'System Design', 'C++'].map(skill => (
+                          <span key={skill} className="px-3 py-1 rounded-xl bg-white/5 border border-white/5 text-[10px] font-extrabold text-slate-350">
+                            {skill}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Mock Swiping Controller Bar */}
+                    <div className="flex justify-center items-center space-x-6 pt-4 border-t border-white/5">
+                      <button 
+                        onClick={() => handleDemoAction('dislike')}
+                        className="w-12 h-12 rounded-full bg-slate-900 border border-rose-500/20 hover:border-rose-500/60 hover:bg-rose-950/20 flex items-center justify-center text-rose-500 shadow-md hover:scale-110 active:scale-95 transition-all cursor-pointer"
+                      >
+                        <X size={18} />
+                      </button>
+                      <button 
+                        onClick={() => handleDemoAction('like')}
+                        className="w-14 h-14 rounded-full bg-gradient-to-r from-violet-600 to-blue-650 hover:from-violet-500 hover:to-blue-550 flex items-center justify-center text-white shadow-xl shadow-blue-600/20 hover:scale-110 active:scale-95 transition-all cursor-pointer"
+                      >
+                        <Heart size={22} className="fill-white animate-pulse" />
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+
+                {demoState === 'match' && (
+                  <motion.div
+                    key="demo-match"
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="h-full flex flex-col justify-between items-center text-center py-6"
                   >
-                    Reswipe Deck
-                  </button>
-                </motion.div>
-              )}
-
-              {demoState === 'disliked' && (
-                <motion.div
-                  key="demo-dislike"
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="h-full flex flex-col justify-between items-center text-center py-8"
-                >
-                  <div className="space-y-3">
-                    <div className="inline-flex p-4 rounded-full bg-slate-900 border border-white/10 text-slate-500">
-                      <Compass size={32} />
+                    <div className="space-y-3">
+                      <div className="inline-flex p-4 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-450 animate-bounce shadow-[0_0_20px_rgba(16,185,129,0.2)]">
+                        <Sparkles size={32} />
+                      </div>
+                      <h4 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400 tracking-tight">It's a Match!</h4>
+                      <p className="text-slate-400 text-xs leading-relaxed max-w-[280px] mx-auto font-bold">
+                        NVIDIA's tech recruitment squad approved your stack. Direct chat is unlocked!
+                      </p>
                     </div>
-                    <h4 className="text-xl font-black text-white">Listing Passed</h4>
-                    <p className="text-slate-500 text-xs leading-relaxed max-w-[240px] mx-auto font-bold">
-                      Skip records committed successfully. Fetching next recommendation...
-                    </p>
-                  </div>
 
-                  <button 
-                    onClick={resetDemo}
-                    className="w-full py-3.5 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-650 text-white font-extrabold text-xs transition-all uppercase tracking-widest cursor-pointer"
+                    <div className="flex items-center justify-center -space-x-3 my-4">
+                      <div className="w-12 h-12 rounded-full border-2 border-slate-950 bg-gradient-to-tr from-violet-600 to-blue-600 flex items-center justify-center font-black text-xs text-white shadow-lg">
+                        YOU
+                      </div>
+                      <div className="w-12 h-12 rounded-full border-2 border-slate-950 bg-slate-900 flex items-center justify-center font-black text-[9px] text-violet-400 border-white/10 shadow-lg">
+                        NVDA
+                      </div>
+                    </div>
+
+                    <button 
+                      onClick={resetDemo}
+                      className="w-full py-3.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-330 font-extrabold text-xs transition-all border border-white/10 uppercase tracking-widest cursor-pointer"
+                    >
+                      Reswipe Deck
+                    </button>
+                  </motion.div>
+                )}
+
+                {demoState === 'disliked' && (
+                  <motion.div
+                    key="demo-dislike"
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="h-full flex flex-col justify-between items-center text-center py-8"
                   >
-                    Reswipe
-                  </button>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        </motion.div>
+                    <div className="space-y-3">
+                      <div className="inline-flex p-4 rounded-full bg-slate-900 border border-white/10 text-slate-500">
+                        <Compass size={32} />
+                      </div>
+                      <h4 className="text-xl font-black text-white">Listing Passed</h4>
+                      <p className="text-slate-550 text-xs leading-relaxed max-w-[240px] mx-auto font-bold">
+                        Skip records committed successfully. Fetching next recommendation...
+                      </p>
+                    </div>
+
+                    <button 
+                      onClick={resetDemo}
+                      className="w-full py-3.5 rounded-xl bg-gradient-to-r from-violet-600 to-blue-600 text-white font-extrabold text-xs transition-all uppercase tracking-widest cursor-pointer"
+                    >
+                      Reswipe
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </motion.div>
+        </div>
+
+        {/* Right Side: AI Assistant Preview Console */}
+        <div className="relative">
+          <motion.div
+            initial={{ opacity: 0, x: 30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, delay: 0.5 }}
+            className="p-[1px] rounded-[38px] bg-gradient-to-tr from-blue-500/20 to-violet-500/20 shadow-2xl"
+          >
+            <div className="bg-slate-950/90 rounded-[37px] p-6 space-y-6 backdrop-blur-3xl min-h-[470px] flex flex-col justify-between border border-white/5">
+              
+              {/* Console Header */}
+              <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                <div className="flex items-center space-x-2">
+                  <Terminal size={14} className="text-violet-400" />
+                  <span className="text-[10px] font-black text-white uppercase tracking-widest">SwipeX AI Assistant</span>
+                </div>
+                <div className="flex items-center space-x-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-[8px] text-slate-500 font-extrabold uppercase">Live Feed</span>
+                </div>
+              </div>
+
+              {/* Message Window Area */}
+              <div className="flex-grow space-y-4 flex flex-col justify-center">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={aiMessageIndex}
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -15 }}
+                    className={`flex ${aiMessages[aiMessageIndex].sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                  >
+                    <div className={`p-4 rounded-2xl max-w-[85%] text-xs leading-relaxed font-semibold ${
+                      aiMessages[aiMessageIndex].sender === 'user'
+                        ? 'bg-gradient-to-r from-violet-600 to-blue-600 text-white rounded-tr-none'
+                        : 'bg-slate-900 border border-white/10 text-slate-200 rounded-tl-none'
+                    }`}>
+                      {aiMessages[aiMessageIndex].text}
+                    </div>
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+
+              {/* Console Footer */}
+              <div className="p-4 bg-slate-900/40 border border-white/5 rounded-2xl text-[10px] text-slate-500 font-bold uppercase tracking-widest text-center">
+                Simulated AI profile scanner loop
+              </div>
+
+            </div>
+          </motion.div>
+        </div>
+
       </div>
 
       {/* Statistics Section */}
-      <div className="max-w-6xl mx-auto px-6 mt-36 grid sm:grid-cols-3 gap-8 text-left">
-        <div className="p-8 rounded-3xl bg-slate-950/60 border border-white/5 hover:border-violet-500/20 transition-all backdrop-blur-xl relative">
-          <div className="text-3xl font-black text-white bg-clip-text bg-gradient-to-r from-violet-450 to-fuchsia-450">12,000+</div>
+      <div className="max-w-6xl mx-auto px-6 mt-36 grid sm:grid-cols-3 gap-8">
+        <div className="p-8 rounded-3xl bg-slate-950/60 border border-white/5 hover:border-violet-500/25 transition-all backdrop-blur-xl relative">
+          <div className="text-3xl font-black text-white bg-clip-text bg-gradient-to-r from-violet-405 to-blue-400">12,000+</div>
           <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-500 mt-2">Verified Matches Made</p>
         </div>
-        <div className="p-8 rounded-3xl bg-slate-950/60 border border-white/5 hover:border-cyan-500/20 transition-all backdrop-blur-xl relative">
-          <div className="text-3xl font-black text-white bg-clip-text bg-gradient-to-r from-cyan-400 to-emerald-400">200+</div>
+        <div className="p-8 rounded-3xl bg-slate-950/60 border border-white/5 hover:border-blue-500/25 transition-all backdrop-blur-xl relative">
+          <div className="text-3xl font-black text-white bg-clip-text bg-gradient-to-r from-blue-400 to-violet-300">200+</div>
           <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-500 mt-2">Seeded Tech Roles</p>
         </div>
-        <div className="p-8 rounded-3xl bg-slate-950/60 border border-white/5 hover:border-pink-500/20 transition-all backdrop-blur-xl relative">
-          <div className="text-3xl font-black text-white bg-clip-text bg-gradient-to-r from-pink-405 to-orange-400">98.2%</div>
+        <div className="p-8 rounded-3xl bg-slate-950/60 border border-white/5 hover:border-violet-500/25 transition-all backdrop-blur-xl relative">
+          <div className="text-3xl font-black text-white bg-clip-text bg-gradient-to-r from-violet-450 to-blue-350">98.2%</div>
           <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-500 mt-2">AI Match Rate</p>
         </div>
       </div>
 
       {/* Features Section */}
-      <div className="max-w-6xl mx-auto px-6 mt-36 text-left space-y-12">
+      <div className="max-w-6xl mx-auto px-6 mt-36 space-y-12">
         <div>
-          <h2 className="text-3xl font-black text-white tracking-tight uppercase tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-pink-400 to-cyan-400">Features Deck</h2>
+          <h2 className="text-3xl font-black text-white tracking-tight uppercase tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-blue-400">Features Deck</h2>
           <p className="text-slate-400 text-xs mt-1.5 font-semibold">Engineered to skip the traditional ATS queues entirely.</p>
         </div>
         <div className="grid sm:grid-cols-3 gap-6">
@@ -339,7 +410,7 @@ export default function Home() {
           ].map((feat, i) => {
             const Icon = feat.icon;
             return (
-              <div key={i} className="p-8 bg-slate-950/60 border border-white/5 rounded-3xl space-y-4 hover:border-violet-500/20 transition-all">
+              <div key={i} className="p-8 bg-slate-950/60 border border-white/5 rounded-3xl space-y-4 hover:border-violet-500/25 transition-all">
                 <div className="w-10 h-10 rounded-xl bg-violet-605/10 border border-violet-500/20 flex items-center justify-center text-violet-400">
                   <Icon size={16} />
                 </div>
@@ -351,33 +422,10 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Client Testimonials Section */}
-      <div className="max-w-6xl mx-auto px-6 mt-36 text-left space-y-12">
-        <div>
-          <h2 className="text-3xl font-black text-white tracking-tight uppercase tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-pink-400 to-cyan-400">Matched Engineers</h2>
-          <p className="text-slate-400 text-xs mt-1.5 font-semibold">Real feedback from job seekers who matches instantly.</p>
-        </div>
-        <div className="grid sm:grid-cols-2 gap-6">
-          {[
-            { quote: "SwipeX bypassed the resume black hole. Swiped right on Nvidia, got matched, and scheduled my technical call within 15 minutes.", author: "Alex R., AI Architect", role: "Matched at NVIDIA" },
-            { quote: "Drafting custom cover notes for every job used to take hours. The automated match analyzer handled all details cleanly.", author: "Sarah M., Backend Dev", role: "Matched at Stripe" }
-          ].map((test, i) => (
-            <div key={i} className="p-8 bg-slate-950/60 border border-white/5 rounded-3xl space-y-4 hover:border-cyan-500/20 transition-all relative">
-              <span className="absolute top-6 right-6 text-fuchsia-400 font-black text-[9px] uppercase tracking-widest">Matched</span>
-              <p className="text-slate-350 text-xs leading-relaxed italic font-semibold">"{test.quote}"</p>
-              <div>
-                <h4 className="text-white font-extrabold text-xxs">{test.author}</h4>
-                <p className="text-slate-500 text-[10px] uppercase tracking-widest font-black mt-1">{test.role}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Accordion FAQ Section */}
-      <div className="max-w-4xl mx-auto px-6 mt-36 text-left space-y-12">
+      {/* FAQ Section */}
+      <div className="max-w-4xl mx-auto px-6 mt-36 space-y-12">
         <div className="text-center space-y-2">
-          <h2 className="text-3xl font-black text-white tracking-tight uppercase tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-pink-400 to-cyan-400">FAQ console</h2>
+          <h2 className="text-3xl font-black text-white tracking-tight uppercase tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-blue-400">FAQ console</h2>
           <p className="text-slate-400 text-xs font-semibold">Quick guides to query operations</p>
         </div>
         
@@ -405,7 +453,7 @@ export default function Home() {
                       exit={{ height: 0, opacity: 0 }}
                       className="overflow-hidden"
                     >
-                      <p className="text-slate-400 text-xxs leading-relaxed pt-3 font-semibold border-t border-white/5 mt-3">
+                      <p className="text-slate-405 text-xxs leading-relaxed pt-3 font-semibold border-t border-white/5 mt-3">
                         {faq.a}
                       </p>
                     </motion.div>

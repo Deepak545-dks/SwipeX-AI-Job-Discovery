@@ -122,14 +122,18 @@ export default function CalendarDashboard() {
   return (
     <PageTransition className="max-w-7xl mx-auto px-6 py-12 space-y-10 relative z-10">
       
+      {/* Ambient background spotlights for Calendar page (Blue + Orange Theme) */}
+      <div className="absolute top-[10%] left-[20%] w-[380px] h-[380px] bg-gradient-to-tr from-blue-650/10 via-orange-500/10 to-transparent rounded-full blur-[110px] -z-10 pointer-events-none" />
+      <div className="absolute bottom-[20%] right-[20%] w-[350px] h-[350px] bg-gradient-to-tr from-orange-600/10 via-blue-550/10 to-transparent rounded-full blur-[110px] -z-10 pointer-events-none" />
+
       {/* Upper header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-white/10 pb-8 text-left">
         <div>
           <h1 className="text-3xl font-black text-white tracking-tight flex items-center gap-2">
-            <Cpu className="text-violet-400" />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-fuchsia-400 to-cyan-400">Interviews & Schedules</span>
+            <Cpu className="text-orange-450" />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-amber-400 to-orange-400">Interviews & Schedules</span>
           </h1>
-          <p className="text-slate-400 text-xs mt-1.5 font-semibold">Track pending calls, access WebRTC video panels, and deploy calendar slots.</p>
+          <p className="text-slate-405 text-xs mt-1.5 font-semibold">Track pending calls, access WebRTC video panels, and deploy calendar slots.</p>
         </div>
       </div>
 

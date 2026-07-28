@@ -216,14 +216,19 @@ export default function ChatPanel() {
 
   return (
     <PageTransition className="max-w-7xl mx-auto px-4 sm:px-6 py-8 h-[82vh] flex flex-col relative z-10">
-      <div className="flex-grow grid lg:grid-cols-4 gap-6 bg-slate-950/80 border border-white/10 rounded-3xl overflow-hidden shadow-2xl backdrop-blur-2xl">
+      
+      {/* Ambient background spotlights for Chat page (Purple + Pink Theme) */}
+      <div className="absolute top-[10%] left-[10%] w-[380px] h-[380px] bg-gradient-to-tr from-violet-600/10 via-pink-500/10 to-transparent rounded-full blur-[110px] -z-10 pointer-events-none" />
+      <div className="absolute bottom-[20%] right-[10%] w-[350px] h-[350px] bg-gradient-to-tr from-pink-600/10 via-violet-500/10 to-transparent rounded-full blur-[110px] -z-10 pointer-events-none" />
+
+      <div className="flex-grow grid lg:grid-cols-4 gap-6 bg-slate-955/80 border border-white/10 rounded-3xl overflow-hidden shadow-2xl backdrop-blur-2xl">
         
         {/* Sidebar chats list */}
-        <div className={`lg:col-span-1 border-r border-white/10 flex flex-col h-full bg-slate-950/30 ${selectedRoom ? 'hidden lg:flex' : 'flex'}`}>
+        <div className={`lg:col-span-1 border-r border-white/10 flex flex-col h-full bg-slate-955/30 ${selectedRoom ? 'hidden lg:flex' : 'flex'}`}>
           <div className="p-5 border-b border-white/10 text-left">
             <h2 className="text-base font-black text-white tracking-tight flex items-center gap-1.5">
-              <Cpu className="text-violet-400" />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-fuchsia-400">Match channels</span>
+              <Cpu className="text-pink-400" />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-fuchsia-400 to-pink-400">Match channels</span>
             </h2>
             <p className="text-slate-500 text-[8px] mt-0.5 uppercase tracking-widest font-black">Conversations</p>
           </div>

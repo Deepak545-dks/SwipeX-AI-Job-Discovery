@@ -216,6 +216,10 @@ export default function SwipeDiscovery() {
   return (
     <PageTransition className="max-w-6xl mx-auto px-6 py-12 grid lg:grid-cols-12 gap-8 relative z-10">
       
+      {/* Ambient background spotlights for Discover page (Purple + Cyan Theme) */}
+      <div className="absolute top-[10%] left-[10%] w-[380px] h-[380px] bg-gradient-to-tr from-violet-650/10 via-cyan-550/10 to-transparent rounded-full blur-[110px] -z-10 pointer-events-none" />
+      <div className="absolute bottom-[20%] right-[10%] w-[350px] h-[350px] bg-gradient-to-tr from-cyan-650/10 via-violet-550/10 to-transparent rounded-full blur-[110px] -z-10 pointer-events-none" />
+
       {/* LEFT COLUMN: Tinder Swiper Deck (8 cols) */}
       <div className="lg:col-span-8 flex flex-col items-center justify-center">
         {deck.length === 0 ? (
@@ -368,11 +372,11 @@ export default function SwipeDiscovery() {
                                   <defs>
                                     <linearGradient id="matchGlow" x1="0%" y1="0%" x2="100%" y2="100%">
                                       <stop offset="0%" stopColor="#8b5cf6" />
-                                      <stop offset="100%" stopColor="#ec4899" />
+                                      <stop offset="100%" stopColor="#06b6d4" />
                                     </linearGradient>
                                   </defs>
                                 </svg>
-                                <span className="absolute text-[9px] font-black text-white">96%</span>
+                                <span className="absolute text-[9px] font-black text-cyan-400">96%</span>
                               </div>
                               <span className="text-[7px] font-black uppercase tracking-widest text-slate-500 mt-1">AI Match</span>
                             </div>

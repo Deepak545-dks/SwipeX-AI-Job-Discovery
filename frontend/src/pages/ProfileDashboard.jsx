@@ -417,13 +417,17 @@ export default function ProfileDashboard() {
   }
 
   return (
-    <PageTransition className="max-w-7xl mx-auto px-4 sm:px-6 py-12 grid lg:grid-cols-4 gap-8 relative z-10">
+    <PageTransition className="max-w-7xl mx-auto px-4 sm:px-6 py-12 grid lg:grid-cols-4 gap-8 relative z-10 text-left">
       
+      {/* Ambient background spotlights for Profile page (Purple + Gold Theme) */}
+      <div className="absolute top-[10%] left-[10%] w-[380px] h-[380px] bg-gradient-to-tr from-violet-650/10 via-amber-500/10 to-transparent rounded-full blur-[110px] -z-10 pointer-events-none" />
+      <div className="absolute bottom-[20%] right-[10%] w-[350px] h-[350px] bg-gradient-to-tr from-amber-600/10 via-violet-550/10 to-transparent rounded-full blur-[110px] -z-10 pointer-events-none" />
+
       {/* LEFT COLUMN: Circular Avatar Cover and Tab lists (1 col span) */}
       <div className="lg:col-span-1 space-y-6">
         
         {/* Avatar Cover Card */}
-        <div className="p-[1.5px] rounded-3xl bg-gradient-to-b from-violet-500/30 via-fuchsia-500/30 to-indigo-500/10 shadow-2xl">
+        <div className="p-[1.5px] rounded-3xl bg-gradient-to-b from-violet-500/30 via-amber-500/30 to-yellow-500/10 shadow-2xl">
           <div className="bg-slate-955/90 rounded-[23px] p-6 backdrop-blur-2xl text-center relative group">
             
             {/* Click avatar uploader */}
@@ -465,7 +469,7 @@ export default function ProfileDashboard() {
         </div>
 
         {/* Tab Selectors Panel */}
-        <div className="p-[1.5px] rounded-3xl bg-gradient-to-b from-indigo-500/10 via-cyan-500/10 to-violet-500/10 shadow-xl">
+        <div className="p-[1.5px] rounded-3xl bg-gradient-to-b from-violet-500/10 via-amber-500/10 to-yellow-500/10 shadow-xl">
           <div className="bg-slate-955/90 rounded-[23px] p-3 backdrop-blur-2xl flex flex-col space-y-1">
             {[
               { id: 'overview', label: 'Overview Hub', icon: BarChart2 },
@@ -511,7 +515,7 @@ export default function ProfileDashboard() {
           </div>
         )}
 
-        <div className="p-[1.5px] rounded-3xl bg-gradient-to-tr from-violet-500/20 via-fuchsia-500/20 to-cyan-500/25 shadow-2xl">
+        <div className="p-[1.5px] rounded-3xl bg-gradient-to-tr from-violet-500/20 via-amber-500/20 to-yellow-500/25 shadow-2xl">
           <div className="bg-slate-955/90 rounded-[23px] p-6 sm:p-8 backdrop-blur-2xl shadow-xl min-h-[50vh]">
             
             {/* TAB 0: Overview Hub */}
@@ -668,7 +672,7 @@ export default function ProfileDashboard() {
                               <defs>
                                 <linearGradient id="scoreRingGlow" x1="0%" y1="0%" x2="100%" y2="100%">
                                   <stop offset="0%" stopColor="#8b5cf6" />
-                                  <stop offset="100%" stopColor="#ec4899" />
+                                  <stop offset="100%" stopColor="#fbbf24" />
                                 </linearGradient>
                               </defs>
                             </svg>

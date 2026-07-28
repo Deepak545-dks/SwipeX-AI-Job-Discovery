@@ -141,18 +141,22 @@ export default function ApplicationsDashboard() {
   return (
     <PageTransition className="max-w-[95%] mx-auto px-4 py-12 space-y-8 relative z-10">
       
+      {/* Ambient background spotlights for Applications page (Blue + Emerald Theme) */}
+      <div className="absolute top-[10%] left-[20%] w-[380px] h-[380px] bg-gradient-to-tr from-blue-600/10 via-emerald-500/10 to-transparent rounded-full blur-[110px] -z-10 pointer-events-none" />
+      <div className="absolute bottom-[20%] right-[20%] w-[350px] h-[350px] bg-gradient-to-tr from-emerald-600/10 via-blue-500/10 to-transparent rounded-full blur-[110px] -z-10 pointer-events-none" />
+
       {/* Header Panel */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-white/10 pb-6 text-left">
         <div>
           <h2 className="text-3xl font-black text-white tracking-tight flex items-center gap-2">
-            <Cpu className="text-violet-400" />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-fuchsia-400 to-cyan-400">Kanban Match Board</span>
+            <Cpu className="text-emerald-400" />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-teal-400 to-emerald-400">Kanban Match Board</span>
           </h2>
           <p className="text-slate-400 text-xs mt-1.5 font-semibold">Track matching statuses in dynamic pipeline columns. Recruiters update statuses as reviews proceed.</p>
         </div>
         <Link 
           to="/swipe"
-          className="inline-flex items-center space-x-2 px-6 py-3.5 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-cyan-600 hover:from-violet-500 hover:via-fuchsia-500 hover:to-cyan-550 text-white text-xs font-extrabold rounded-2xl transition-all shadow-lg shadow-violet-650/20 active:scale-95 cursor-pointer uppercase tracking-wider self-start md:self-auto"
+          className="inline-flex items-center space-x-2 px-6 py-3.5 bg-gradient-to-r from-blue-600 via-teal-600 to-emerald-600 hover:from-blue-500 hover:via-teal-500 hover:to-emerald-555 text-white text-xs font-extrabold rounded-2xl transition-all shadow-lg shadow-blue-650/20 active:scale-95 cursor-pointer uppercase tracking-wider self-start md:self-auto"
         >
           <span>Explore Deck</span>
           <ChevronRight size={14} />
