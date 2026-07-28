@@ -3,7 +3,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { 
   User, Briefcase, GraduationCap, Code, FileText, Folder, BarChart2,
   Plus, Trash2, Globe, Phone, Pencil, X, Sparkles, AlertCircle,
-  Mail, Calendar, MapPin, Loader2, Save, Upload, CheckCircle, ExternalLink, Link as LinkIcon
+  Mail, Calendar, MapPin, Loader2, Save, Upload, CheckCircle, ExternalLink, Link as LinkIcon, Cpu, Target, Award, ShieldAlert
 } from 'lucide-react';
 import api from '../utils/api';
 import { updateUser } from '../store/slices/authSlice';
@@ -98,8 +98,19 @@ export default function ProfileDashboard() {
       setGithubUrl(data.github_url || '');
       setLinkedinUrl(data.linkedin_url || '');
       setSkills(data.skills || []);
+
+      // If there is a resume analysis cache
+      if (data.resumes && data.resumes.length > 0) {
+        try {
+          const analysisResp = await api.get(`/jobs/ai/resume-analysis-history/`);
+          setAiAnalysis(analysisResp.data.analysis || analysisResp.data);
+        } catch (e) {
+          console.log("No previous resume analysis found.");
+        }
+      }
     } catch (err) {
-      setError('Failed to fetch profile details.');
+      console.error(err);
+      setError('Failed to fetch profile settings data.');
     } finally {
       setLoading(false);
     }
@@ -111,40 +122,40 @@ export default function ProfileDashboard() {
 
   const handleSavePersonal = async (e) => {
     e.preventDefault();
-    if (phone && !/^\+?[0-9\s-]{7,15}$/.test(phone)) {
-      showToast('Please enter a valid phone number (7-15 digits)', 'warning');
-      return;
-    }
+    setError('');
+    setMessage('');
+
     if (portfolioUrl && !validateUrl(portfolioUrl)) {
-      showToast('Portfolio link must be a valid URL (starting with http/https)', 'warning');
+      showToast('Portfolio URL must start with http:// or https://', 'error');
       return;
     }
     if (githubUrl && !validateUrl(githubUrl)) {
-      showToast('GitHub link must be a valid URL (starting with http/https)', 'warning');
+      showToast('GitHub URL must start with http:// or https://', 'error');
       return;
     }
     if (linkedinUrl && !validateUrl(linkedinUrl)) {
-      showToast('LinkedIn link must be a valid URL (starting with http/https)', 'warning');
+      showToast('LinkedIn URL must start with http:// or https://', 'error');
       return;
     }
 
     setSaving(true);
-    setError('');
-    setMessage('');
     try {
-      const response = await api.put('/profiles/me/', {
+      const response = await api.put('/profiles/update/', {
         full_name: fullName,
-        phone,
-        bio,
+        phone: phone,
+        bio: bio,
         portfolio_url: portfolioUrl,
         github_url: githubUrl,
         linkedin_url: linkedinUrl
       });
       setProfile(response.data);
+      dispatch(updateUser({ full_name: response.data.full_name }));
       showToast('Profile updated successfully.', 'success');
-      dispatch(updateUser({ full_name: fullName }));
+      setMessage('Profile settings saved successfully.');
     } catch (err) {
-      showToast('Failed to update profile details.', 'error');
+      console.error(err);
+      setError(err.response?.data?.error || 'Failed to update personal details.');
+      showToast('Failed to save profile changes.', 'error');
     } finally {
       setSaving(false);
     }
@@ -154,74 +165,66 @@ export default function ProfileDashboard() {
     const file = e.target.files[0];
     if (!file) return;
 
-    if (!file.type.startsWith('image/')) {
-      showToast('Please upload an image file.', 'error');
-      return;
-    }
-
-    setUploadingAvatar(true);
     const formData = new FormData();
     formData.append('profile_picture', file);
 
+    setUploadingAvatar(true);
     try {
-      const response = await api.put('/profiles/me/', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
+      const response = await api.put('/profiles/update/', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
       });
       setProfile(response.data);
-      showToast('Avatar image updated.', 'success');
+      showToast('Avatar updated successfully.', 'success');
     } catch (err) {
-      showToast('Failed to upload avatar image.', 'error');
+      showToast('Failed to upload avatar picture.', 'error');
     } finally {
       setUploadingAvatar(false);
     }
   };
 
-  // Skill Handlers
-  const handleAddSkill = async (e) => {
+  const handleSkillAdd = async (e) => {
     e.preventDefault();
-    const tag = skillInput.trim();
-    if (!tag) return;
-
-    if (skills.includes(tag)) {
-      showToast('Skill already in list', 'info');
+    const clean = skillInput.trim();
+    if (!clean) return;
+    if (skills.includes(clean)) {
+      setSkillInput('');
       return;
     }
 
-    const updated = [...skills, tag];
+    const updated = [...skills, clean];
     try {
-      await api.put('/profiles/me/', { skills: updated });
-      setSkills(updated);
+      const response = await api.put('/profiles/update/', { skills: updated });
+      setSkills(response.data.skills);
+      setProfile(response.data);
       setSkillInput('');
-      fetchProfile();
+      showToast(`Added ${clean} to skills.`, 'success');
     } catch (err) {
-      showToast('Failed to add skill.', 'error');
+      showToast('Failed to append technical skill.', 'error');
     }
   };
 
-  const handleRemoveSkill = async (tag) => {
-    const updated = skills.filter(s => s !== tag);
+  const handleSkillRemove = async (skillToRemove) => {
+    const updated = skills.filter(s => s !== skillToRemove);
     try {
-      await api.put('/profiles/me/', { skills: updated });
-      setSkills(updated);
-      fetchProfile();
+      const response = await api.put('/profiles/update/', { skills: updated });
+      setSkills(response.data.skills);
+      setProfile(response.data);
+      showToast(`Removed ${skillToRemove} from skills.`, 'info');
     } catch (err) {
-      showToast('Failed to remove skill.', 'error');
+      showToast('Failed to delete skill.', 'error');
     }
   };
 
-  // Experience handlers
-  const handleSaveExperience = async (e) => {
+  const handleAddExperience = async (e) => {
     e.preventDefault();
     if (!expCompany || !expTitle || !expStartDate) {
-      showToast('Please fill in required fields.', 'warning');
+      showToast('Please fill in Company, Job Title and Start Date fields.', 'warning');
       return;
     }
 
     const payload = {
-      company: expCompany,
-      title: expTitle,
+      company_name: expCompany,
+      job_title: expTitle,
       location: expLocation,
       start_date: expStartDate,
       end_date: expIsCurrent ? null : expEndDate,
@@ -229,62 +232,44 @@ export default function ProfileDashboard() {
       description: expDescription
     };
 
+    setSaving(true);
     try {
-      if (editingExpId) {
-        await api.put(`/profiles/me/experience/${editingExpId}/`, payload);
-        showToast('Experience updated successfully.', 'success');
-      } else {
-        await api.post('/profiles/me/experience/', payload);
-        showToast('Experience added successfully.', 'success');
-      }
-      resetExperienceForm();
-      fetchProfile();
+      await api.post('/profiles/experience/', payload);
+      showToast('Work history added successfully.', 'success');
+      setExpCompany('');
+      setExpTitle('');
+      setExpLocation('');
+      setExpStartDate('');
+      setExpEndDate('');
+      setExpIsCurrent(false);
+      setExpDescription('');
+      await fetchProfile();
     } catch (err) {
-      showToast('Failed to save experience entry.', 'error');
+      showToast('Failed to append experience record.', 'error');
+    } finally {
+      setSaving(false);
     }
-  };
-
-  const startEditExperience = (exp) => {
-    setEditingExpId(exp.id);
-    setExpCompany(exp.company || '');
-    setExpTitle(exp.title || '');
-    setExpLocation(exp.location || '');
-    setExpStartDate(exp.start_date || '');
-    setExpEndDate(exp.end_date || '');
-    setExpIsCurrent(exp.is_current || false);
-    setExpDescription(exp.description || '');
-  };
-
-  const resetExperienceForm = () => {
-    setEditingExpId(null);
-    setExpCompany('');
-    setExpTitle('');
-    setExpLocation('');
-    setExpStartDate('');
-    setExpEndDate('');
-    setExpIsCurrent(false);
-    setExpDescription('');
   };
 
   const handleDeleteExperience = async (id) => {
     try {
-      await api.delete(`/profiles/me/experience/${id}/`);
-      fetchProfile();
+      await api.delete(`/profiles/experience/${id}/`);
+      showToast('Experience log deleted.', 'info');
+      await fetchProfile();
     } catch (err) {
-      setError('Failed to delete experience.');
+      showToast('Failed to delete experience log.', 'error');
     }
   };
 
-  // Education handlers
-  const handleSaveEducation = async (e) => {
+  const handleAddEducation = async (e) => {
     e.preventDefault();
-    if (!eduInstitution || !eduDegree || !eduField || !eduStartDate) {
-      showToast('Please fill in required fields.', 'warning');
+    if (!eduInstitution || !eduDegree || !eduStartDate) {
+      showToast('Please enter Institution, Degree and Start Date.', 'warning');
       return;
     }
 
     const payload = {
-      institution: eduInstitution,
+      institution_name: eduInstitution,
       degree: eduDegree,
       field_of_study: eduField,
       start_date: eduStartDate,
@@ -293,62 +278,49 @@ export default function ProfileDashboard() {
       description: eduDescription
     };
 
+    setSaving(true);
     try {
-      if (editingEduId) {
-        await api.put(`/profiles/me/education/${editingEduId}/`, payload);
-        showToast('Education updated successfully.', 'success');
-      } else {
-        await api.post('/profiles/me/education/', payload);
-        showToast('Education added successfully.', 'success');
-      }
-      resetEducationForm();
-      fetchProfile();
+      await api.post('/profiles/education/', payload);
+      showToast('Education record added successfully.', 'success');
+      setEduInstitution('');
+      setEduDegree('');
+      setEduField('');
+      setEduStartDate('');
+      setEduEndDate('');
+      setEduIsCurrent(false);
+      setEduDescription('');
+      await fetchProfile();
     } catch (err) {
-      showToast('Failed to save education entry.', 'error');
+      showToast('Failed to append education details.', 'error');
+    } finally {
+      setSaving(false);
     }
-  };
-
-  const startEditEducation = (edu) => {
-    setEditingEduId(edu.id);
-    setEduInstitution(edu.institution || '');
-    setEduDegree(edu.degree || '');
-    setEduField(edu.field_of_study || '');
-    setEduStartDate(edu.start_date || '');
-    setEduEndDate(edu.end_date || '');
-    setEduIsCurrent(edu.is_current || false);
-    setEduDescription(edu.description || '');
-  };
-
-  const resetEducationForm = () => {
-    setEditingEduId(null);
-    setEduInstitution('');
-    setEduDegree('');
-    setEduField('');
-    setEduStartDate('');
-    setEduEndDate('');
-    setEduIsCurrent(false);
-    setEduDescription('');
   };
 
   const handleDeleteEducation = async (id) => {
     try {
-      await api.delete(`/profiles/me/education/${id}/`);
-      fetchProfile();
+      await api.delete(`/profiles/education/${id}/`);
+      showToast('Education record deleted.', 'info');
+      await fetchProfile();
     } catch (err) {
-      setError('Failed to delete education.');
+      showToast('Failed to delete education log.', 'error');
     }
   };
 
-  // Project handlers
-  const handleSaveProject = async (e) => {
+  const handleAddProject = async (e) => {
     e.preventDefault();
     if (!projName || !projStartDate) {
-      showToast('Please fill in required fields.', 'warning');
+      showToast('Project Name and Start Date are required.', 'warning');
+      return;
+    }
+
+    if (projUrl && !validateUrl(projUrl)) {
+      showToast('Project URL must start with http:// or https://', 'error');
       return;
     }
 
     const payload = {
-      name: projName,
+      project_name: projName,
       description: projDescription,
       start_date: projStartDate,
       end_date: projIsCurrent ? null : projEndDate,
@@ -356,87 +328,75 @@ export default function ProfileDashboard() {
       project_url: projUrl
     };
 
+    setSaving(true);
     try {
-      if (editingProjId) {
-        await api.put(`/profiles/me/project/${editingProjId}/`, payload);
-        showToast('Project entry updated successfully.', 'success');
-      } else {
-        await api.post('/profiles/me/project/', payload);
-        showToast('Project entry added successfully.', 'success');
-      }
-      resetProjectForm();
-      fetchProfile();
+      await api.post('/profiles/projects/', payload);
+      showToast('Project details added successfully.', 'success');
+      setProjName('');
+      setProjDescription('');
+      setProjStartDate('');
+      setProjEndDate('');
+      setProjIsCurrent(false);
+      setProjUrl('');
+      await fetchProfile();
     } catch (err) {
-      showToast('Failed to save project entry.', 'error');
+      showToast('Failed to append project record.', 'error');
+    } finally {
+      setSaving(false);
     }
-  };
-
-  const startEditProject = (proj) => {
-    setEditingProjId(proj.id);
-    setProjName(proj.name || '');
-    setProjDescription(proj.description || '');
-    setProjStartDate(proj.start_date || '');
-    setProjEndDate(proj.end_date || '');
-    setProjIsCurrent(proj.is_current || false);
-    setProjUrl(proj.project_url || '');
-  };
-
-  const resetProjectForm = () => {
-    setEditingProjId(null);
-    setProjName('');
-    setProjDescription('');
-    setProjStartDate('');
-    setProjEndDate('');
-    setProjIsCurrent(false);
-    setProjUrl('');
   };
 
   const handleDeleteProject = async (id) => {
     try {
-      await api.delete(`/profiles/me/project/${id}/`);
-      fetchProfile();
+      await api.delete(`/profiles/projects/${id}/`);
+      showToast('Project showcase record deleted.', 'info');
+      await fetchProfile();
     } catch (err) {
-      setError('Failed to delete project.');
+      showToast('Failed to delete project.', 'error');
     }
   };
 
-  // Resume handlers
   const handleResumeUpload = async (e) => {
     e.preventDefault();
-    if (!resumeFile) return;
-
-    if (resumeFile.size > 5 * 1024 * 1024) {
-      showToast('File size exceeds the 5MB limit. Please upload a smaller document.', 'error');
+    if (!resumeFile) {
+      showToast('Please select a PDF file to upload.', 'warning');
       return;
     }
 
-    setUploadingResume(true);
-    setError('');
     const formData = new FormData();
     formData.append('file', resumeFile);
 
+    setUploadingResume(true);
     try {
-      await api.post('/profiles/me/resume/', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
+      const response = await api.post('/profiles/resumes/', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
       });
       setResumeFile(null);
-      document.getElementById('resume-file-input').value = null;
       showToast('Resume uploaded successfully.', 'success');
-      fetchProfile();
+      await fetchProfile();
     } catch (err) {
-      showToast(err.response?.data?.error || 'Failed to upload resume.', 'error');
+      showToast('Failed to upload resume file.', 'error');
     } finally {
       setUploadingResume(false);
     }
   };
 
-  const handleAnalyzeResume = async () => {
+  const handleDeleteResume = async (id) => {
+    try {
+      await api.delete(`/profiles/resumes/${id}/`);
+      showToast('Resume deleted successfully.', 'info');
+      setAiAnalysis(null);
+      await fetchProfile();
+    } catch (err) {
+      showToast('Failed to delete resume.', 'error');
+    }
+  };
+
+  const handleGenerateAiAnalysis = async (resumeId) => {
     setAnalyzingResume(true);
     try {
-      const response = await api.post('/profiles/ai/analyze-resume/');
-      setAiAnalysis(response.data);
+      const response = await api.post('/jobs/ai/analyze-resume/', { resume_id: resumeId });
+      setAiAnalysis(response.data.analysis || response.data);
       showToast('AI Resume Analysis completed successfully.', 'success');
     } catch (err) {
       showToast('Failed to analyze resume.', 'error');
@@ -447,26 +407,10 @@ export default function ProfileDashboard() {
 
   if (loading) {
     return (
-      <PageTransition className="max-w-7xl mx-auto px-4 sm:px-6 py-12 grid lg:grid-cols-4 gap-8">
-        <div className="lg:col-span-1 space-y-6">
-          <div className="bg-slate-900/40 border border-white/5 rounded-3xl p-6 flex flex-col items-center space-y-4">
-            <div className="w-20 h-20 rounded-full animate-shimmer" />
-            <div className="h-6 rounded w-3/4 animate-shimmer" />
-            <div className="h-4 rounded w-1/2 animate-shimmer" />
-          </div>
-          <div className="bg-slate-900/40 border border-white/5 p-3 rounded-2xl space-y-2">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="h-10 rounded-xl animate-shimmer" />
-            ))}
-          </div>
-        </div>
-        <div className="lg:col-span-3 bg-slate-900/40 border border-white/5 p-8 rounded-3xl space-y-6">
-          <div className="h-7 rounded w-1/3 animate-shimmer" />
-          <div className="space-y-4">
-            <div className="h-10 rounded-xl animate-shimmer" />
-            <div className="h-10 rounded-xl animate-shimmer" />
-            <div className="h-24 rounded-xl animate-shimmer" />
-          </div>
+      <PageTransition className="max-w-7xl mx-auto px-6 py-12 flex items-center justify-center">
+        <div className="w-full max-w-sm h-72 bg-slate-900/40 border border-white/5 rounded-3xl p-6 flex flex-col items-center justify-center backdrop-blur-xl shadow-2xl">
+          <Loader2 className="animate-spin text-violet-400" size={32} />
+          <span className="text-slate-500 text-xxs font-extrabold uppercase tracking-widest mt-4">Syncing Hub...</span>
         </div>
       </PageTransition>
     );
@@ -474,1004 +418,805 @@ export default function ProfileDashboard() {
 
   return (
     <PageTransition className="max-w-7xl mx-auto px-4 sm:px-6 py-12 grid lg:grid-cols-4 gap-8 relative z-10">
-      {/* Side Profile Card & Tab Selectors */}
+      
+      {/* LEFT COLUMN: Circular Avatar Cover and Tab lists (1 col span) */}
       <div className="lg:col-span-1 space-y-6">
+        
+        {/* Avatar Cover Card */}
         <div className="p-[1.5px] rounded-3xl bg-gradient-to-b from-violet-500/30 via-fuchsia-500/30 to-indigo-500/10 shadow-2xl">
-          <div className="bg-slate-950/90 rounded-[23px] p-6 backdrop-blur-2xl text-center relative group">
-          
-          {/* Circular avatar with click upload trigger */}
-          <div className="relative w-20 h-20 mx-auto group">
-            {profile.profile_picture ? (
-              <img 
-                src={profile.profile_picture} 
-                alt="Avatar" 
-                className="w-20 h-20 rounded-full object-cover mx-auto border border-white/10 shadow-lg" 
-              />
-            ) : (
-              <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-violet-600 to-fuchsia-600 flex items-center justify-center text-2xl font-black text-white mx-auto shadow-md">
-                {fullName ? fullName.charAt(0).toUpperCase() : profile.email.charAt(0).toUpperCase()}
-              </div>
-            )}
+          <div className="bg-slate-955/90 rounded-[23px] p-6 backdrop-blur-2xl text-center relative group">
             
-            <label className="absolute inset-0 rounded-full bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center cursor-pointer transition-opacity">
-              {uploadingAvatar ? (
-                <Loader2 size={16} className="animate-spin text-white" />
+            {/* Click avatar uploader */}
+            <div className="relative w-20 h-20 mx-auto group">
+              {profile.profile_picture ? (
+                <img 
+                  src={profile.profile_picture} 
+                  alt="Avatar" 
+                  className="w-20 h-20 rounded-full object-cover mx-auto border-2 border-violet-500/25 shadow-lg group-hover:border-violet-455 transition-colors" 
+                />
               ) : (
-                <>
-                  <Upload size={16} className="text-white animate-bounce" />
-                  <span className="text-[8px] text-slate-300 font-bold uppercase mt-1">Upload</span>
-                </>
+                <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-violet-600 to-fuchsia-600 flex items-center justify-center text-2xl font-black text-white mx-auto shadow-md">
+                  {fullName ? fullName.charAt(0).toUpperCase() : profile.email.charAt(0).toUpperCase()}
+                </div>
               )}
-              <input 
-                type="file" 
-                accept="image/*" 
-                onChange={handleAvatarUpload} 
-                className="hidden" 
-              />
-            </label>
+              
+              <label className="absolute inset-0 rounded-full bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center cursor-pointer transition-opacity">
+                {uploadingAvatar ? (
+                  <Loader2 size={16} className="animate-spin text-white" />
+                ) : (
+                  <>
+                    <Upload size={16} className="text-white animate-bounce" />
+                    <span className="text-[8px] text-slate-300 font-bold uppercase mt-1">Upload</span>
+                  </>
+                )}
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  onChange={handleAvatarUpload} 
+                  className="hidden" 
+                />
+              </label>
+            </div>
+
+            <h2 className="text-base font-black text-white mt-4">{fullName || 'Add your name'}</h2>
+            <p className="text-slate-400 text-[10px] mt-1 uppercase tracking-wider font-extrabold">{profile.role.replace('_', ' ')}</p>
+            <p className="text-slate-500 text-xxs mt-2 break-all">{profile.email}</p>
           </div>
+        </div>
 
-          <h2 className="text-base font-black text-white mt-4">{fullName || 'Add your name'}</h2>
-          <p className="text-slate-400 text-[10px] mt-1 uppercase tracking-wider font-bold">{profile.role.replace('_', ' ')}</p>
-          <p className="text-slate-500 text-xxs mt-2 break-all">{profile.email}</p>
+        {/* Tab Selectors Panel */}
+        <div className="p-[1.5px] rounded-3xl bg-gradient-to-b from-indigo-500/10 via-cyan-500/10 to-violet-500/10 shadow-xl">
+          <div className="bg-slate-955/90 rounded-[23px] p-3 backdrop-blur-2xl flex flex-col space-y-1">
+            {[
+              { id: 'overview', label: 'Overview Hub', icon: BarChart2 },
+              { id: 'personal', label: 'Personal Info', icon: User },
+              { id: 'skills', label: 'Technical Skills', icon: Code },
+              { id: 'experience', label: 'Experience Logs', icon: Briefcase },
+              { id: 'education', label: 'Education Hub', icon: GraduationCap },
+              { id: 'projects', label: 'Projects Showcase', icon: Folder },
+              { id: 'resume', label: 'Resumes & AI', icon: FileText }
+            ].map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => { setActiveTab(tab.id); setError(''); setMessage(''); }}
+                  className={`flex items-center space-x-3 px-4 py-3 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    activeTab === tab.id
+                      ? 'bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-md'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                  }`}
+                >
+                  <Icon size={15} />
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 
-      <div className="p-[1.5px] rounded-3xl bg-gradient-to-b from-indigo-500/10 via-cyan-500/10 to-violet-500/10 shadow-xl">
-        <div className="bg-slate-950/90 rounded-[23px] p-3 backdrop-blur-2xl flex flex-col space-y-1">
-          {[
-            { id: 'overview', label: 'Executive Dashboard', icon: BarChart2 },
-            { id: 'personal', label: 'Personal Info', icon: User },
-            { id: 'skills', label: 'Technical Skills', icon: Code },
-            { id: 'experience', label: 'Experience Logs', icon: Briefcase },
-            { id: 'education', label: 'Education Hub', icon: GraduationCap },
-            { id: 'projects', label: 'Projects Showcase', icon: Folder },
-            { id: 'resume', label: 'Resumes & AI', icon: FileText }
-          ].map((tab) => {
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => { setActiveTab(tab.id); setError(''); setMessage(''); }}
-                className={`flex items-center space-x-3 px-4 py-3 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  activeTab === tab.id
-                    ? 'bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-md'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
-                }`}
-              >
-                <Icon size={15} />
-                <span>{tab.label}</span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-      </div>
-
-      {/* Main Content Pane */}
-      <div className="lg:col-span-3 space-y-6">
+      {/* RIGHT COLUMN: Tab Panel content consoles (3 col span) */}
+      <div className="lg:col-span-3 space-y-6 text-left">
         {error && (
-          <div className="mb-6 p-4 rounded-2xl bg-rose-950/30 border border-rose-500/20 text-rose-400 text-xs font-bold animate-shake">
+          <div className="mb-6 p-4 rounded-2xl bg-rose-950/30 border border-rose-500/20 text-rose-450 text-xs font-bold">
             {error}
           </div>
         )}
 
         {message && (
-          <div className="mb-6 p-4 rounded-2xl bg-emerald-950/30 border border-emerald-500/20 text-emerald-400 text-xs font-bold flex items-center space-x-2 animate-pulse">
+          <div className="mb-6 p-4 rounded-2xl bg-emerald-950/30 border border-emerald-500/20 text-emerald-450 text-xs font-bold flex items-center space-x-2">
             <CheckCircle size={14} />
             <span>{message}</span>
           </div>
         )}
 
         <div className="p-[1.5px] rounded-3xl bg-gradient-to-tr from-violet-500/20 via-fuchsia-500/20 to-cyan-500/25 shadow-2xl">
-          <div className="bg-slate-950/90 rounded-[23px] p-6 sm:p-8 backdrop-blur-2xl shadow-xl min-h-[50vh]">
-          
-          {/* TAB 0: Executive Dashboard Overview */}
-          {activeTab === 'overview' && (
-            <div className="space-y-8 animate-fade-in text-left">
-              {/* Header profile banner details */}
-              <div className="p-6 rounded-2xl bg-gradient-to-r from-violet-600/10 via-fuchsia-600/10 to-cyan-600/10 border border-white/10 relative overflow-hidden flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div>
-                  <h4 className="text-xl font-black text-white tracking-tight">{fullName || 'User Profile'}</h4>
-                  <p className="text-xs text-violet-400 font-bold mt-1 uppercase tracking-wider">{profile?.role?.replace('_', ' ')}</p>
-                  <p className="text-slate-400 text-xs mt-2 leading-relaxed max-w-xl font-medium">{bio || 'No professional summary set yet. Update personal details to describe your focus.'}</p>
-                </div>
-                <button 
-                  onClick={() => setActiveTab('personal')}
-                  className="px-4 py-2 border border-white/10 hover:bg-white/5 text-slate-350 hover:text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
-                >
-                  <Pencil size={12} />
-                  <span>Edit Profile</span>
-                </button>
-              </div>
-
-              {/* Grid block layout */}
-              <div className="grid md:grid-cols-12 gap-6">
+          <div className="bg-slate-955/90 rounded-[23px] p-6 sm:p-8 backdrop-blur-2xl shadow-xl min-h-[50vh]">
+            
+            {/* TAB 0: Overview Hub */}
+            {activeTab === 'overview' && (
+              <div className="space-y-8 animate-fade-in">
                 
-                {/* Left Side: Stats & Skills & Resumes (5 cols) */}
-                <div className="md:col-span-5 space-y-6">
-                  {/* Stats list */}
-                  <div className="p-5 rounded-2xl bg-slate-900/35 border border-white/5 space-y-4">
-                    <h5 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Connect Handles</h5>
-                    <div className="space-y-2.5 text-xs text-slate-350 font-semibold">
-                      {profile?.phone && (
-                        <div className="flex items-center gap-2">
-                          <Phone size={13} className="text-slate-500" />
-                          <span>{profile.phone}</span>
-                        </div>
-                      )}
-                      <div className="flex items-center gap-2">
-                        <Mail size={13} className="text-slate-500" />
-                        <span className="truncate">{profile?.email}</span>
-                      </div>
-                      {portfolioUrl && (
-                        <a href={portfolioUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-violet-400 hover:underline">
-                          <Globe size={13} className="text-violet-500" />
-                          <span className="truncate">Portfolio Link</span>
-                        </a>
-                      )}
-                      {githubUrl && (
-                        <a href={githubUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-violet-400 hover:underline">
-                          <ExternalLink size={13} className="text-violet-500" />
-                          <span className="truncate">GitHub Profile</span>
-                        </a>
-                      )}
-                    </div>
+                {/* Covers banner details */}
+                <div className="p-6 rounded-2xl bg-gradient-to-r from-violet-650/10 via-fuchsia-650/10 to-cyan-650/10 border border-white/10 relative overflow-hidden flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                  <div>
+                    <h4 className="text-xl font-black text-white tracking-tight">{fullName || 'User Profile'}</h4>
+                    <p className="text-xs text-violet-400 font-bold mt-1 uppercase tracking-wider">{profile?.role?.replace('_', ' ')}</p>
+                    <p className="text-slate-400 text-xs mt-2.5 leading-relaxed max-w-xl font-semibold">{bio || 'No professional summary set. Update personal details tab to describe your stack focus.'}</p>
                   </div>
-
-                  {/* Skills summary block */}
-                  <div className="p-5 rounded-2xl bg-slate-900/35 border border-white/5 space-y-4">
-                    <div className="flex justify-between items-center">
-                      <h5 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Technical Skills</h5>
-                      <button onClick={() => setActiveTab('skills')} className="text-violet-400 hover:underline text-[10px] font-extrabold cursor-pointer">Edit</button>
-                    </div>
-                    <div className="flex flex-wrap gap-1.5">
-                      {skills.length === 0 ? (
-                        <p className="text-slate-550 text-xxs font-semibold">No skills added yet.</p>
-                      ) : (
-                        skills.map(skill => (
-                          <span key={skill} className="px-2.5 py-1 rounded bg-white/5 border border-white/5 text-slate-300 text-xxs font-extrabold">
-                            {skill}
-                          </span>
-                        ))
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Active Resume list */}
-                  <div className="p-5 rounded-2xl bg-slate-900/35 border border-white/5 space-y-4">
-                    <div className="flex justify-between items-center">
-                      <h5 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Resumes</h5>
-                      <button onClick={() => setActiveTab('resume')} className="text-violet-400 hover:underline text-[10px] font-extrabold cursor-pointer">Manage</button>
-                    </div>
-                    <div className="space-y-3">
-                      {profile?.resumes && profile.resumes.length > 0 ? (
-                        profile.resumes.map(res => (
-                          <div key={res.id} className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5">
-                            <div className="min-w-0 flex items-center space-x-2">
-                              <FileText size={14} className="text-violet-400 shrink-0" />
-                              <span className="text-xxs text-slate-300 font-bold truncate max-w-[120px]">{res.filename}</span>
-                            </div>
-                            <span className="text-[9px] text-slate-500 font-semibold">{new Date(res.uploaded_at).toLocaleDateString()}</span>
-                          </div>
-                        ))
-                      ) : (
-                        <p className="text-slate-550 text-xxs font-semibold">No resumes uploaded.</p>
-                      )}
-                    </div>
-                  </div>
+                  <button 
+                    onClick={() => setActiveTab('personal')}
+                    className="px-4 py-2 border border-white/10 hover:bg-white/5 text-slate-350 hover:text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+                  >
+                    <Pencil size={12} />
+                    <span>Edit Profile</span>
+                  </button>
                 </div>
 
-                {/* Right Side: Timeline History & AI Analysis (7 cols) */}
-                <div className="md:col-span-7 space-y-6">
-                  
-                  {/* Experience Timeline Summary */}
-                  <div className="p-5 rounded-2xl bg-slate-900/35 border border-white/5 space-y-4">
-                    <div className="flex justify-between items-center">
-                      <h5 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Work History</h5>
-                      <button onClick={() => setActiveTab('experience')} className="text-violet-400 hover:underline text-[10px] font-extrabold cursor-pointer">Manage</button>
-                    </div>
-                    <div className="space-y-4 relative border-l border-white/5 pl-4 ml-1">
-                      {profile?.experience && profile.experience.length > 0 ? (
-                        profile.experience.map(exp => (
-                          <div key={exp.id} className="relative space-y-1">
-                            <span className="absolute -left-[21.5px] top-1 w-2.5 h-2.5 rounded-full bg-violet-650 ring-4 ring-slate-950" />
-                            <div className="flex justify-between items-start text-xs">
-                              <h6 className="font-extrabold text-white">{exp.job_title}</h6>
-                              <span className="text-[9px] text-slate-500 font-extrabold uppercase">{new Date(exp.start_date).getFullYear()} - {exp.is_current ? 'Present' : exp.end_date ? new Date(exp.end_date).getFullYear() : ''}</span>
-                            </div>
-                            <p className="text-violet-450 text-xxs font-bold">{exp.company_name}</p>
-                            <p className="text-slate-400 text-xxs leading-relaxed font-semibold line-clamp-2 mt-1">{exp.description}</p>
+                <div className="grid md:grid-cols-12 gap-6">
+                  {/* Left stats/handles (5 cols) */}
+                  <div className="md:col-span-5 space-y-6">
+                    {/* Handles */}
+                    <div className="p-5 rounded-2xl bg-slate-900/35 border border-white/5 space-y-4">
+                      <h5 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Connect Links</h5>
+                      <div className="space-y-3 text-xs text-slate-350 font-bold">
+                        {profile?.phone && (
+                          <div className="flex items-center gap-2">
+                            <Phone size={13} className="text-slate-500" />
+                            <span>{profile.phone}</span>
                           </div>
-                        ))
+                        )}
+                        <div className="flex items-center gap-2">
+                          <Mail size={13} className="text-slate-500" />
+                          <span className="truncate">{profile?.email}</span>
+                        </div>
+                        {portfolioUrl && (
+                          <a href={portfolioUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-violet-400 hover:underline">
+                            <Globe size={13} className="text-violet-550" />
+                            <span className="truncate">Portfolio Link</span>
+                          </a>
+                        )}
+                        {githubUrl && (
+                          <a href={githubUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-violet-400 hover:underline">
+                            <ExternalLink size={13} className="text-violet-550" />
+                            <span className="truncate">GitHub Profile</span>
+                          </a>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Skills Summary */}
+                    <div className="p-5 rounded-2xl bg-slate-900/35 border border-white/5 space-y-4">
+                      <div className="flex justify-between items-center">
+                        <h5 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Technical Skills</h5>
+                        <button onClick={() => setActiveTab('skills')} className="text-violet-400 hover:underline text-[10px] font-bold cursor-pointer">Edit</button>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {skills.length === 0 ? (
+                          <p className="text-slate-550 text-xxs font-semibold">No skills added yet.</p>
+                        ) : (
+                          skills.map(skill => (
+                            <span key={skill} className="px-2.5 py-1 rounded bg-white/5 border border-white/5 text-slate-300 text-xxs font-bold">
+                              {skill}
+                            </span>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right timelines/AI (7 cols) */}
+                  <div className="md:col-span-7 space-y-6">
+                    {/* Work history timeline */}
+                    <div className="p-5 rounded-2xl bg-slate-900/35 border border-white/5 space-y-4">
+                      <div className="flex justify-between items-center">
+                        <h5 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Work History</h5>
+                        <button onClick={() => setActiveTab('experience')} className="text-violet-400 hover:underline text-[10px] font-bold cursor-pointer">Manage</button>
+                      </div>
+                      <div className="space-y-4 relative border-l border-white/5 pl-4 ml-1">
+                        {profile?.experience && profile.experience.length > 0 ? (
+                          profile.experience.map(exp => (
+                            <div key={exp.id} className="relative space-y-1">
+                              <span className="absolute -left-[21.5px] top-1 w-2.5 h-2.5 rounded-full bg-violet-600 ring-4 ring-slate-950" />
+                              <div className="flex justify-between items-start text-xs font-bold">
+                                <h6 className="text-white">{exp.job_title}</h6>
+                                <span className="text-[9px] text-slate-500 font-extrabold uppercase">{new Date(exp.start_date).getFullYear()} - {exp.is_current ? 'Present' : exp.end_date ? new Date(exp.end_date).getFullYear() : ''}</span>
+                              </div>
+                              <p className="text-violet-450 text-xxs font-bold">{exp.company_name}</p>
+                              <p className="text-slate-400 text-xxs leading-relaxed font-semibold line-clamp-2 mt-1">{exp.description}</p>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-slate-550 text-xxs font-semibold pl-2">No experience logs found.</p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* AI Resume Overview */}
+                    <div className="p-5 rounded-2xl bg-slate-900/35 border border-white/5 space-y-4">
+                      <div className="flex justify-between items-center">
+                        <h5 className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1">
+                          <Sparkles size={12} className="text-violet-400" />
+                          <span>AI Score Analysis</span>
+                        </h5>
+                        <button onClick={() => setActiveTab('resume')} className="text-violet-400 hover:underline text-[10px] font-bold cursor-pointer">Analyze</button>
+                      </div>
+                      {aiAnalysis ? (
+                        <div className="space-y-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-violet-600 to-fuchsia-600 flex items-center justify-center font-black text-white text-sm shadow-md">
+                              {aiAnalysis.score}%
+                            </div>
+                            <div>
+                              <span className="text-xs font-bold text-white">ATS Target Checklist</span>
+                              <span className="text-[10px] text-slate-500 font-semibold block mt-0.5">Audit compiled successfully</span>
+                            </div>
+                          </div>
+                        </div>
                       ) : (
-                        <p className="text-slate-550 text-xxs font-semibold pl-2">No work history records found.</p>
+                        <div className="text-center py-4">
+                          <p className="text-slate-550 text-xxs font-semibold">Upload your CV in the Resumes tab to request an automated ATS score audit here.</p>
+                        </div>
                       )}
                     </div>
                   </div>
-
-                  {/* AI resume Analysis Overview */}
-                  <div className="p-5 rounded-2xl bg-slate-900/35 border border-white/5 space-y-4">
-                    <div className="flex justify-between items-center">
-                      <h5 className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
-                        <Sparkles size={12} className="text-violet-400" />
-                        <span>AI Optimization Score</span>
-                      </h5>
-                      <button onClick={() => setActiveTab('resume')} className="text-violet-400 hover:underline text-[10px] font-extrabold cursor-pointer">Analyze</button>
-                    </div>
-                    {aiAnalysis ? (
-                      <div className="space-y-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-violet-600 to-fuchsia-600 flex items-center justify-center font-black text-white text-sm shadow-md">
-                            {aiAnalysis.score}%
-                          </div>
-                          <div>
-                            <span className="text-xs font-bold text-white">ATS Score Checklist</span>
-                            <span className="text-[10px] text-slate-500 font-semibold block mt-0.5">Recommendations populated</span>
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="text-center py-4 space-y-3">
-                        <p className="text-slate-550 text-xxs font-semibold">Analyze your resume to view ATS suggestions on this panel.</p>
-                      </div>
-                    )}
-                  </div>
-
                 </div>
 
               </div>
-            </div>
-          )}
-          
-          {/* TAB 1: Personal Info */}
-          {activeTab === 'personal' && (
-            <div>
-              <h3 className="text-base font-black text-white tracking-tight mb-6">Personal Details</h3>
-              <form onSubmit={handleSavePersonal} className="space-y-5">
-                <div className="grid sm:grid-cols-2 gap-5">
-                  <div>
-                    <label className="block text-slate-350 text-[10px] font-bold uppercase tracking-wider mb-2">Full Name</label>
-                    <input
-                      type="text"
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      className="w-full bg-slate-950/50 border border-white/5 focus:border-violet-500/50 focus:bg-slate-950/70 focus:ring-4 focus:ring-violet-500/5 rounded-xl py-3 px-4 text-white text-xs outline-none transition-all"
-                      placeholder="Jane Doe"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-slate-350 text-[10px] font-bold uppercase tracking-wider mb-2">Phone Number</label>
-                    <input
-                      type="text"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      className="w-full bg-slate-950/50 border border-white/5 focus:border-violet-500/50 focus:bg-slate-950/70 focus:ring-4 focus:ring-violet-500/5 rounded-xl py-3 px-4 text-white text-xs outline-none transition-all"
-                      placeholder="+1 (234) 567-890"
-                    />
-                  </div>
-                </div>
+            )}
 
-                <div>
-                  <label className="block text-slate-350 text-[10px] font-bold uppercase tracking-wider mb-2">Professional Summary</label>
-                  <textarea
-                    value={bio}
-                    onChange={(e) => setBio(e.target.value)}
-                    rows={4}
-                    className="w-full bg-slate-955/50 border border-white/5 focus:border-violet-500/50 focus:bg-slate-950/70 focus:ring-4 focus:ring-violet-500/5 rounded-xl py-3 px-4 text-white text-xs outline-none resize-none transition-all"
-                    placeholder="Brief bio describing your field of expertise..."
-                  />
-                </div>
-
-                <div className="grid sm:grid-cols-3 gap-5">
-                  <div>
-                    <label className="block text-slate-350 text-[10px] font-bold uppercase tracking-wider mb-2">Portfolio URL</label>
-                    <input
-                      type="url"
-                      value={portfolioUrl}
-                      onChange={(e) => setPortfolioUrl(e.target.value)}
-                      className="w-full bg-slate-955/50 border border-white/5 focus:border-violet-500/50 focus:bg-slate-950/70 focus:ring-4 focus:ring-violet-500/5 rounded-xl py-3 px-4 text-white text-xs outline-none transition-all"
-                      placeholder="https://myportfolio.com"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-slate-350 text-[10px] font-bold uppercase tracking-wider mb-2">GitHub profile</label>
-                    <input
-                      type="url"
-                      value={githubUrl}
-                      onChange={(e) => setGithubUrl(e.target.value)}
-                      className="w-full bg-slate-955/50 border border-white/5 focus:border-violet-500/50 focus:bg-slate-950/70 focus:ring-4 focus:ring-violet-500/5 rounded-xl py-3 px-4 text-white text-xs outline-none transition-all"
-                      placeholder="https://github.com/myusername"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-slate-350 text-[10px] font-bold uppercase tracking-wider mb-2">LinkedIn profile</label>
-                    <input
-                      type="url"
-                      value={linkedinUrl}
-                      onChange={(e) => setLinkedinUrl(e.target.value)}
-                      className="w-full bg-slate-955/50 border border-white/5 focus:border-violet-500/50 focus:bg-slate-950/70 focus:ring-4 focus:ring-violet-500/5 rounded-xl py-3 px-4 text-white text-xs outline-none transition-all"
-                      placeholder="https://linkedin.com/in/myusername"
-                    />
-                  </div>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="flex items-center justify-center px-5 py-3.5 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 rounded-xl text-white font-bold text-xs uppercase tracking-wider transition-all disabled:opacity-50 shadow-md shadow-violet-500/10 cursor-pointer"
-                >
-                  {saving ? (
-                    <>
-                      <Loader2 size={14} className="animate-spin mr-2" />
-                      <span>Saving changes...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Save size={14} className="mr-2" />
-                      <span>Save Details</span>
-                    </>
-                  )}
-                </button>
-              </form>
-            </div>
-          )}
-
-          {/* TAB 2: Skills */}
-          {activeTab === 'skills' && (
-            <div>
-              <h3 className="text-base font-black text-white tracking-tight mb-6">Technical Skills</h3>
-              
-              <form onSubmit={handleAddSkill} className="flex gap-4 mb-8">
-                <input
-                  type="text"
-                  value={skillInput}
-                  onChange={(e) => setSkillInput(e.target.value)}
-                  className="flex-grow bg-slate-950/50 border border-white/5 focus:border-violet-500/50 focus:bg-slate-950/70 focus:ring-4 focus:ring-violet-500/5 rounded-xl py-3 px-4 text-white text-xs outline-none transition-all"
-                  placeholder="e.g. Kubernetes, React, Python..."
-                />
-                <button
-                  type="submit"
-                  className="flex items-center justify-center px-5 py-3.5 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 rounded-xl text-white font-bold text-xs uppercase tracking-wider transition-all shadow-md cursor-pointer"
-                >
-                  <Plus size={14} className="mr-1.5 animate-pulse" />
-                  Add
-                </button>
-              </form>
-
-              {skills.length === 0 ? (
-                <p className="text-slate-500 text-xs">No skills added yet. Type a skill above to begin building your stack.</p>
-              ) : (
-                <div className="flex flex-wrap gap-2">
-                  {skills.map((skill) => (
-                    <span
-                      key={skill}
-                      className="inline-flex items-center space-x-2 px-3 py-1 rounded-lg bg-slate-950 border border-white/5 text-slate-350 text-xxs font-bold"
-                    >
-                      <span>{skill}</span>
-                      <button
-                        onClick={() => handleRemoveSkill(skill)}
-                        className="text-slate-500 hover:text-red-400 cursor-pointer"
-                      >
-                        &times;
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* TAB 3: Experience */}
-          {activeTab === 'experience' && (
-            <div className="space-y-10">
-              <div>
-                <h3 className="text-base font-black text-white tracking-tight mb-5">
-                  {editingExpId ? 'Edit Experience Log' : 'Add Experience Log'}
+            {/* TAB 1: Personal Info Details */}
+            {activeTab === 'personal' && (
+              <div className="space-y-6 animate-fade-in">
+                <h3 className="text-base font-black text-white tracking-tight mb-6 flex items-center gap-1.5">
+                  <User size={16} className="text-violet-400" />
+                  <span>Personal Details Console</span>
                 </h3>
-                <form onSubmit={handleSaveExperience} className="space-y-4">
-                  <div className="grid sm:grid-cols-2 gap-4">
-                    <input
-                      type="text"
-                      placeholder="Job Title *"
-                      required
-                      value={expTitle}
-                      onChange={(e) => setExpTitle(e.target.value)}
-                      className="bg-slate-950/50 border border-white/5 focus:border-violet-500/50 focus:bg-slate-950/70 focus:ring-4 focus:ring-violet-500/5 rounded-xl py-3 px-4 text-white text-xs outline-none transition-all"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Company Name *"
-                      required
-                      value={expCompany}
-                      onChange={(e) => setExpCompany(e.target.value)}
-                      className="bg-slate-950/50 border border-white/5 focus:border-violet-500/50 focus:bg-slate-950/70 focus:ring-4 focus:ring-violet-500/5 rounded-xl py-3 px-4 text-white text-xs outline-none transition-all"
-                    />
-                  </div>
-
-                  <div className="grid sm:grid-cols-3 gap-4">
-                    <input
-                      type="text"
-                      placeholder="Location (e.g. San Francisco, CA)"
-                      value={expLocation}
-                      onChange={(e) => setExpLocation(e.target.value)}
-                      className="bg-slate-950/50 border border-white/5 focus:border-violet-500/50 focus:bg-slate-950/70 focus:ring-4 focus:ring-violet-500/5 rounded-xl py-3 px-4 text-white text-xs outline-none transition-all"
-                    />
+                <form onSubmit={handleSavePersonal} className="space-y-5">
+                  <div className="grid sm:grid-cols-2 gap-5">
                     <div>
-                      <label className="block text-slate-500 text-[9px] font-bold uppercase tracking-wider mb-1">Start Date *</label>
+                      <label className="block text-slate-450 text-[10px] font-extrabold uppercase tracking-widest mb-2">Full Name</label>
                       <input
-                        type="date"
-                        required
-                        value={expStartDate}
-                        onChange={(e) => setExpStartDate(e.target.value)}
-                        className="w-full bg-slate-955/50 border border-white/5 focus:border-violet-500/50 focus:bg-slate-950/70 focus:ring-4 focus:ring-violet-500/5 rounded-xl py-3 px-4 text-white text-xs outline-none transition-all"
+                        type="text"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        className="w-full bg-slate-900 border border-white/10 focus:border-violet-500 focus:bg-slate-900/95 focus:ring-4 focus:ring-violet-500/10 rounded-2xl py-3 px-4 text-white text-xs outline-none transition-all placeholder-slate-550 font-semibold"
+                        placeholder="Jane Doe"
                       />
                     </div>
                     <div>
-                      <label className="block text-slate-505 text-[9px] font-bold uppercase tracking-wider mb-1">End Date</label>
+                      <label className="block text-slate-455 text-[10px] font-extrabold uppercase tracking-widest mb-2">Phone Number</label>
+                      <input
+                        type="text"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        className="w-full bg-slate-900 border border-white/10 focus:border-violet-500 focus:bg-slate-900/95 focus:ring-4 focus:ring-violet-500/10 rounded-2xl py-3 px-4 text-white text-xs outline-none transition-all placeholder-slate-550 font-semibold"
+                        placeholder="+1 (234) 567-890"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-slate-455 text-[10px] font-extrabold uppercase tracking-widest mb-2">Professional Summary</label>
+                    <textarea
+                      value={bio}
+                      onChange={(e) => setBio(e.target.value)}
+                      rows={4}
+                      className="w-full bg-slate-900 border border-white/10 focus:border-violet-500 focus:bg-slate-900/95 focus:ring-4 focus:ring-violet-500/10 rounded-2xl py-3 px-4 text-white text-xs outline-none resize-none transition-all placeholder-slate-555 font-semibold"
+                      placeholder="Brief bio describing your field of expertise..."
+                    />
+                  </div>
+
+                  <div className="grid sm:grid-cols-3 gap-5">
+                    <div>
+                      <label className="block text-slate-455 text-[10px] font-extrabold uppercase tracking-widest mb-2">Portfolio URL</label>
+                      <input
+                        type="url"
+                        value={portfolioUrl}
+                        onChange={(e) => setPortfolioUrl(e.target.value)}
+                        className="w-full bg-slate-900 border border-white/10 focus:border-violet-500 focus:bg-slate-900/95 focus:ring-4 focus:ring-violet-500/10 rounded-2xl py-3 px-4 text-white text-xs outline-none transition-all placeholder-slate-555 font-semibold"
+                        placeholder="https://myportfolio.com"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-slate-455 text-[10px] font-extrabold uppercase tracking-widest mb-2">GitHub profile</label>
+                      <input
+                        type="url"
+                        value={githubUrl}
+                        onChange={(e) => setGithubUrl(e.target.value)}
+                        className="w-full bg-slate-900 border border-white/10 focus:border-violet-500 focus:bg-slate-900/95 focus:ring-4 focus:ring-violet-500/10 rounded-2xl py-3 px-4 text-white text-xs outline-none transition-all placeholder-slate-555 font-semibold"
+                        placeholder="https://github.com/myusername"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-slate-455 text-[10px] font-extrabold uppercase tracking-widest mb-2">LinkedIn profile</label>
+                      <input
+                        type="url"
+                        value={linkedinUrl}
+                        onChange={(e) => setLinkedinUrl(e.target.value)}
+                        className="w-full bg-slate-900 border border-white/10 focus:border-violet-500 focus:bg-slate-900/95 focus:ring-4 focus:ring-violet-500/10 rounded-2xl py-3 px-4 text-white text-xs outline-none transition-all placeholder-slate-555 font-semibold"
+                        placeholder="https://linkedin.com/in/myusername"
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={saving}
+                    className="px-6 py-3.5 bg-gradient-to-r from-violet-650 via-fuchsia-650 to-indigo-650 text-white rounded-2xl text-xs font-extrabold transition-all shadow-md active:scale-95 disabled:opacity-50 cursor-pointer uppercase tracking-wider"
+                  >
+                    {saving ? 'Saving changes...' : 'Save Settings'}
+                  </button>
+                </form>
+              </div>
+            )}
+
+            {/* TAB 2: Technical Skills */}
+            {activeTab === 'skills' && (
+              <div className="space-y-6 animate-fade-in">
+                <h3 className="text-base font-black text-white tracking-tight mb-6 flex items-center gap-1.5">
+                  <Code size={16} className="text-violet-400" />
+                  <span>Technical Skills Editor</span>
+                </h3>
+
+                <form onSubmit={handleSkillAdd} className="flex gap-3">
+                  <input
+                    type="text"
+                    value={skillInput}
+                    onChange={(e) => setSkillInput(e.target.value)}
+                    className="flex-grow bg-slate-900 border border-white/10 focus:border-violet-500 focus:bg-slate-900/95 focus:ring-4 focus:ring-violet-500/10 rounded-2xl py-3 px-4 text-white text-xs outline-none transition-all placeholder-slate-555 font-semibold"
+                    placeholder="E.g., PyTorch, GraphQL, CUDA"
+                  />
+                  <button
+                    type="submit"
+                    className="px-5 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-indigo-650 text-white rounded-2xl text-xs font-extrabold hover:scale-105 active:scale-95 transition-all cursor-pointer uppercase tracking-wider"
+                  >
+                    Add
+                  </button>
+                </form>
+
+                <div className="flex flex-wrap gap-2 pt-4">
+                  {skills.length === 0 ? (
+                    <p className="text-slate-500 text-xs">No technical skills added yet. Define your skill tag list above.</p>
+                  ) : (
+                    skills.map((skill) => (
+                      <span 
+                        key={skill} 
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-slate-300 text-xxs font-extrabold"
+                      >
+                        <span>{skill}</span>
+                        <button 
+                          onClick={() => handleSkillRemove(skill)}
+                          className="p-0.5 hover:bg-white/15 rounded-md text-slate-500 hover:text-white transition-colors cursor-pointer"
+                        >
+                          <X size={10} />
+                        </button>
+                      </span>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* TAB 3: Experience Logs */}
+            {activeTab === 'experience' && (
+              <div className="space-y-8 animate-fade-in">
+                <h3 className="text-base font-black text-white tracking-tight mb-6 flex items-center gap-1.5">
+                  <Briefcase size={16} className="text-violet-400" />
+                  <span>Work History Console</span>
+                </h3>
+
+                <form onSubmit={handleAddExperience} className="space-y-4 p-5 rounded-2xl bg-slate-900 border border-white/10">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-slate-400">Add Experience Record</h4>
+                  
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-slate-450 text-[9px] font-extrabold uppercase tracking-widest mb-1.5">Job Title</label>
+                      <input
+                        type="text"
+                        value={expTitle}
+                        onChange={(e) => setExpTitle(e.target.value)}
+                        className="w-full bg-slate-950 border border-white/5 rounded-xl py-2.5 px-3 text-white text-xs outline-none placeholder-slate-550 font-semibold"
+                        placeholder="Systems Architect"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-slate-455 text-[9px] font-extrabold uppercase tracking-widest mb-1.5">Company Name</label>
+                      <input
+                        type="text"
+                        value={expCompany}
+                        onChange={(e) => setExpCompany(e.target.value)}
+                        className="w-full bg-slate-955 border border-white/5 rounded-xl py-2.5 px-3 text-white text-xs outline-none placeholder-slate-550 font-semibold"
+                        placeholder="Google Inc."
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid sm:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-slate-455 text-[9px] font-extrabold uppercase tracking-widest mb-1.5">Start Date</label>
+                      <input
+                        type="date"
+                        value={expStartDate}
+                        onChange={(e) => setExpStartDate(e.target.value)}
+                        className="w-full bg-slate-955 border border-white/5 rounded-xl py-2.5 px-3 text-white text-xs outline-none font-semibold text-slate-400"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-slate-455 text-[9px] font-extrabold uppercase tracking-widest mb-1.5">End Date</label>
                       <input
                         type="date"
                         value={expEndDate}
                         disabled={expIsCurrent}
                         onChange={(e) => setExpEndDate(e.target.value)}
-                        className="w-full bg-slate-955/50 border border-white/5 focus:border-violet-500/50 focus:bg-slate-950/70 focus:ring-4 focus:ring-violet-500/5 rounded-xl py-3 px-4 text-white text-xs outline-none disabled:opacity-30 transition-all"
+                        className="w-full bg-slate-955 border border-white/5 rounded-xl py-2.5 px-3 text-white text-xs outline-none font-semibold text-slate-400 disabled:opacity-50"
                       />
+                    </div>
+                    <div className="flex items-center space-x-2 pt-5">
+                      <input
+                        type="checkbox"
+                        checked={expIsCurrent}
+                        onChange={(e) => setExpIsCurrent(e.target.checked)}
+                        className="rounded border-white/10 bg-slate-955 focus:ring-violet-500 cursor-pointer"
+                        id="expCurrent"
+                      />
+                      <label htmlFor="expCurrent" className="text-xxs font-bold text-slate-400 uppercase tracking-wider cursor-pointer">Current Role</label>
                     </div>
                   </div>
 
-                  <div className="flex items-center space-x-2">
+                  <div>
+                    <label className="block text-slate-455 text-[9px] font-extrabold uppercase tracking-widest mb-1.5">Location</label>
                     <input
-                      type="checkbox"
-                      id="expCurrent"
-                      checked={expIsCurrent}
-                      onChange={(e) => setExpIsCurrent(e.target.checked)}
-                      className="rounded border-white/10 bg-slate-955/50 text-violet-600 focus:ring-violet-500/5 w-4 h-4 cursor-pointer"
+                      type="text"
+                      value={expLocation}
+                      onChange={(e) => setExpLocation(e.target.value)}
+                      className="w-full bg-slate-955 border border-white/5 rounded-xl py-2.5 px-3 text-white text-xs outline-none placeholder-slate-550 font-semibold"
+                      placeholder="Mountain View, CA"
                     />
-                    <label htmlFor="expCurrent" className="text-slate-350 text-xs cursor-pointer select-none">I currently work here</label>
                   </div>
 
-                  <textarea
-                    placeholder="Achievements, contributions, and stack highlights..."
-                    value={expDescription}
-                    onChange={(e) => setExpDescription(e.target.value)}
-                    rows={3}
-                    className="w-full bg-slate-950/50 border border-white/5 focus:border-violet-500/50 focus:bg-slate-950/70 focus:ring-4 focus:ring-violet-500/5 rounded-xl py-3 px-4 text-white text-xs outline-none resize-none transition-all"
-                  />
-
-                  <div className="flex items-center space-x-3">
-                    <button
-                      type="submit"
-                      className="px-5 py-2.5 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl cursor-pointer"
-                    >
-                      {editingExpId ? 'Update Log' : 'Add Log'}
-                    </button>
-                    {editingExpId && (
-                      <button
-                        type="button"
-                        onClick={resetExperienceForm}
-                        className="px-5 py-2.5 border border-white/5 hover:bg-white/5 text-slate-350 hover:text-white rounded-xl text-xs font-bold uppercase tracking-wider cursor-pointer"
-                      >
-                        Cancel
-                      </button>
-                    )}
+                  <div>
+                    <label className="block text-slate-455 text-[9px] font-extrabold uppercase tracking-widest mb-1.5">Role Description</label>
+                    <textarea
+                      value={expDescription}
+                      onChange={(e) => setExpDescription(e.target.value)}
+                      rows={3}
+                      className="w-full bg-slate-955 border border-white/5 rounded-xl py-2.5 px-3 text-white text-xs outline-none resize-none placeholder-slate-555 font-semibold"
+                      placeholder="Detail technical actions, pipeline metrics, teams led..."
+                    />
                   </div>
+
+                  <button
+                    type="submit"
+                    className="px-5 py-2.5 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-indigo-650 text-white rounded-xl text-xs font-extrabold hover:scale-102 active:scale-95 transition-all cursor-pointer uppercase tracking-wider"
+                  >
+                    Add Experience
+                  </button>
                 </form>
-              </div>
 
-              <div>
-                <h3 className="text-base font-black text-white tracking-tight mb-6">Work History Timeline</h3>
-                {profile.experiences.length === 0 ? (
-                  <p className="text-slate-500 text-xs">No work experience entries recorded yet.</p>
-                ) : (
-                  <div className="relative border-l border-white/5 ml-4 space-y-6">
-                    {profile.experiences.map((exp) => (
-                      <div key={exp.id} className="relative pl-6">
-                        <div className="absolute -left-1 w-2.5 h-2.5 rounded-full bg-violet-600 border border-slate-950" />
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <h4 className="text-xs font-bold text-white uppercase tracking-wide">{exp.title}</h4>
-                            <p className="text-slate-350 text-xs font-bold mt-0.5">{exp.company} {exp.location && <span className="text-slate-500 font-semibold">• {exp.location}</span>}</p>
-                            <p className="text-slate-500 text-[10px] mt-1 font-semibold">
-                              {exp.start_date} &ndash; {exp.is_current ? 'Present' : exp.end_date}
-                            </p>
-                            {exp.description && <p className="text-slate-400 text-xs mt-2.5 leading-relaxed whitespace-pre-line bg-slate-950/20 p-3 rounded-xl border border-white/5 max-w-xl">{exp.description}</p>}
-                          </div>
-                          
-                          <div className="flex items-center space-x-1.5 shrink-0">
-                            <button
-                              onClick={() => startEditExperience(exp)}
-                              className="text-slate-500 hover:text-violet-400 p-1.5 rounded-lg border border-transparent hover:bg-white/5 transition-all cursor-pointer"
-                              title="Edit Entry"
-                            >
-                              <Pencil size={12} />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteExperience(exp.id)}
-                              className="text-slate-500 hover:text-red-400 p-1.5 rounded-lg border border-transparent hover:bg-white/5 transition-all cursor-pointer"
-                              title="Delete Entry"
-                            >
-                              <Trash2 size={12} />
-                            </button>
-                          </div>
-                        </div>
+                <div className="space-y-4">
+                  {profile.experience?.map((exp) => (
+                    <div key={exp.id} className="flex justify-between items-start p-5 rounded-2xl bg-slate-900/60 border border-white/10">
+                      <div>
+                        <h4 className="text-sm font-extrabold text-white">{exp.job_title}</h4>
+                        <span className="text-violet-405 text-xxs font-bold">{exp.company_name}</span>
+                        <p className="text-slate-500 text-xxs mt-1 font-semibold">{exp.start_date} - {exp.is_current ? 'Present' : exp.end_date}</p>
+                        <p className="text-slate-400 text-xxs mt-3 leading-relaxed font-semibold">{exp.description}</p>
                       </div>
-                    ))}
-                  </div>
-                )}
+                      <button 
+                        onClick={() => handleDeleteExperience(exp.id)}
+                        className="p-2 hover:bg-rose-955/20 border border-white/10 hover:border-rose-500/30 text-slate-500 hover:text-rose-500 rounded-xl transition-all cursor-pointer shrink-0"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* TAB 4: Education */}
-          {activeTab === 'education' && (
-            <div className="space-y-10">
-              <div>
-                <h3 className="text-base font-black text-white tracking-tight mb-5">
-                  {editingEduId ? 'Edit Education Entry' : 'Add Education Entry'}
+            {/* TAB 4: Education Hub */}
+            {activeTab === 'education' && (
+              <div className="space-y-8 animate-fade-in">
+                <h3 className="text-base font-black text-white tracking-tight mb-6 flex items-center gap-1.5">
+                  <GraduationCap size={16} className="text-violet-400" />
+                  <span>Education Hub Console</span>
                 </h3>
-                <form onSubmit={handleSaveEducation} className="space-y-4">
-                  <div className="grid sm:grid-cols-3 gap-4">
-                    <input
-                      type="text"
-                      placeholder="Degree / Certificate *"
-                      required
-                      value={eduDegree}
-                      onChange={(e) => setEduDegree(e.target.value)}
-                      className="bg-slate-955/50 border border-white/5 focus:border-violet-500/50 focus:bg-slate-950/70 focus:ring-4 focus:ring-violet-500/5 rounded-xl py-3 px-4 text-white text-xs outline-none transition-all"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Field of Study *"
-                      required
-                      value={eduField}
-                      onChange={(e) => setEduField(e.target.value)}
-                      className="bg-slate-955/50 border border-white/5 focus:border-violet-500/50 focus:bg-slate-950/70 focus:ring-4 focus:ring-violet-500/5 rounded-xl py-3 px-4 text-white text-xs outline-none transition-all"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Institution / School *"
-                      required
-                      value={eduInstitution}
-                      onChange={(e) => setEduInstitution(e.target.value)}
-                      className="bg-slate-955/50 border border-white/5 focus:border-violet-500/50 focus:bg-slate-950/70 focus:ring-4 focus:ring-violet-500/5 rounded-xl py-3 px-4 text-white text-xs outline-none transition-all"
-                    />
-                  </div>
+
+                <form onSubmit={handleAddEducation} className="space-y-4 p-5 rounded-2xl bg-slate-900 border border-white/10">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-slate-400">Add Academic Record</h4>
 
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-slate-500 text-[9px] font-bold uppercase tracking-wider mb-1">Start Date *</label>
+                      <label className="block text-slate-455 text-[9px] font-extrabold uppercase tracking-widest mb-1.5">Institution Name</label>
                       <input
-                        type="date"
-                        required
-                        value={eduStartDate}
-                        onChange={(e) => setEduStartDate(e.target.value)}
-                        className="w-full bg-slate-955/50 border border-white/5 focus:border-violet-500/50 focus:bg-slate-950/70 focus:ring-4 focus:ring-violet-500/5 rounded-xl py-3 px-4 text-white text-xs outline-none transition-all"
+                        type="text"
+                        value={eduInstitution}
+                        onChange={(e) => setEduInstitution(e.target.value)}
+                        className="w-full bg-slate-955 border border-white/5 rounded-xl py-2.5 px-3 text-white text-xs outline-none placeholder-slate-550 font-semibold"
+                        placeholder="Stanford University"
                       />
                     </div>
                     <div>
-                      <label className="block text-slate-505 text-[9px] font-bold uppercase tracking-wider mb-1">End Date</label>
+                      <label className="block text-slate-455 text-[9px] font-extrabold uppercase tracking-widest mb-1.5">Degree</label>
+                      <input
+                        type="text"
+                        value={eduDegree}
+                        onChange={(e) => setEduDegree(e.target.value)}
+                        className="w-full bg-slate-955 border border-white/5 rounded-xl py-2.5 px-3 text-white text-xs outline-none placeholder-slate-550 font-semibold"
+                        placeholder="Master of Science (M.S.)"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid sm:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-slate-455 text-[9px] font-extrabold uppercase tracking-widest mb-1.5">Start Date</label>
+                      <input
+                        type="date"
+                        value={eduStartDate}
+                        onChange={(e) => setEduStartDate(e.target.value)}
+                        className="w-full bg-slate-955 border border-white/5 rounded-xl py-2.5 px-3 text-white text-xs outline-none font-semibold text-slate-400"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-slate-455 text-[9px] font-extrabold uppercase tracking-widest mb-1.5">End Date</label>
                       <input
                         type="date"
                         value={eduEndDate}
                         disabled={eduIsCurrent}
                         onChange={(e) => setEduEndDate(e.target.value)}
-                        className="w-full bg-slate-955/50 border border-white/5 focus:border-violet-500/50 focus:bg-slate-950/70 focus:ring-4 focus:ring-violet-500/5 rounded-xl py-3 px-4 text-white text-xs outline-none disabled:opacity-30 transition-all"
+                        className="w-full bg-slate-955 border border-white/5 rounded-xl py-2.5 px-3 text-white text-xs outline-none font-semibold text-slate-400 disabled:opacity-50"
                       />
+                    </div>
+                    <div className="flex items-center space-x-2 pt-5">
+                      <input
+                        type="checkbox"
+                        checked={eduIsCurrent}
+                        onChange={(e) => setEduIsCurrent(e.target.checked)}
+                        className="rounded border-white/10 bg-slate-955 focus:ring-violet-500 cursor-pointer"
+                        id="eduCurrent"
+                      />
+                      <label htmlFor="eduCurrent" className="text-xxs font-bold text-slate-400 uppercase tracking-wider cursor-pointer">Enrolled</label>
                     </div>
                   </div>
 
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="eduCurrent"
-                      checked={eduIsCurrent}
-                      onChange={(e) => setEduIsCurrent(e.target.checked)}
-                      className="rounded border-white/10 bg-slate-955/50 text-violet-600 focus:ring-violet-500/5 w-4 h-4 cursor-pointer"
-                    />
-                    <label htmlFor="eduCurrent" className="text-slate-350 text-xs cursor-pointer select-none">I am currently studying here</label>
-                  </div>
-
-                  <textarea
-                    placeholder="Context, grades, specific achievements..."
-                    value={eduDescription}
-                    onChange={(e) => setEduDescription(e.target.value)}
-                    rows={3}
-                    className="w-full bg-slate-950/50 border border-white/5 focus:border-violet-500/50 focus:bg-slate-950/70 focus:ring-4 focus:ring-violet-500/5 rounded-xl py-3 px-4 text-white text-xs outline-none resize-none transition-all"
-                  />
-
-                  <div className="flex items-center space-x-3">
-                    <button
-                      type="submit"
-                      className="px-5 py-2.5 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl cursor-pointer"
-                    >
-                      {editingEduId ? 'Update Entry' : 'Add Entry'}
-                    </button>
-                    {editingEduId && (
-                      <button
-                        type="button"
-                        onClick={resetEducationForm}
-                        className="px-5 py-2.5 border border-white/5 hover:bg-white/5 text-slate-355 hover:text-white rounded-xl text-xs font-bold uppercase tracking-wider cursor-pointer"
-                      >
-                        Cancel
-                      </button>
-                    )}
-                  </div>
-                </form>
-              </div>
-
-              <div>
-                <h3 className="text-base font-black text-white tracking-tight mb-6">Education Timeline</h3>
-                {profile.education.length === 0 ? (
-                  <p className="text-slate-500 text-xs">No education entries recorded yet.</p>
-                ) : (
-                  <div className="relative border-l border-white/5 ml-4 space-y-6">
-                    {profile.education.map((edu) => (
-                      <div key={edu.id} className="relative pl-6">
-                        <div className="absolute -left-1 top-1.5 w-2.5 h-2.5 rounded-full bg-fuchsia-600 border border-slate-950" />
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <h4 className="text-xs font-bold text-white uppercase tracking-wide">{edu.degree} &ndash; {edu.field_of_study}</h4>
-                            <p className="text-slate-350 text-xs font-bold mt-0.5">{edu.institution}</p>
-                            <p className="text-slate-500 text-[10px] mt-1 font-semibold">
-                              {edu.start_date} &ndash; {edu.is_current ? 'Present' : edu.end_date}
-                            </p>
-                            {edu.description && <p className="text-slate-400 text-xs mt-2.5 leading-relaxed whitespace-pre-line bg-slate-950/20 p-3 rounded-xl border border-white/5 max-w-xl">{edu.description}</p>}
-                          </div>
-                          
-                          <div className="flex items-center space-x-1.5 shrink-0">
-                            <button
-                              onClick={() => startEditEducation(edu)}
-                              className="text-slate-500 hover:text-violet-400 p-1.5 rounded-lg border border-transparent hover:bg-white/5 transition-all cursor-pointer"
-                              title="Edit Entry"
-                            >
-                              <Pencil size={12} />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteEducation(edu.id)}
-                              className="text-slate-500 hover:text-red-400 p-1.5 rounded-lg border border-transparent hover:bg-white/5 transition-all cursor-pointer"
-                              title="Delete Entry"
-                            >
-                              <Trash2 size={12} />
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* TAB 5: Projects */}
-          {activeTab === 'projects' && (
-            <div className="space-y-10">
-              <div>
-                <h3 className="text-base font-black text-white tracking-tight mb-5">
-                  {editingProjId ? 'Edit Project Log' : 'Add Project Log'}
-                </h3>
-                <form onSubmit={handleSaveProject} className="space-y-4">
-                  <div className="grid sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-slate-455 text-[9px] font-extrabold uppercase tracking-widest mb-1.5">Field of Study</label>
                     <input
                       type="text"
-                      placeholder="Project Name *"
-                      required
-                      value={projName}
-                      onChange={(e) => setProjName(e.target.value)}
-                      className="bg-slate-950/50 border border-white/5 focus:border-violet-500/50 focus:bg-slate-950/70 focus:ring-4 focus:ring-violet-500/5 rounded-xl py-3 px-4 text-white text-xs outline-none transition-all"
-                    />
-                    <input
-                      type="url"
-                      placeholder="Project Repository / Deploy Link (http/https)"
-                      value={projUrl}
-                      onChange={(e) => setProjUrl(e.target.value)}
-                      className="bg-slate-950/50 border border-white/5 focus:border-violet-500/50 focus:bg-slate-950/70 focus:ring-4 focus:ring-violet-500/5 rounded-xl py-3 px-4 text-white text-xs outline-none transition-all"
+                      value={eduField}
+                      onChange={(e) => setEduField(e.target.value)}
+                      className="w-full bg-slate-955 border border-white/5 rounded-xl py-2.5 px-3 text-white text-xs outline-none placeholder-slate-550 font-semibold"
+                      placeholder="Computer Science & ML"
                     />
                   </div>
 
+                  <button
+                    type="submit"
+                    className="px-5 py-2.5 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-indigo-650 text-white rounded-xl text-xs font-extrabold hover:scale-102 active:scale-95 transition-all cursor-pointer uppercase tracking-wider"
+                  >
+                    Add Education
+                  </button>
+                </form>
+
+                <div className="space-y-4">
+                  {profile.education?.map((edu) => (
+                    <div key={edu.id} className="flex justify-between items-start p-5 rounded-2xl bg-slate-900/60 border border-white/10">
+                      <div>
+                        <h4 className="text-sm font-extrabold text-white">{edu.degree} in {edu.field_of_study}</h4>
+                        <span className="text-violet-405 text-xxs font-bold">{edu.institution_name}</span>
+                        <p className="text-slate-500 text-xxs mt-1 font-semibold">{edu.start_date} - {edu.is_current ? 'Present' : edu.end_date}</p>
+                      </div>
+                      <button 
+                        onClick={() => handleDeleteEducation(edu.id)}
+                        className="p-2 hover:bg-rose-955/20 border border-white/10 hover:border-rose-500/30 text-slate-500 hover:text-rose-500 rounded-xl transition-all cursor-pointer shrink-0"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* TAB 5: Projects Showcase */}
+            {activeTab === 'projects' && (
+              <div className="space-y-8 animate-fade-in">
+                <h3 className="text-base font-black text-white tracking-tight mb-6 flex items-center gap-1.5">
+                  <Folder size={16} className="text-violet-400" />
+                  <span>Projects Showcase Console</span>
+                </h3>
+
+                <form onSubmit={handleAddProject} className="space-y-4 p-5 rounded-2xl bg-slate-900 border border-white/10">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-slate-400">Add Project Record</h4>
+
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-slate-500 text-[9px] font-bold uppercase tracking-wider mb-1">Start Date *</label>
+                      <label className="block text-slate-455 text-[9px] font-extrabold uppercase tracking-widest mb-1.5">Project Name</label>
                       <input
-                        type="date"
-                        required
-                        value={projStartDate}
-                        onChange={(e) => setProjStartDate(e.target.value)}
-                        className="w-full bg-slate-955/50 border border-white/5 focus:border-violet-500/50 focus:bg-slate-950/70 focus:ring-4 focus:ring-violet-500/5 rounded-xl py-3 px-4 text-white text-xs outline-none transition-all"
+                        type="text"
+                        value={projName}
+                        onChange={(e) => setProjName(e.target.value)}
+                        className="w-full bg-slate-955 border border-white/5 rounded-xl py-2.5 px-3 text-white text-xs outline-none placeholder-slate-550 font-semibold"
+                        placeholder="Decentralized Database Sync"
                       />
                     </div>
                     <div>
-                      <label className="block text-slate-505 text-[9px] font-bold uppercase tracking-wider mb-1">End Date</label>
+                      <label className="block text-slate-455 text-[9px] font-extrabold uppercase tracking-widest mb-1.5">Project URL</label>
+                      <input
+                        type="url"
+                        value={projUrl}
+                        onChange={(e) => setProjUrl(e.target.value)}
+                        className="w-full bg-slate-955 border border-white/5 rounded-xl py-2.5 px-3 text-white text-xs outline-none placeholder-slate-555 font-semibold"
+                        placeholder="https://github.com/myusername/project"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid sm:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-slate-455 text-[9px] font-extrabold uppercase tracking-widest mb-1.5">Start Date</label>
+                      <input
+                        type="date"
+                        value={projStartDate}
+                        onChange={(e) => setProjStartDate(e.target.value)}
+                        className="w-full bg-slate-955 border border-white/5 rounded-xl py-2.5 px-3 text-white text-xs outline-none font-semibold text-slate-400"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-slate-455 text-[9px] font-extrabold uppercase tracking-widest mb-1.5">End Date</label>
                       <input
                         type="date"
                         value={projEndDate}
                         disabled={projIsCurrent}
                         onChange={(e) => setProjEndDate(e.target.value)}
-                        className="w-full bg-slate-955/50 border border-white/5 focus:border-violet-500/50 focus:bg-slate-950/70 focus:ring-4 focus:ring-violet-500/5 rounded-xl py-3 px-4 text-white text-xs outline-none disabled:opacity-30 transition-all"
+                        className="w-full bg-slate-955 border border-white/5 rounded-xl py-2.5 px-3 text-white text-xs outline-none font-semibold text-slate-400 disabled:opacity-50"
                       />
+                    </div>
+                    <div className="flex items-center space-x-2 pt-5">
+                      <input
+                        type="checkbox"
+                        checked={projIsCurrent}
+                        onChange={(e) => setProjIsCurrent(e.target.checked)}
+                        className="rounded border-white/10 bg-slate-955 focus:ring-violet-500 cursor-pointer"
+                        id="projCurrent"
+                      />
+                      <label htmlFor="projCurrent" className="text-xxs font-bold text-slate-400 uppercase tracking-wider cursor-pointer">In Development</label>
                     </div>
                   </div>
 
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="projCurrent"
-                      checked={projIsCurrent}
-                      onChange={(e) => setProjIsCurrent(e.target.checked)}
-                      className="rounded border-white/10 bg-slate-955/50 text-violet-600 focus:ring-violet-500/5 w-4 h-4 cursor-pointer"
+                  <div>
+                    <label className="block text-slate-455 text-[9px] font-extrabold uppercase tracking-widest mb-1.5">Description</label>
+                    <textarea
+                      value={projDescription}
+                      onChange={(e) => setProjDescription(e.target.value)}
+                      rows={3}
+                      className="w-full bg-slate-955 border border-white/5 rounded-xl py-2.5 px-3 text-white text-xs outline-none resize-none placeholder-slate-555 font-semibold"
+                      placeholder="Build stack details, challenges met, throughput..."
                     />
-                    <label htmlFor="projCurrent" className="text-slate-350 text-xs cursor-pointer select-none">I am currently working on this</label>
                   </div>
-
-                  <textarea
-                    placeholder="Scope, technical stacks, tools, achievements..."
-                    value={projDescription}
-                    onChange={(e) => setProjDescription(e.target.value)}
-                    rows={3}
-                    className="w-full bg-slate-950/50 border border-white/5 focus:border-violet-500/50 focus:bg-slate-950/70 focus:ring-4 focus:ring-violet-500/5 rounded-xl py-3 px-4 text-white text-xs outline-none resize-none transition-all"
-                  />
-
-                  <div className="flex items-center space-x-3">
-                    <button
-                      type="submit"
-                      className="px-5 py-2.5 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl cursor-pointer"
-                    >
-                      {editingProjId ? 'Update Project' : 'Add Project'}
-                    </button>
-                    {editingProjId && (
-                      <button
-                        type="button"
-                        onClick={resetProjectForm}
-                        className="px-5 py-2.5 border border-white/5 hover:bg-white/5 text-slate-355 hover:text-white rounded-xl text-xs font-bold uppercase tracking-wider cursor-pointer"
-                      >
-                        Cancel
-                      </button>
-                    )}
-                  </div>
-                </form>
-              </div>
-
-              <div>
-                <h3 className="text-base font-black text-white tracking-tight mb-6">Projects Showcase</h3>
-                {profile.projects && profile.projects.length === 0 ? (
-                  <p className="text-slate-500 text-xs">No project entries listed yet.</p>
-                ) : (
-                  <div className="grid sm:grid-cols-2 gap-6">
-                    {profile.projects && profile.projects.map((proj) => (
-                      <div key={proj.id} className="p-5 rounded-2xl border border-white/5 bg-slate-950/20 flex flex-col justify-between space-y-4">
-                        <div className="space-y-1.5">
-                          <div className="flex items-center justify-between">
-                            <h4 className="text-sm font-bold text-white">{proj.name}</h4>
-                            <div className="flex items-center space-x-1 shrink-0">
-                              <button
-                                onClick={() => startEditProject(proj)}
-                                className="text-slate-550 hover:text-violet-400 p-1 rounded hover:bg-white/5 transition-all cursor-pointer"
-                              >
-                                <Pencil size={11} />
-                              </button>
-                              <button
-                                onClick={() => handleDeleteProject(proj.id)}
-                                className="text-slate-550 hover:text-red-400 p-1 rounded hover:bg-white/5 transition-all cursor-pointer"
-                              >
-                                <Trash2 size={11} />
-                              </button>
-                            </div>
-                          </div>
-                          
-                          <p className="text-slate-500 text-[10px] font-semibold">
-                            {proj.start_date} &ndash; {proj.is_current ? 'Active' : proj.end_date}
-                          </p>
-                          {proj.description && (
-                            <p className="text-slate-400 text-xs leading-relaxed whitespace-pre-line line-clamp-3">
-                              {proj.description}
-                            </p>
-                          )}
-                        </div>
-
-                        {proj.project_url && (
-                          <a
-                            href={proj.project_url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex items-center space-x-1 text-xxs font-bold text-violet-400 hover:text-violet-300 transition-colors pt-2 border-t border-white/5"
-                          >
-                            <Globe size={11} />
-                            <span>View Project</span>
-                            <ExternalLink size={8} />
-                          </a>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* TAB 6: Resume versioning */}
-          {activeTab === 'resume' && (
-            <div>
-              <h3 className="text-base font-black text-white tracking-tight mb-6">Resume Versioning</h3>
-              
-              <form onSubmit={handleResumeUpload} className="p-6 border border-dashed border-white/10 rounded-2xl bg-slate-950/20 text-center mb-8 space-y-4">
-                <div className="w-12 h-12 rounded-xl bg-violet-650/10 border border-violet-500/20 flex items-center justify-center text-violet-400 mx-auto">
-                  <FileText size={24} />
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-white">Upload new CV version</p>
-                  <p className="text-[10px] text-slate-550 mt-1">Supported formats: PDF, DOC, DOCX up to 5MB.</p>
-                </div>
-                
-                <input
-                  type="file"
-                  id="resume-file-input"
-                  onChange={(e) => setResumeFile(e.target.files[0])}
-                  className="hidden"
-                  accept=".pdf,.doc,.docx"
-                />
-                
-                <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
-                  <button
-                    type="button"
-                    onClick={() => document.getElementById('resume-file-input').click()}
-                    className="px-4 py-2 bg-slate-950 border border-white/5 hover:bg-white/5 rounded-xl text-slate-350 hover:text-white text-xs font-bold cursor-pointer"
-                  >
-                    Select File
-                  </button>
-                  
-                  {resumeFile && (
-                    <span className="text-xs text-violet-400 font-bold max-w-xs truncate">
-                      {resumeFile.name}
-                    </span>
-                  )}
 
                   <button
                     type="submit"
-                    disabled={!resumeFile || uploadingResume}
-                    className="flex items-center justify-center px-4 py-2 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 rounded-xl text-white font-bold text-xs disabled:opacity-30 disabled:cursor-not-allowed shadow-md cursor-pointer"
+                    className="px-5 py-2.5 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-indigo-650 text-white rounded-xl text-xs font-extrabold hover:scale-102 active:scale-95 transition-all cursor-pointer uppercase tracking-wider"
                   >
-                    {uploadingResume ? (
-                      <Loader2 size={12} className="animate-spin" />
-                    ) : (
-                      <>
-                        <Upload size={12} className="mr-1.5" />
-                        <span>Upload Version</span>
-                      </>
-                    )}
+                    Add Project
                   </button>
-                </div>
-              </form>
+                </form>
 
-              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-4">Version History</h4>
-              {profile.resumes.length === 0 ? (
-                <p className="text-slate-500 text-xs">No resume files uploaded yet.</p>
-              ) : (
-                <div className="divide-y divide-white/5">
-                  {profile.resumes.map((res) => (
-                    <div key={res.id} className="py-4 flex justify-between items-center">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 rounded-xl bg-slate-950 border border-white/5 flex items-center justify-center text-slate-400">
-                          <FileText size={18} />
-                        </div>
-                        <div>
-                          <p className="text-xs font-bold text-white">Version {res.version}</p>
-                          <p className="text-[10px] text-slate-550 mt-0.5">Uploaded {new Date(res.uploaded_at).toLocaleString()}</p>
-                        </div>
+                <div className="space-y-4">
+                  {profile.projects?.map((proj) => (
+                    <div key={proj.id} className="flex justify-between items-start p-5 rounded-2xl bg-slate-900/60 border border-white/10">
+                      <div>
+                        <h4 className="text-sm font-extrabold text-white flex items-center gap-1.5">
+                          <span>{proj.project_name}</span>
+                          {proj.project_url && (
+                            <a href={proj.project_url} target="_blank" rel="noreferrer" className="text-slate-500 hover:text-white transition-colors">
+                              <LinkIcon size={12} />
+                            </a>
+                          )}
+                        </h4>
+                        <p className="text-slate-500 text-xxs mt-1 font-semibold">{proj.start_date} - {proj.is_current ? 'Present' : proj.end_date}</p>
+                        <p className="text-slate-400 text-xxs mt-3 leading-relaxed font-semibold">{proj.description}</p>
                       </div>
-                      <a
-                        href={res.file}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="px-3.5 py-1.5 rounded-xl border border-white/5 hover:bg-white/5 text-slate-300 hover:text-white text-xs font-bold"
+                      <button 
+                        onClick={() => handleDeleteProject(proj.id)}
+                        className="p-2 hover:bg-rose-955/20 border border-white/10 hover:border-rose-500/30 text-slate-500 hover:text-rose-500 rounded-xl transition-all cursor-pointer shrink-0"
                       >
-                        Download
-                      </a>
+                        <Trash2 size={13} />
+                      </button>
                     </div>
                   ))}
                 </div>
-              )}
-
-              {/* AI Resume Analyzer Section */}
-              <div className="mt-8 pt-8 border-t border-white/5 space-y-6">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div>
-                    <h4 className="text-base font-black text-white flex items-center gap-2">
-                      <Sparkles size={18} className="text-violet-400 animate-pulse" />
-                      <span>AI CV Analyzer</span>
-                    </h4>
-                    <p className="text-slate-500 text-xxs mt-0.5">Retrieve immediate assessment on strengths, tech alignments, and ATS score optimizations.</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleAnalyzeResume}
-                    disabled={analyzingResume}
-                    className="px-4 py-2.5 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white font-bold text-xs rounded-xl transition-all shadow-md active:scale-95 disabled:opacity-50 shrink-0 flex items-center justify-center space-x-2 cursor-pointer"
-                  >
-                    {analyzingResume ? (
-                      <>
-                        <Loader2 size={14} className="animate-spin" />
-                        <span>Analyzing CV...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles size={14} />
-                        <span>{aiAnalysis ? 'Re-Analyze Resume' : 'Analyze Resume'}</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-
-                {aiAnalysis && (
-                  <div className="p-6 rounded-3xl bg-slate-950/60 border border-violet-500/10 space-y-6 backdrop-blur-xl shadow-xl animate-fade-in">
-                    <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-900/50 border border-white/5">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">ATS Match Score</span>
-                      <span className="px-3.5 py-1 rounded-full bg-violet-600 text-white font-black text-xs shadow-md">
-                        {aiAnalysis.overall_score} / 100
-                      </span>
-                    </div>
-
-                    <div className="grid md:grid-cols-2 gap-6">
-                      {/* Strengths */}
-                      <div className="space-y-3">
-                        <h5 className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
-                          <CheckCircle size={12} /> Key Strengths
-                        </h5>
-                        <ul className="space-y-2 text-xxs text-slate-300">
-                          {aiAnalysis.strengths.map((item, i) => (
-                            <li key={i} className="p-3 rounded-xl bg-emerald-950/20 border border-emerald-900/30 leading-relaxed">
-                              {item}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-
-                      {/* Weaknesses */}
-                      <div className="space-y-3">
-                        <h5 className="text-[10px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
-                          <AlertCircle size={12} /> Areas to Optimize
-                        </h5>
-                        <ul className="space-y-2 text-xxs text-slate-300">
-                          {aiAnalysis.weaknesses.map((item, i) => (
-                            <li key={i} className="p-3 rounded-xl bg-amber-955/20 border border-amber-900/30 leading-relaxed">
-                              {item}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-
-                    {/* Missing technical skills */}
-                    {aiAnalysis.missing_skills && aiAnalysis.missing_skills.length > 0 && (
-                      <div className="space-y-2 pt-2">
-                        <h5 className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Recommended Skills to Add</h5>
-                        <div className="flex flex-wrap gap-1.5">
-                          {aiAnalysis.missing_skills.map((skill) => (
-                            <span key={skill} className="px-2.5 py-1 rounded-lg bg-slate-900 border border-white/5 text-violet-300 text-xxs font-bold">
-                              + {skill}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Recommendations */}
-                    {aiAnalysis.improvements && aiAnalysis.improvements.length > 0 && (
-                      <div className="space-y-2 pt-2 border-t border-white/5">
-                        <h5 className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Actionable suggestions</h5>
-                        <ul className="space-y-2 text-xxs text-slate-350 list-disc list-inside leading-relaxed">
-                          {aiAnalysis.improvements.map((item, i) => (
-                            <li key={i} className="leading-relaxed">{item}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-                )}
               </div>
-            </div>
-          )}
+            )}
+
+            {/* TAB 6: Resumes & AI Optimization */}
+            {activeTab === 'resume' && (
+              <div className="space-y-8 animate-fade-in">
+                <h3 className="text-base font-black text-white tracking-tight mb-6 flex items-center gap-1.5">
+                  <FileText size={16} className="text-violet-400" />
+                  <span>Resume & AI Optimization Console</span>
+                </h3>
+
+                <form onSubmit={handleResumeUpload} className="p-6 rounded-2xl border border-dashed border-white/10 bg-slate-900/40 text-center space-y-4">
+                  <div className="w-12 h-12 rounded-xl bg-violet-600/10 border border-violet-500/20 flex items-center justify-center text-violet-400 mx-auto">
+                    <Upload size={22} className="animate-bounce" />
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold text-white block">Upload CV (PDF format only)</span>
+                    <span className="text-[10px] text-slate-550 block mt-1 font-semibold">Max file limit: 5MB</span>
+                  </div>
+                  <input
+                    type="file"
+                    accept=".pdf"
+                    onChange={(e) => setResumeFile(e.target.files[0])}
+                    className="mx-auto block text-xxs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xxs file:font-extrabold file:bg-white/5 file:text-slate-300 file:hover:bg-white/10 file:cursor-pointer"
+                  />
+                  {resumeFile && (
+                    <button
+                      type="submit"
+                      disabled={uploadingResume}
+                      className="px-6 py-2.5 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-indigo-650 text-white rounded-xl text-xs font-extrabold hover:scale-105 active:scale-95 transition-all disabled:opacity-50 cursor-pointer uppercase tracking-wider"
+                    >
+                      {uploadingResume ? 'Uploading...' : 'Confirm Upload'}
+                    </button>
+                  )}
+                </form>
+
+                <div className="space-y-5">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-slate-550 border-b border-white/5 pb-2">Active Resumes</h4>
+                  
+                  {profile.resumes?.length === 0 ? (
+                    <p className="text-slate-500 text-xs py-4">No CV files uploaded yet.</p>
+                  ) : (
+                    profile.resumes?.map((res) => (
+                      <div key={res.id} className="space-y-4 p-5 rounded-2xl bg-slate-900 border border-white/10">
+                        <div className="flex justify-between items-center">
+                          <div className="flex items-center space-x-3 min-w-0">
+                            <div className="w-10 h-10 rounded-xl bg-violet-600/10 border border-violet-500/20 flex items-center justify-center text-violet-400 shrink-0">
+                              <FileText size={18} />
+                            </div>
+                            <div className="min-w-0">
+                              <span className="text-xs font-extrabold text-white truncate block max-w-[200px]">{res.filename}</span>
+                              <span className="text-[10px] text-slate-500 font-semibold block mt-0.5">Uploaded {new Date(res.uploaded_at).toLocaleDateString()}</span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center space-x-2 shrink-0">
+                            <button
+                              onClick={() => handleGenerateAiAnalysis(res.id)}
+                              disabled={analyzingResume}
+                              className="px-4 py-2 border border-violet-500/20 hover:border-violet-500/40 bg-violet-600/10 hover:bg-violet-600/25 text-violet-400 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
+                            >
+                              {analyzingResume ? 'Analyzing...' : 'AI Review'}
+                            </button>
+                            <button
+                              onClick={() => handleDeleteResume(res.id)}
+                              className="p-2 hover:bg-rose-955/20 border border-white/10 hover:border-rose-500/30 text-slate-550 hover:text-rose-500 rounded-xl transition-all cursor-pointer"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* AI resume Analysis report cache */}
+                        {aiAnalysis && (
+                          <div className="p-4 rounded-xl bg-slate-950/60 border border-white/5 space-y-4 text-left animate-fade-in font-semibold">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-violet-650 to-fuchsia-650 flex items-center justify-center font-black text-white text-xs shadow-md">
+                                {aiAnalysis.score}%
+                              </div>
+                              <div>
+                                <span className="text-xs font-bold text-white">AI Optimization Index</span>
+                                <span className="text-[10px] text-slate-500 font-semibold block mt-0.5">ATS score evaluation</span>
+                              </div>
+                            </div>
+
+                            {/* Improvements */}
+                            {aiAnalysis.improvements && aiAnalysis.improvements.length > 0 && (
+                              <div className="space-y-2 pt-2 border-t border-white/5">
+                                <h5 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">ATS Checklist suggestions</h5>
+                                <ul className="space-y-1.5 text-xxs text-slate-350 list-disc list-inside leading-relaxed">
+                                  {aiAnalysis.improvements.map((item, i) => (
+                                    <li key={i} className="leading-relaxed">{item}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+
+          </div>
         </div>
-      </div>
       </div>
     </PageTransition>
   );
