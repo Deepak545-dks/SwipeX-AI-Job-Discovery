@@ -91,23 +91,23 @@ export default function Home() {
   return (
     <div className="relative min-h-screen pb-32 overflow-hidden selection:bg-violet-500/30 text-left">
       
-      {/* Immersive Aurora Background Engine (Purple + Blue Theme) */}
-      <div className="absolute inset-0 bg-slate-950 -z-30" />
+      {/* Immersive Aurora Background Engine (Navy, Indigo, Purple, Cyan, Pink Theme) */}
+      <div className="absolute inset-0 bg-[#070913] -z-30" />
       <motion.div 
         animate={{ 
-          x: mousePos.x * -1.5, 
-          y: mousePos.y * -1.5 
+          x: mousePos.x * -1.8, 
+          y: mousePos.y * -1.8 
         }}
         transition={{ type: 'tween', ease: 'easeOut', duration: 0.5 }}
-        className="absolute top-[-10%] left-[-10%] w-[80vw] h-[80vh] bg-gradient-to-tr from-violet-650/20 via-blue-600/15 to-transparent rounded-full blur-[160px] -z-10 pointer-events-none animate-pulse duration-[8000ms]"
+        className="absolute top-[-10%] left-[-15%] w-[85vw] h-[85vh] bg-gradient-to-tr from-indigo-700/25 via-violet-600/20 to-transparent rounded-full blur-[150px] -z-10 pointer-events-none animate-pulse duration-[7000ms]"
       />
       <motion.div 
         animate={{ 
-          x: mousePos.x * 1.8, 
-          y: mousePos.y * 1.8 
+          x: mousePos.x * 2.2, 
+          y: mousePos.y * 2.2 
         }}
         transition={{ type: 'tween', ease: 'easeOut', duration: 0.5 }}
-        className="absolute bottom-[-10%] right-[-10%] w-[75vw] h-[75vh] bg-gradient-to-br from-blue-650/20 via-violet-600/15 to-transparent rounded-full blur-[160px] -z-10 pointer-events-none"
+        className="absolute bottom-[-10%] right-[-15%] w-[80vw] h-[80vh] bg-gradient-to-br from-cyan-600/20 via-pink-650/15 to-transparent rounded-full blur-[150px] -z-10 pointer-events-none"
       />
 
       {/* Floating Interactive Glow Particles */}
@@ -154,12 +154,11 @@ export default function Home() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-            className="text-6xl sm:text-7xl md:text-[5.5rem] font-black text-white leading-[0.9] tracking-tight"
+            className="text-6xl sm:text-7xl md:text-[5rem] font-black leading-[0.95] tracking-tight"
           >
-            Your Career.<br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-405 via-blue-405 to-fuchsia-400 drop-shadow-[0_0_40px_rgba(139,92,246,0.2)]">
-              One Swipe Away.
-            </span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-teal-400 to-emerald-400">Discover Better Jobs.</span><br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-fuchsia-400 to-pink-400">Match Faster.</span><br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-amber-400 to-yellow-300 drop-shadow-[0_0_40px_rgba(245,158,11,0.2)]">Get Hired.</span>
           </motion.h1>
 
           {/* Subtitle */}
@@ -167,7 +166,7 @@ export default function Home() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.1 }}
-            className="text-slate-400 text-base sm:text-lg max-w-xl leading-relaxed font-semibold"
+            className="text-slate-350 text-base sm:text-lg max-w-xl leading-relaxed font-semibold"
           >
             Find jobs smarter with AI, swipe through personalized opportunities, match instantly with top companies, and build your career faster than ever.
           </motion.p>
