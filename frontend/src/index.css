@@ -203,4 +203,16 @@ body {
   animation-duration: 22s;
   animation-delay: -10s;
 }
+@keyframes scroll-left {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-30%);
+  }
+}
 
+.animate-scroll-left {
+  display: inline-flex;
+  animation: scroll-left 20s linear infinite;
+}
