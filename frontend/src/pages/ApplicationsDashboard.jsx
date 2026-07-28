@@ -3,18 +3,18 @@ import { Link } from 'react-router-dom';
 import { 
   Briefcase, Calendar, MapPin, DollarSign, Clock, 
   FileText, Star, ShieldAlert, Award, XCircle, 
-  CheckCircle, ChevronRight, X, ArrowRight, Loader2, Sparkles, Inbox, Filter, Cpu, Target, Check
+  CheckCircle, ChevronRight, X, ArrowRight, Loader2, Sparkles, Inbox, Filter, Cpu, Target, Check, RefreshCw
 } from 'lucide-react';
 import api from '../utils/api';
 import PageTransition from '../components/PageTransition';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const CompanyLogo = ({ company, className = "w-11 h-11" }) => {
+const CompanyLogo = ({ company, className = "w-10 h-10" }) => {
   const [error, setError] = useState(false);
   
   if (!company.logo_url || error) {
     return (
-      <div className={`${className} rounded-2xl bg-slate-950 border border-white/10 flex items-center justify-center text-violet-400 font-extrabold text-xs uppercase shrink-0 shadow-inner`}>
+      <div className={`${className} rounded-xl bg-slate-950 border border-white/10 flex items-center justify-center text-violet-400 font-black text-xs uppercase shrink-0`}>
         {company.name ? company.name.charAt(0) : 'C'}
       </div>
     );
@@ -25,7 +25,7 @@ const CompanyLogo = ({ company, className = "w-11 h-11" }) => {
       src={company.logo_url}
       alt={company.name}
       onError={() => setError(true)}
-      className={`${className} rounded-2xl object-cover bg-slate-950 border border-white/10 p-1 shrink-0 shadow-md`}
+      className={`${className} rounded-xl object-cover bg-slate-950 border border-white/10 shrink-0 shadow-sm`}
     />
   );
 };
@@ -34,7 +34,6 @@ export default function ApplicationsDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [applications, setApplications] = useState([]);
-  const [activeTab, setActiveTab] = useState('all');
   const [stats, setStats] = useState(null);
   const [selectedApp, setSelectedApp] = useState(null);
 
@@ -67,40 +66,56 @@ export default function ApplicationsDashboard() {
     loadData();
   }, []);
 
-  const classified = {
-    applied: applications.filter(app => app.status === 'applied'),
-    under_review: applications.filter(app => app.status === 'under_review'),
-    shortlisted: applications.filter(app => app.status === 'shortlisted'),
-    interviewing: applications.filter(app => app.status === 'interviewing'),
-    offered: applications.filter(app => app.status === 'offered' || app.status === 'accepted'),
-    rejected: applications.filter(app => app.status === 'rejected')
+  // Map backend statuses to Kanban columns
+  const getColumns = () => {
+    return {
+      applied: {
+        title: 'Applied',
+        color: 'border-violet-500/20 text-violet-400 bg-violet-950/10',
+        badge: 'bg-violet-600/20 text-violet-400',
+        items: applications.filter(app => app.status === 'applied' || app.status === 'under_review')
+      },
+      assessment: {
+        title: 'Assessment',
+        color: 'border-indigo-500/20 text-indigo-400 bg-indigo-950/10',
+        badge: 'bg-indigo-650/20 text-indigo-400',
+        items: applications.filter(app => app.status === 'shortlisted')
+      },
+      interview: {
+        title: 'Interview',
+        color: 'border-fuchsia-500/20 text-fuchsia-400 bg-fuchsia-950/10',
+        badge: 'bg-fuchsia-600/20 text-fuchsia-400',
+        items: applications.filter(app => app.status === 'interviewing')
+      },
+      offer: {
+        title: 'Offer',
+        color: 'border-emerald-500/20 text-emerald-450 bg-emerald-950/10',
+        badge: 'bg-emerald-600/20 text-emerald-400',
+        items: applications.filter(app => app.status === 'offered' || app.status === 'accepted')
+      },
+      rejected: {
+        title: 'Rejected',
+        color: 'border-rose-500/20 text-rose-450 bg-rose-950/10',
+        badge: 'bg-rose-600/20 text-rose-400',
+        items: applications.filter(app => app.status === 'rejected')
+      }
+    };
   };
 
-  const getFilteredApps = () => {
-    if (activeTab === 'all') return applications;
-    if (activeTab === 'applied') return classified.applied;
-    if (activeTab === 'under_review') return classified.under_review;
-    if (activeTab === 'shortlisted') return classified.shortlisted;
-    if (activeTab === 'interviewing') return classified.interviewing;
-    if (activeTab === 'offered') return classified.offered;
-    if (activeTab === 'rejected') return classified.rejected;
-    return applications;
-  };
+  const columns = getColumns();
 
   const getStatusBadgeClass = (status) => {
-    const base = "px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-widest border ";
+    const base = "px-2.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest border ";
     switch (status) {
       case 'accepted':
       case 'offered':
         return base + "bg-emerald-500/10 border-emerald-500/20 text-emerald-450 shadow-[0_0_15px_rgba(16,185,129,0.1)]";
       case 'rejected':
-        return base + "bg-rose-500/10 border-rose-500/20 text-rose-450";
+        return base + "bg-rose-500/10 border-rose-500/20 text-rose-455";
       case 'shortlisted':
-        return base + "bg-indigo-550/15 border-indigo-500/20 text-indigo-400";
+        return base + "bg-indigo-500/10 border-indigo-500/20 text-indigo-400";
       case 'interviewing':
-        return base + "bg-violet-550/15 border-violet-500/20 text-violet-400 shadow-[0_0_15px_rgba(139,92,246,0.1)]";
-      case 'under_review':
-        return base + "bg-amber-550/10 border-amber-500/20 text-amber-400";
+        return base + "bg-fuchsia-500/10 border-fuchsia-500/20 text-fuchsia-400 shadow-[0_0_15px_rgba(217,70,239,0.1)]";
       default:
         return base + "bg-slate-900 border-white/5 text-slate-400";
     }
@@ -117,29 +132,27 @@ export default function ApplicationsDashboard() {
       <PageTransition className="max-w-7xl mx-auto px-6 py-12 flex items-center justify-center">
         <div className="w-full max-w-sm h-72 bg-slate-900/40 border border-white/5 rounded-3xl p-6 flex flex-col items-center justify-center backdrop-blur-xl shadow-2xl">
           <Loader2 className="animate-spin text-violet-400" size={32} />
-          <span className="text-slate-500 text-xxs font-extrabold uppercase tracking-widest mt-4">Syncing Console...</span>
+          <span className="text-slate-500 text-xxs font-extrabold uppercase tracking-widest mt-4">Loading Pipeline...</span>
         </div>
       </PageTransition>
     );
   }
 
-  const filteredApps = getFilteredApps();
-
   return (
-    <PageTransition className="max-w-7xl mx-auto px-6 py-12 space-y-10 relative z-10">
+    <PageTransition className="max-w-[95%] mx-auto px-4 py-12 space-y-8 relative z-10">
       
-      {/* Header section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-white/10 pb-8 text-left">
+      {/* Header Panel */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-white/10 pb-6 text-left">
         <div>
           <h2 className="text-3xl font-black text-white tracking-tight flex items-center gap-2">
-            <Cpu className="text-violet-400 animate-pulse" />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-fuchsia-400 to-cyan-400">Applications Pipeline</span>
+            <Cpu className="text-violet-400" />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-fuchsia-400 to-cyan-400">Kanban Match Board</span>
           </h2>
-          <p className="text-slate-400 text-xs mt-1.5 font-semibold">Monitor matchmaking status updates, direct interview sessions, and job offers.</p>
+          <p className="text-slate-400 text-xs mt-1.5 font-semibold">Track matching statuses in dynamic pipeline columns. Recruiters update statuses as reviews proceed.</p>
         </div>
         <Link 
           to="/swipe"
-          className="inline-flex items-center space-x-2 px-6 py-3.5 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-cyan-600 hover:from-violet-500 hover:via-fuchsia-500 hover:to-cyan-500 text-white text-xs font-extrabold rounded-2xl transition-all shadow-lg shadow-violet-650/20 active:scale-95 cursor-pointer uppercase tracking-wider"
+          className="inline-flex items-center space-x-2 px-6 py-3.5 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-cyan-600 hover:from-violet-500 hover:via-fuchsia-500 hover:to-cyan-550 text-white text-xs font-extrabold rounded-2xl transition-all shadow-lg shadow-violet-650/20 active:scale-95 cursor-pointer uppercase tracking-wider self-start md:self-auto"
         >
           <span>Explore Deck</span>
           <ChevronRight size={14} />
@@ -147,148 +160,82 @@ export default function ApplicationsDashboard() {
       </div>
 
       {error && (
-        <div className="p-4 rounded-2xl bg-rose-950/30 border border-rose-500/20 text-rose-450 text-xs font-bold text-left">
+        <div className="p-4 rounded-2xl bg-rose-950/30 border border-rose-500/20 text-rose-455 text-xs font-bold text-left">
           {error}
         </div>
       )}
 
-      {/* Metrics Row */}
-      {stats && (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          {[
-            { label: 'Total Swipes', val: stats.total_applications || 0, gradient: 'from-violet-500/10 to-indigo-500/5', text: 'text-violet-400' },
-            { label: 'Shortlisted', val: stats.shortlisted || 0, gradient: 'from-indigo-500/10 to-blue-500/5', text: 'text-indigo-400' },
-            { label: 'Interviews', val: stats.interviews || 0, gradient: 'from-fuchsia-500/10 to-pink-500/5', text: 'text-fuchsia-400' },
-            { label: 'Offers', val: stats.offered || 0, gradient: 'from-emerald-500/10 to-cyan-500/5', text: 'text-emerald-450' },
-            { label: 'Pending', val: stats.pending || 0, gradient: 'from-amber-500/10 to-orange-500/5', text: 'text-amber-400' },
-            { label: 'Rejected', val: stats.rejected || 0, gradient: 'from-rose-500/10 to-red-500/5', text: 'text-rose-450' }
-          ].map((st, i) => (
-            <div key={i} className="p-1 rounded-2xl bg-gradient-to-tr from-white/5 to-transparent">
-              <div className="p-5 rounded-2xl bg-slate-950/80 backdrop-blur-2xl text-left relative overflow-hidden group">
-                <div className={`absolute inset-0 bg-gradient-to-tr ${st.gradient} opacity-20`} />
-                <span className="text-[9px] font-black uppercase tracking-wider text-slate-500 block mb-1.5 relative z-10">{st.label}</span>
-                <span className={`text-3xl font-black ${st.text} relative z-10`}>{st.val}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      <div className="grid lg:grid-cols-4 gap-8 items-start">
-        {/* Status filtering sidebar */}
-        <div className="lg:col-span-1 p-[1px] rounded-3xl bg-gradient-to-b from-white/10 to-transparent shadow-xl">
-          <div className="bg-slate-950/80 backdrop-blur-2xl p-4 rounded-[23px] space-y-1.5 text-left">
-            <div className="px-3 py-2 flex items-center justify-between text-slate-500 border-b border-white/5 mb-3">
-              <span className="text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5">
-                <Filter size={12} /> Pipeline Stages
-              </span>
-            </div>
-
-            {[
-              { id: 'all', label: 'All Records', count: applications.length },
-              { id: 'applied', label: 'Applied Matches', count: classified.applied.length },
-              { id: 'under_review', label: 'Under Review', count: classified.under_review.length },
-              { id: 'shortlisted', label: 'Shortlisted', count: classified.shortlisted.length },
-              { id: 'interviewing', label: 'Interviews', count: classified.interviewing.length },
-              { id: 'offered', label: 'Offers', count: classified.offered.length },
-              { id: 'rejected', label: 'Rejected', count: classified.rejected.length },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  activeTab === tab.id
-                    ? 'bg-gradient-to-r from-violet-650 via-fuchsia-650 to-indigo-650 text-white shadow-md font-black'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
-                }`}
-              >
-                <span>{tab.label}</span>
-                <span className={`px-2 py-0.5 rounded-md text-[9px] font-black ${
-                  activeTab === tab.id ? 'bg-white/20 text-white' : 'bg-slate-900 border border-white/5 text-slate-500'
-                }`}>
-                  {tab.count}
+      {/* Kanban Columns Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-6 items-start overflow-x-auto pb-4">
+        {Object.entries(columns).map(([colId, col]) => (
+          <div 
+            key={colId} 
+            className="p-[1px] rounded-3xl bg-gradient-to-b from-white/5 to-transparent shrink-0 w-full min-w-[240px] shadow-lg"
+          >
+            <div className="bg-slate-950/90 rounded-[23px] p-4 min-h-[60vh] flex flex-col space-y-4">
+              
+              {/* Column Header */}
+              <div className={`p-3 rounded-2xl border ${col.color} flex justify-between items-center text-left`}>
+                <span className="text-xxs font-black uppercase tracking-widest">{col.title}</span>
+                <span className={`px-2 py-0.5 rounded-md text-[9px] font-black ${col.badge}`}>
+                  {col.items.length}
                 </span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Applications List Grid */}
-        <div className="lg:col-span-3 text-left">
-          {filteredApps.length === 0 ? (
-            <div className="text-center py-16 bg-slate-950/80 border border-violet-500/20 rounded-3xl backdrop-blur-2xl space-y-6">
-              <div className="w-14 h-14 mx-auto rounded-2xl bg-slate-900 border border-white/10 flex items-center justify-center text-slate-500">
-                <Inbox size={26} />
               </div>
-              <div className="max-w-xs mx-auto space-y-2">
-                <h4 className="text-white text-sm font-black">No Matches found</h4>
-                <p className="text-slate-550 text-xs leading-relaxed font-semibold">
-                  You haven't swiped right or received matching approvals under the "{activeTab.replace('_', ' ')}" stage yet.
-                </p>
-              </div>
-              <Link 
-                to="/swipe"
-                className="inline-flex items-center space-x-1.5 px-5 py-2.5 bg-gradient-to-r from-violet-650 via-fuchsia-650 to-indigo-650 text-white text-xs font-extrabold rounded-xl transition-all shadow-md active:scale-95"
-              >
-                <span>Discover Jobs</span>
-                <ChevronRight size={12} />
-              </Link>
-            </div>
-          ) : (
-            <div className="grid md:grid-cols-2 gap-6">
-              {filteredApps.map((app) => (
-                <div 
-                  key={app.id} 
-                  onClick={() => setSelectedApp(app)}
-                  className="p-[1px] rounded-3xl bg-gradient-to-br from-white/5 hover:from-violet-500/20 to-transparent shadow-md hover:shadow-lg transition-all duration-300"
-                >
-                  <div className="bg-slate-950/80 backdrop-blur-3xl p-6 rounded-[23px] h-full flex flex-col justify-between cursor-pointer relative group">
-                    <div>
-                      <div className="flex justify-between items-start gap-4">
-                        <div className="min-w-0">
-                          <span className={getStatusBadgeClass(app.status)}>
-                            {formatStatus(app.status)}
-                          </span>
-                          <h3 className="text-base font-black text-white group-hover:text-violet-400 transition-colors mt-3.5 leading-snug truncate">
-                            {app.job_details.title}
-                          </h3>
-                          <p className="text-violet-450 text-xxs font-bold mt-0.5 truncate">{app.job_details.company.name}</p>
-                        </div>
-                        <CompanyLogo company={app.job_details.company} className="w-11 h-11 shrink-0" />
-                      </div>
 
-                      <div className="space-y-2 mt-5 pt-4 border-t border-white/5 text-slate-400 font-semibold">
-                        <div className="flex items-center space-x-2 text-xxs">
-                          <MapPin size={12} className="text-slate-500" />
-                          <span>{app.job_details.location}</span>
-                        </div>
-                        {app.resume_details && (
-                          <div className="flex items-center space-x-2 text-xxs">
-                            <FileText size={12} className="text-slate-500" />
-                            <span>Submitted CV (v{app.resume_details.version})</span>
-                          </div>
-                        )}
-                        {app.cover_letter && (
-                          <div className="flex items-center space-x-2 text-xxs text-violet-400 font-bold">
-                            <Target size={12} />
-                            <span>AI Cover Letter Attached</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="mt-6 flex justify-between items-center text-slate-500 text-xxs border-t border-white/5 pt-4 font-semibold uppercase tracking-wider">
-                      <span>Applied {new Date(app.applied_at).toLocaleDateString()}</span>
-                      <span className="text-violet-400 group-hover:translate-x-1.5 transition-transform flex items-center gap-1 font-extrabold">
-                        Open console <ArrowRight size={10} />
-                      </span>
-                    </div>
+              {/* Column Items */}
+              <div className="space-y-4 flex-grow overflow-y-auto max-h-[70vh]">
+                {col.items.length === 0 ? (
+                  <div className="py-12 text-center text-slate-600 text-xxs font-bold">
+                    Empty column
                   </div>
-                </div>
-              ))}
+                ) : (
+                  col.items.map((app) => (
+                    <motion.div 
+                      key={app.id}
+                      initial={{ opacity: 0, y: 15 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      onClick={() => setSelectedApp(app)}
+                      className="p-[1px] rounded-2xl bg-white/5 hover:bg-gradient-to-tr hover:from-violet-500/20 hover:to-transparent transition-all cursor-pointer text-left shadow"
+                    >
+                      <div className="bg-slate-900/60 p-4 rounded-[15px] space-y-3 relative group">
+                        <div className="flex justify-between items-start gap-3">
+                          <div className="min-w-0">
+                            <h4 className="text-xs font-black text-white group-hover:text-violet-400 transition-colors leading-tight truncate">
+                              {app.job_details.title}
+                            </h4>
+                            <p className="text-violet-450 text-[10px] font-bold truncate mt-0.5">{app.job_details.company.name}</p>
+                          </div>
+                          <CompanyLogo company={app.job_details.company} className="w-8 h-8 shrink-0" />
+                        </div>
+
+                        <div className="space-y-1.5 pt-3 border-t border-white/5 text-[10px] text-slate-400 font-semibold">
+                          <div className="flex items-center space-x-1.5">
+                            <MapPin size={11} className="text-slate-550" />
+                            <span className="truncate">{app.job_details.location}</span>
+                          </div>
+                          {app.resume_details && (
+                            <div className="flex items-center space-x-1.5">
+                              <FileText size={11} className="text-slate-555" />
+                              <span>CV v{app.resume_details.version}</span>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="pt-2.5 border-t border-white/5 flex items-center justify-between text-[9px] text-slate-500 font-bold uppercase tracking-wider">
+                          <span>{new Date(app.applied_at).toLocaleDateString()}</span>
+                          <span className="text-violet-400 group-hover:translate-x-1 transition-transform flex items-center gap-0.5">
+                            View <ArrowRight size={8} />
+                          </span>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))
+                )}
+              </div>
+
             </div>
-          )}
-        </div>
+          </div>
+        ))}
       </div>
 
       {/* Details view modal */}
@@ -302,7 +249,7 @@ export default function ApplicationsDashboard() {
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-              className="relative w-full max-w-lg bg-slate-950 border-t border-white/10 rounded-t-3xl p-6 sm:p-8 z-50 max-h-[85vh] overflow-y-auto space-y-6 shadow-2xl text-left"
+              className="relative w-full max-w-lg bg-slate-955 border-t border-white/10 rounded-t-3xl p-6 sm:p-8 z-50 max-h-[85vh] overflow-y-auto space-y-6 shadow-2xl text-left"
             >
               <div className="flex justify-between items-start gap-4">
                 <div>
@@ -341,11 +288,11 @@ export default function ApplicationsDashboard() {
               {/* Resume used */}
               {selectedApp.resume_details && (
                 <div className="p-4 rounded-xl bg-slate-900 border border-white/5 space-y-2">
-                  <h4 className="text-[10px] font-extrabold uppercase tracking-widest text-slate-500">Resume Submitted</h4>
+                  <h4 className="text-[10px] font-extrabold uppercase tracking-widest text-slate-550">Resume Submitted</h4>
                   <div className="flex items-center justify-between text-xs pt-1">
                     <div className="flex items-center space-x-2">
                       <FileText size={15} className="text-violet-400" />
-                      <span className="font-bold text-slate-355">Resume version {selectedApp.resume_details.version}</span>
+                      <span className="font-bold text-slate-300">Resume version {selectedApp.resume_details.version}</span>
                     </div>
                     <a
                       href={selectedApp.resume_details.file}
@@ -363,7 +310,7 @@ export default function ApplicationsDashboard() {
               {/* Cover letter used */}
               {selectedApp.cover_letter && (
                 <div className="space-y-2">
-                  <h4 className="text-xs font-extrabold uppercase tracking-widest text-slate-500">Your Cover Letter</h4>
+                  <h4 className="text-xs font-extrabold uppercase tracking-widest text-slate-550">Your Cover Letter</h4>
                   <div className="p-4 rounded-xl bg-slate-900 border border-white/5 text-slate-300 text-xs leading-relaxed whitespace-pre-line font-semibold">
                     {selectedApp.cover_letter}
                   </div>

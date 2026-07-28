@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { 
   Calendar as CalendarIcon, Clock, User, Check, X, AlertCircle, 
   Sparkles, CalendarPlus, CheckCircle, Video, 
-  MapPin, Loader2, ArrowRight, HelpCircle 
+  MapPin, Loader2, ArrowRight, HelpCircle, Cpu
 } from 'lucide-react';
 import api from '../utils/api';
 import PageTransition from '../components/PageTransition';
@@ -120,19 +120,22 @@ export default function CalendarDashboard() {
   };
 
   return (
-    <PageTransition className="max-w-7xl mx-auto px-4 sm:px-6 py-12 space-y-8">
+    <PageTransition className="max-w-7xl mx-auto px-6 py-12 space-y-10 relative z-10">
+      
       {/* Upper header */}
-      <div>
-        <h1 className="text-3xl font-black text-white tracking-tight flex items-center gap-2">
-          <CalendarIcon className="text-violet-400" />
-          <span>Calendar & Meetings</span>
-        </h1>
-        <p className="text-slate-400 text-xs mt-1">Manage scheduled interview rounds and video conferences</p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-white/10 pb-8 text-left">
+        <div>
+          <h1 className="text-3xl font-black text-white tracking-tight flex items-center gap-2">
+            <Cpu className="text-violet-400" />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-fuchsia-400 to-cyan-400">Interviews & Schedules</span>
+          </h1>
+          <p className="text-slate-400 text-xs mt-1.5 font-semibold">Track pending calls, access WebRTC video panels, and deploy calendar slots.</p>
+        </div>
       </div>
 
       {error && (
-        <div className="p-4 bg-red-955/20 border border-red-900/30 text-red-400 text-xs font-semibold rounded-2xl flex items-center space-x-3">
-          <AlertCircle size={16} />
+        <div className="p-4 bg-rose-955/20 border border-rose-500/20 text-rose-455 text-xs font-semibold rounded-2xl flex items-center space-x-3 text-left">
+          <AlertCircle size={16} className="shrink-0" />
           <span>{error}</span>
         </div>
       )}
@@ -140,18 +143,18 @@ export default function CalendarDashboard() {
       <div className="grid lg:grid-cols-3 gap-8">
         
         {/* Left Column: List of scheduled interviews */}
-        <div className="lg:col-span-2 space-y-6">
-          <div className="bg-slate-900/40 border border-white/5 p-6 rounded-3xl backdrop-blur-md">
-            <h2 className="text-base font-black text-white mb-6 tracking-tight">Your Scheduled Meetings</h2>
+        <div className="lg:col-span-2 p-[1.5px] rounded-3xl bg-gradient-to-b from-white/10 to-transparent shadow-xl">
+          <div className="bg-slate-950/80 backdrop-blur-2xl p-6 rounded-[23px] space-y-6 text-left">
+            <h2 className="text-base font-black text-white tracking-tight border-b border-white/5 pb-4">Meeting Agenda Feed</h2>
             
             {loading ? (
               <div className="flex justify-center py-20">
                 <Loader2 size={24} className="animate-spin text-violet-500" />
               </div>
             ) : interviews.length === 0 ? (
-              <div className="text-center py-16 space-y-3 bg-slate-950/20 rounded-2xl border border-white/5 border-dashed">
-                <CalendarIcon size={32} className="text-slate-700 mx-auto" />
-                <p className="text-slate-500 text-xs">No interviews scheduled yet.</p>
+              <div className="text-center py-16 space-y-4 bg-slate-950/30 rounded-2xl border border-white/10 border-dashed">
+                <CalendarIcon size={32} className="text-slate-600 mx-auto" />
+                <p className="text-slate-550 text-xs font-bold">No interviews scheduled yet.</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -173,17 +176,17 @@ export default function CalendarDashboard() {
                       key={meeting.id}
                       className={`p-5 rounded-2xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
                         isAccepted 
-                          ? 'bg-slate-905/30 border-slate-800' 
+                          ? 'bg-slate-900 border-white/10 hover:border-violet-500/20 shadow-[0_0_15px_rgba(139,92,246,0.02)]' 
                           : isDeclined 
-                            ? 'bg-red-955/10 border-red-950/20 opacity-60' 
-                            : 'bg-slate-955/20 border-white/5 border-dashed'
+                            ? 'bg-rose-955/10 border-rose-950/20 opacity-50' 
+                            : 'bg-slate-900/50 border-white/5 border-dashed'
                       }`}
                     >
                       <div className="space-y-2.5">
-                        <div className="flex items-center space-x-2">
-                          <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider border ${
+                        <div className="flex items-center space-x-2.5">
+                          <span className={`px-2.5 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border ${
                             isAccepted 
-                              ? 'bg-emerald-950/40 border-emerald-900/50 text-emerald-400' 
+                              ? 'bg-emerald-950/40 border-emerald-900/50 text-emerald-450' 
                               : isDeclined 
                                 ? 'bg-red-955/20 border-red-900/30 text-red-400' 
                                 : 'bg-amber-955/20 border-amber-900/30 text-amber-400'
@@ -191,27 +194,27 @@ export default function CalendarDashboard() {
                             {meeting.status}
                           </span>
                           {meeting.google_calendar_event_id && (
-                            <span className="text-[9px] font-bold text-violet-400 bg-violet-500/10 border border-violet-500/15 px-2 py-0.5 rounded">Google Calendar Synced</span>
+                            <span className="text-[8px] font-black text-violet-405 bg-violet-600/10 border border-violet-500/20 px-2 py-0.5 rounded uppercase tracking-wider">Google Synced</span>
                           )}
                         </div>
 
                         <div>
                           <h4 className="text-sm font-bold text-white tracking-tight">{meeting.title}</h4>
-                          <p className="text-slate-400 text-xxs mt-0.5">{targetName} • {companyDetails}</p>
+                          <p className="text-slate-400 text-xxs mt-0.5 font-semibold">{targetName} • {companyDetails}</p>
                         </div>
 
-                        <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-slate-500 text-xxs">
+                        <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-slate-500 text-xxs font-semibold">
                           <span className="flex items-center space-x-1.5">
-                            <CalendarIcon size={12} />
+                            <CalendarIcon size={12} className="text-slate-550" />
                             <span>{formattedDate}</span>
                           </span>
                           <span className="flex items-center space-x-1.5">
-                            <Clock size={12} />
+                            <Clock size={12} className="text-slate-550" />
                             <span>{formattedTime}</span>
                           </span>
                         </div>
                         {meeting.description && (
-                          <p className="text-slate-400 text-xxs bg-slate-950/40 px-3 py-2 rounded-xl border border-white/5 max-w-lg">
+                          <p className="text-slate-400 text-xxs bg-slate-950 border border-white/5 px-3 py-2 rounded-xl max-w-lg font-semibold">
                             {meeting.description}
                           </p>
                         )}
@@ -223,14 +226,14 @@ export default function CalendarDashboard() {
                           <>
                             <button
                               onClick={() => handleResponse(meeting.id, 'accepted')}
-                              className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xxs font-bold transition-all flex items-center space-x-1 cursor-pointer"
+                              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xxs font-black transition-all flex items-center space-x-1 cursor-pointer uppercase tracking-wider"
                             >
                               <Check size={12} />
                               <span>Accept</span>
                             </button>
                             <button
                               onClick={() => handleResponse(meeting.id, 'declined')}
-                              className="px-3.5 py-1.5 bg-red-600 hover:bg-red-550 text-white rounded-xl text-xxs font-bold transition-all flex items-center space-x-1 cursor-pointer"
+                              className="px-4 py-2 bg-rose-600 hover:bg-rose-550 text-white rounded-xl text-xxs font-black transition-all flex items-center space-x-1 cursor-pointer uppercase tracking-wider"
                             >
                               <X size={12} />
                               <span>Decline</span>
@@ -241,7 +244,7 @@ export default function CalendarDashboard() {
                         {isAccepted && (
                           <button
                             onClick={() => navigate(`/call/${meeting.id}?opponent=${targetName}`)}
-                            className="px-4 py-2.5 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white rounded-xl text-xxs font-bold transition-all flex items-center space-x-1.5 shadow-md cursor-pointer"
+                            className="px-5 py-3 bg-gradient-to-r from-violet-650 via-fuchsia-650 to-cyan-550 hover:from-violet-500 hover:via-fuchsia-500 hover:to-cyan-450 text-white rounded-xl text-xxs font-extrabold transition-all flex items-center space-x-1.5 shadow-md cursor-pointer uppercase tracking-wider"
                           >
                             <Video size={13} />
                             <span>Join Video Call</span>
@@ -258,12 +261,12 @@ export default function CalendarDashboard() {
         </div>
 
         {/* Right Column: Recruiter scheduling wizard form */}
-        <div className="lg:col-span-1">
+        <div className="lg:col-span-1 p-[1.5px] rounded-3xl bg-gradient-to-b from-white/10 to-transparent shadow-xl">
           {user.role === 'recruiter' ? (
-            <div className="bg-slate-900/40 border border-white/5 p-6 rounded-3xl backdrop-blur-md space-y-6">
+            <div className="bg-slate-950/80 backdrop-blur-2xl p-6 rounded-[23px] space-y-6 text-left">
               <div>
                 <h3 className="text-sm font-bold text-white tracking-tight">Schedule Interview</h3>
-                <p className="text-slate-400 text-xxs mt-0.5">Invite shortlisted seekers to virtual calls</p>
+                <p className="text-slate-400 text-xxs mt-0.5 font-semibold">Invite shortlisted seekers to virtual calls</p>
               </div>
 
               {loadingApps ? (
@@ -271,17 +274,17 @@ export default function CalendarDashboard() {
                   <Loader2 size={16} className="animate-spin text-violet-500" />
                 </div>
               ) : applications.length === 0 ? (
-                <p className="text-slate-500 text-xxs leading-relaxed">No candidates are currently shortlisted or awaiting schedules.</p>
+                <p className="text-slate-500 text-xxs leading-relaxed font-semibold">No candidates are currently shortlisted or awaiting schedules.</p>
               ) : (
                 <form onSubmit={handleScheduleInterview} className="space-y-4">
                   
                   {/* Select application */}
                   <div className="space-y-1.5">
-                    <label className="text-slate-350 text-[10px] font-bold uppercase tracking-wider">Candidate / Job</label>
+                    <label className="text-slate-455 text-[10px] font-extrabold uppercase tracking-widest">Candidate / Job</label>
                     <select
                       value={selectedAppId}
                       onChange={(e) => setSelectedAppId(e.target.value)}
-                      className="w-full bg-slate-950 border border-white/5 focus:border-violet-500/50 rounded-xl py-3 px-4 text-white text-xs outline-none transition-all cursor-pointer"
+                      className="w-full bg-slate-900 border border-white/10 focus:border-violet-500 rounded-xl py-3 px-4 text-white text-xs outline-none transition-all cursor-pointer font-semibold"
                     >
                       {applications.map((app) => (
                         <option key={app.id} value={app.id}>
@@ -293,60 +296,60 @@ export default function CalendarDashboard() {
 
                   {/* Title */}
                   <div className="space-y-1.5">
-                    <label className="text-slate-350 text-[10px] font-bold uppercase tracking-wider">Interview Title</label>
+                    <label className="text-slate-455 text-[10px] font-extrabold uppercase tracking-widest">Interview Title</label>
                     <input
                       type="text"
                       required
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
                       placeholder="e.g. Technical Round 1"
-                      className="w-full bg-slate-950 border border-white/5 focus:border-violet-500/50 rounded-xl py-3 px-4 text-white text-xs outline-none transition-all"
+                      className="w-full bg-slate-900 border border-white/10 focus:border-violet-500 rounded-xl py-3 px-4 text-white text-xs outline-none transition-all placeholder-slate-550 font-semibold"
                     />
                   </div>
 
                   {/* Description */}
                   <div className="space-y-1.5">
-                    <label className="text-slate-350 text-[10px] font-bold uppercase tracking-wider">Description</label>
+                    <label className="text-slate-455 text-[10px] font-extrabold uppercase tracking-widest">Description</label>
                     <textarea
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
                       placeholder="Meeting notes or links..."
                       rows={3}
-                      className="w-full bg-slate-955/50 border border-white/5 focus:border-violet-500/50 rounded-xl py-3 px-4 text-white text-xs outline-none resize-none transition-all"
+                      className="w-full bg-slate-900 border border-white/10 focus:border-violet-500 rounded-xl py-3 px-4 text-white text-xs outline-none resize-none transition-all placeholder-slate-550 font-semibold"
                     />
                   </div>
 
                   {/* Date & Time */}
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                      <label className="text-slate-355 text-[10px] font-bold uppercase tracking-wider">Date</label>
+                      <label className="text-slate-455 text-[10px] font-extrabold uppercase tracking-widest">Date</label>
                       <input
                         type="date"
                         required
                         value={startDate}
                         onChange={(e) => setStartDate(e.target.value)}
-                        className="w-full bg-slate-950 border border-white/5 focus:border-violet-500/50 rounded-xl py-3 px-4 text-white text-xs outline-none transition-all cursor-pointer"
+                        className="w-full bg-slate-900 border border-white/10 focus:border-violet-500 rounded-xl py-3 px-4 text-white text-xs outline-none transition-all cursor-pointer font-semibold"
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-slate-355 text-[10px] font-bold uppercase tracking-wider">Time</label>
+                      <label className="text-slate-455 text-[10px] font-extrabold uppercase tracking-widest">Time</label>
                       <input
                         type="time"
                         required
                         value={startTime}
                         onChange={(e) => setStartTime(e.target.value)}
-                        className="w-full bg-slate-950 border border-white/5 focus:border-violet-500/50 rounded-xl py-3 px-4 text-white text-xs outline-none transition-all cursor-pointer"
+                        className="w-full bg-slate-900 border border-white/10 focus:border-violet-500 rounded-xl py-3 px-4 text-white text-xs outline-none transition-all cursor-pointer font-semibold"
                       />
                     </div>
                   </div>
 
                   {/* Duration */}
                   <div className="space-y-1.5">
-                    <label className="text-slate-350 text-[10px] font-bold uppercase tracking-wider">Duration</label>
+                    <label className="text-slate-455 text-[10px] font-extrabold uppercase tracking-widest">Duration</label>
                     <select
                       value={duration}
                       onChange={(e) => setDuration(e.target.value)}
-                      className="w-full bg-slate-955/50 border border-white/5 focus:border-violet-500/50 rounded-xl py-3 px-4 text-white text-xs outline-none transition-all cursor-pointer"
+                      className="w-full bg-slate-900 border border-white/10 focus:border-violet-500 rounded-xl py-3 px-4 text-white text-xs outline-none transition-all cursor-pointer font-semibold"
                     >
                       <option value="30">30 Minutes</option>
                       <option value="45">45 Minutes</option>
@@ -356,26 +359,26 @@ export default function CalendarDashboard() {
                   </div>
 
                   {/* Google Calendar Sync */}
-                  <label className="flex items-center space-x-3 cursor-pointer py-1">
+                  <label className="flex items-center space-x-3 cursor-pointer py-1 text-slate-300 text-xxs font-extrabold select-none">
                     <input
                       type="checkbox"
                       checked={syncCalendar}
                       onChange={(e) => setSyncCalendar(e.target.checked)}
-                      className="rounded border-white/10 bg-slate-955 text-violet-650 focus:ring-violet-500/5 w-4 h-4 cursor-pointer"
+                      className="rounded border-white/10 bg-slate-900 text-violet-650 focus:ring-violet-500/5 w-4 h-4 cursor-pointer"
                     />
-                    <span className="text-slate-300 text-xxs font-bold select-none">Sync to Google Calendar</span>
+                    <span className="uppercase tracking-wider">Sync Google Calendar</span>
                   </label>
 
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="w-full py-3.5 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all disabled:opacity-30 shadow-md shadow-violet-500/10 cursor-pointer"
+                    className="w-full py-3.5 bg-gradient-to-r from-violet-650 via-fuchsia-650 to-indigo-650 hover:from-violet-500 hover:via-fuchsia-500 hover:to-indigo-500 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all disabled:opacity-30 shadow-md cursor-pointer"
                   >
                     {submitting ? (
                       <Loader2 size={14} className="animate-spin" />
                     ) : (
                       <>
-                        <CalendarPlus size={14} className="mr-1.5" />
+                        <CalendarPlus size={14} className="inline mr-1.5" />
                         <span>Schedule Slot</span>
                       </>
                     )}
@@ -386,14 +389,14 @@ export default function CalendarDashboard() {
 
             </div>
           ) : (
-            <div className="bg-slate-900/40 border border-white/5 p-6 rounded-3xl backdrop-blur-md space-y-4">
-              <div className="w-10 h-10 rounded-xl bg-violet-600/10 border border-violet-500/20 flex items-center justify-center text-violet-400">
+            <div className="bg-slate-955/80 backdrop-blur-2xl p-6 rounded-[23px] space-y-4 text-left">
+              <div className="w-10 h-10 rounded-xl bg-violet-605/10 border border-violet-500/20 flex items-center justify-center text-violet-400">
                 <Sparkles size={16} />
               </div>
               <div>
-                <h3 className="text-white font-bold text-xs tracking-tight">Calendar Notifications</h3>
-                <p className="text-slate-405 text-xxs mt-1.5 leading-relaxed">
-                  Invitations scheduled by recruiters will reflect on this dashboard in real-time. Accept slot invitations to auto-progress your application status and unlock WebRTC call conference channels.
+                <h3 className="text-white font-black text-xs tracking-tight uppercase tracking-wider">Schedules Radar</h3>
+                <p className="text-slate-405 text-xxs mt-2.5 leading-relaxed font-semibold">
+                  Scheduled interview slots proposed by recruiters will automatically sync here. Accept invites to lock schedules and enable WebRTC communication rooms.
                 </p>
               </div>
             </div>

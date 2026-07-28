@@ -331,16 +331,52 @@ export default function SwipeDiscovery() {
                           <div className="flex justify-between items-start gap-4">
                             <div className="min-w-0 text-left">
                               <div className="flex flex-wrap gap-1.5">
-                                <span className="inline-flex px-2 py-0.5 bg-violet-600/10 border border-violet-500/20 rounded-md text-[9px] font-black uppercase text-violet-400 tracking-wider">
+                                <span className="inline-flex px-2.5 py-0.5 bg-violet-650/15 border border-violet-500/20 rounded-md text-[9px] font-black uppercase text-violet-400 tracking-wider">
                                   {job.job_type}
                                 </span>
-                                <span className="inline-flex px-2 py-0.5 bg-emerald-500/10 border border-emerald-500/20 rounded-md text-[9px] font-black uppercase text-emerald-400 tracking-wider">
-                                  98% Match
+                                <span className="inline-flex px-2.5 py-0.5 bg-emerald-500/10 border border-emerald-500/20 rounded-md text-[9px] font-black uppercase text-emerald-450 tracking-wider">
+                                  Verified
                                 </span>
                               </div>
                               <h2 className="text-xl font-black text-white tracking-tight mt-3 leading-snug truncate">{job.title}</h2>
                               <p className="text-violet-450 text-xs font-bold mt-0.5 truncate">{job.company.name}</p>
                             </div>
+
+                            {/* Circular AI Match Score Progress Ring */}
+                            <div className="flex flex-col items-center shrink-0">
+                              <div className="relative w-12 h-12 flex items-center justify-center">
+                                <svg className="w-full h-full transform -rotate-90">
+                                  <circle
+                                    cx="24"
+                                    cy="24"
+                                    r="18"
+                                    stroke="rgba(255,255,255,0.05)"
+                                    strokeWidth="3"
+                                    fill="transparent"
+                                  />
+                                  <circle
+                                    cx="24"
+                                    cy="24"
+                                    r="18"
+                                    stroke="url(#matchGlow)"
+                                    strokeWidth="3.5"
+                                    fill="transparent"
+                                    strokeDasharray={113}
+                                    strokeDashoffset={113 - (113 * 96) / 100}
+                                    strokeLinecap="round"
+                                  />
+                                  <defs>
+                                    <linearGradient id="matchGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+                                      <stop offset="0%" stopColor="#8b5cf6" />
+                                      <stop offset="100%" stopColor="#ec4899" />
+                                    </linearGradient>
+                                  </defs>
+                                </svg>
+                                <span className="absolute text-[9px] font-black text-white">96%</span>
+                              </div>
+                              <span className="text-[7px] font-black uppercase tracking-widest text-slate-500 mt-1">AI Match</span>
+                            </div>
+
                             <CompanyLogo company={job.company} className="w-12 h-12 shrink-0 shadow-lg" />
                           </div>
 
