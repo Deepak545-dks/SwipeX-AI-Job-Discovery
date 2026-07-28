@@ -87,29 +87,29 @@ export default function Navbar() {
   const isActive = (path) => location.pathname === path;
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-white/5 bg-slate-950/70 backdrop-blur-xl px-6 py-4">
+    <nav className="sticky top-0 z-50 border-b border-white/10 bg-slate-950/80 backdrop-blur-2xl px-6 py-4.5 shadow-lg shadow-black/20">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
-        <Link to="/" className="flex items-center space-x-2 group">
-          <div className="relative flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-tr from-violet-600 to-fuchsia-600 shadow-md shadow-violet-500/20 group-hover:scale-105 transition-transform">
-            <Sparkles size={18} className="text-white animate-pulse" />
+        <Link to="/" className="flex items-center space-x-2.5 group">
+          <div className="relative flex items-center justify-center w-10 h-10 rounded-2xl bg-gradient-to-tr from-violet-600 via-fuchsia-600 to-cyan-500 shadow-lg shadow-violet-500/25 group-hover:scale-105 transition-transform duration-300">
+            <Sparkles size={20} className="text-white animate-pulse" />
           </div>
-          <span className="text-xl font-extrabold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-fuchsia-500 group-hover:from-violet-300 group-hover:to-fuchsia-400 transition-all">
+          <span className="text-2xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-fuchsia-400 to-cyan-400 group-hover:from-white group-hover:to-white transition-all duration-300">
             SwipeX
           </span>
         </Link>
 
-        <div className="flex items-center space-x-1 md:space-x-4">
+        <div className="flex items-center space-x-2 md:space-x-4">
           {isAuthenticated ? (
             <>
-              <div className="hidden lg:flex items-center space-x-1">
+              <div className="hidden lg:flex items-center space-x-1.5">
                 {user?.role === 'job_seeker' && (
                   <>
                     <Link 
                       to="/swipe" 
-                      className={`flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                      className={`flex items-center space-x-1.5 px-4 py-2.5 rounded-xl text-xs font-bold transition-all border ${
                         isActive('/swipe') 
-                          ? 'bg-violet-500/10 text-violet-400' 
-                          : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                          ? 'bg-gradient-to-r from-violet-600/15 to-fuchsia-600/15 border-violet-500/30 text-violet-400 shadow-inner' 
+                          : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-white/5'
                       }`}
                     >
                       <Compass size={15} />
@@ -117,10 +117,10 @@ export default function Navbar() {
                     </Link>
                     <Link 
                       to="/search" 
-                      className={`flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                      className={`flex items-center space-x-1.5 px-4 py-2.5 rounded-xl text-xs font-bold transition-all border ${
                         isActive('/search') 
-                          ? 'bg-violet-500/10 text-violet-400' 
-                          : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                          ? 'bg-gradient-to-r from-violet-600/15 to-fuchsia-600/15 border-violet-500/30 text-violet-400 shadow-inner' 
+                          : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-white/5'
                       }`}
                     >
                       <Search size={15} />
@@ -128,10 +128,10 @@ export default function Navbar() {
                     </Link>
                     <Link 
                       to="/applications" 
-                      className={`flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                      className={`flex items-center space-x-1.5 px-4 py-2.5 rounded-xl text-xs font-bold transition-all border ${
                         isActive('/applications') 
-                          ? 'bg-violet-500/10 text-violet-400' 
-                          : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                          ? 'bg-gradient-to-r from-violet-600/15 to-fuchsia-600/15 border-violet-500/30 text-violet-400 shadow-inner' 
+                          : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-white/5'
                       }`}
                     >
                       <Briefcase size={15} />
@@ -143,10 +143,10 @@ export default function Navbar() {
                 {user?.role === 'recruiter' && (
                   <Link 
                     to="/recruiter" 
-                    className={`flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                    className={`flex items-center space-x-1.5 px-4 py-2.5 rounded-xl text-xs font-bold transition-all border ${
                       isActive('/recruiter') 
-                        ? 'bg-violet-500/10 text-violet-400' 
-                        : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                        ? 'bg-gradient-to-r from-violet-600/15 to-fuchsia-600/15 border-violet-500/30 text-violet-400 shadow-inner' 
+                        : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-white/5'
                     }`}
                   >
                     <BarChart2 size={15} />
@@ -157,10 +157,10 @@ export default function Navbar() {
                 {user?.role === 'admin' && (
                   <Link 
                     to="/admin" 
-                    className={`flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                    className={`flex items-center space-x-1.5 px-4 py-2.5 rounded-xl text-xs font-bold transition-all border ${
                       isActive('/admin') 
-                        ? 'bg-violet-500/10 text-violet-400' 
-                        : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                        ? 'bg-gradient-to-r from-violet-600/15 to-fuchsia-600/15 border-violet-500/30 text-violet-400 shadow-inner' 
+                        : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-white/5'
                     }`}
                   >
                     <Shield size={15} />
@@ -170,10 +170,10 @@ export default function Navbar() {
 
                 <Link 
                   to="/calendar" 
-                  className={`flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                  className={`flex items-center space-x-1.5 px-4 py-2.5 rounded-xl text-xs font-bold transition-all border ${
                     isActive('/calendar') 
-                      ? 'bg-violet-500/10 text-violet-400' 
-                      : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                      ? 'bg-gradient-to-r from-violet-600/15 to-fuchsia-600/15 border-violet-500/30 text-violet-400 shadow-inner' 
+                      : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-white/5'
                   }`}
                 >
                   <Calendar size={15} />
@@ -182,10 +182,10 @@ export default function Navbar() {
 
                 <Link 
                   to="/messages" 
-                  className={`flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                  className={`flex items-center space-x-1.5 px-4 py-2.5 rounded-xl text-xs font-bold transition-all border ${
                     isActive('/messages') 
-                      ? 'bg-violet-500/10 text-violet-400' 
-                      : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                      ? 'bg-gradient-to-r from-violet-600/15 to-fuchsia-600/15 border-violet-500/30 text-violet-400 shadow-inner' 
+                      : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-white/5'
                   }`}
                 >
                   <MessageSquare size={15} />
@@ -194,10 +194,10 @@ export default function Navbar() {
 
                 <Link 
                   to="/profile" 
-                  className={`flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                  className={`flex items-center space-x-1.5 px-4 py-2.5 rounded-xl text-xs font-bold transition-all border ${
                     isActive('/profile') 
-                      ? 'bg-violet-500/10 text-violet-400' 
-                      : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                      ? 'bg-gradient-to-r from-violet-600/15 to-fuchsia-600/15 border-violet-500/30 text-violet-400 shadow-inner' 
+                      : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-white/5'
                   }`}
                 >
                   <User size={15} />

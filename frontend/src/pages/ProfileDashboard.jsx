@@ -473,10 +473,11 @@ export default function ProfileDashboard() {
   }
 
   return (
-    <PageTransition className="max-w-7xl mx-auto px-4 sm:px-6 py-12 grid lg:grid-cols-4 gap-8">
+    <PageTransition className="max-w-7xl mx-auto px-4 sm:px-6 py-12 grid lg:grid-cols-4 gap-8 relative z-10">
       {/* Side Profile Card & Tab Selectors */}
       <div className="lg:col-span-1 space-y-6">
-        <div className="bg-slate-900/40 border border-white/5 rounded-3xl p-6 backdrop-blur-xl shadow-xl text-center relative group">
+        <div className="p-[1.5px] rounded-3xl bg-gradient-to-b from-violet-500/30 via-fuchsia-500/30 to-indigo-500/10 shadow-2xl">
+          <div className="bg-slate-950/90 rounded-[23px] p-6 backdrop-blur-2xl text-center relative group">
           
           {/* Circular avatar with click upload trigger */}
           <div className="relative w-20 h-20 mx-auto group">
@@ -514,8 +515,10 @@ export default function ProfileDashboard() {
           <p className="text-slate-400 text-[10px] mt-1 uppercase tracking-wider font-bold">{profile.role.replace('_', ' ')}</p>
           <p className="text-slate-500 text-xxs mt-2 break-all">{profile.email}</p>
         </div>
+      </div>
 
-        <div className="bg-slate-900/40 border border-white/5 rounded-3xl p-3 backdrop-blur-xl shadow-xl flex flex-col space-y-1">
+      <div className="p-[1.5px] rounded-3xl bg-gradient-to-b from-indigo-500/10 via-cyan-500/10 to-violet-500/10 shadow-xl">
+        <div className="bg-slate-950/90 rounded-[23px] p-3 backdrop-blur-2xl flex flex-col space-y-1">
           {[
             { id: 'personal', label: 'Personal Info', icon: User },
             { id: 'skills', label: 'Technical Skills', icon: Code },
@@ -542,23 +545,25 @@ export default function ProfileDashboard() {
           })}
         </div>
       </div>
+      </div>
 
       {/* Main Content Pane */}
-      <div className="lg:col-span-3">
+      <div className="lg:col-span-3 space-y-6">
         {error && (
-          <div className="mb-6 p-4 rounded-xl bg-red-950/30 border border-red-900/40 text-red-400 text-xs font-medium animate-shake">
+          <div className="mb-6 p-4 rounded-2xl bg-rose-950/30 border border-rose-500/20 text-rose-400 text-xs font-bold animate-shake">
             {error}
           </div>
         )}
 
         {message && (
-          <div className="mb-6 p-4 rounded-xl bg-green-950/30 border border-green-900/40 text-green-400 text-xs font-medium flex items-center space-x-2 animate-pulse">
+          <div className="mb-6 p-4 rounded-2xl bg-emerald-950/30 border border-emerald-500/20 text-emerald-400 text-xs font-bold flex items-center space-x-2 animate-pulse">
             <CheckCircle size={14} />
             <span>{message}</span>
           </div>
         )}
 
-        <div className="bg-slate-900/40 border border-white/5 rounded-3xl p-6 sm:p-8 backdrop-blur-md shadow-xl min-h-[50vh]">
+        <div className="p-[1.5px] rounded-3xl bg-gradient-to-tr from-violet-500/20 via-fuchsia-500/20 to-cyan-500/25 shadow-2xl">
+          <div className="bg-slate-950/90 rounded-[23px] p-6 sm:p-8 backdrop-blur-2xl shadow-xl min-h-[50vh]">
           
           {/* TAB 1: Personal Info */}
           {activeTab === 'personal' && (
@@ -1304,9 +1309,9 @@ export default function ProfileDashboard() {
                   </div>
                 )}
               </div>
-            </div>
-          )}
         </div>
+      </div>
+      </div>
       </div>
     </PageTransition>
   );
