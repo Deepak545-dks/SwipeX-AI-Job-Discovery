@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { 
-  User, Briefcase, GraduationCap, Code, FileText, Folder,
+  User, Briefcase, GraduationCap, Code, FileText, Folder, BarChart2,
   Plus, Trash2, Globe, Phone, Pencil, X, Sparkles, AlertCircle,
   Mail, Calendar, MapPin, Loader2, Save, Upload, CheckCircle, ExternalLink, Link as LinkIcon
 } from 'lucide-react';
@@ -12,7 +12,7 @@ import PageTransition from '../components/PageTransition';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function ProfileDashboard() {
-  const [activeTab, setActiveTab] = useState('personal');
+  const [activeTab, setActiveTab] = useState('overview');
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -520,6 +520,7 @@ export default function ProfileDashboard() {
       <div className="p-[1.5px] rounded-3xl bg-gradient-to-b from-indigo-500/10 via-cyan-500/10 to-violet-500/10 shadow-xl">
         <div className="bg-slate-950/90 rounded-[23px] p-3 backdrop-blur-2xl flex flex-col space-y-1">
           {[
+            { id: 'overview', label: 'Executive Dashboard', icon: BarChart2 },
             { id: 'personal', label: 'Personal Info', icon: User },
             { id: 'skills', label: 'Technical Skills', icon: Code },
             { id: 'experience', label: 'Experience Logs', icon: Briefcase },
@@ -564,6 +565,164 @@ export default function ProfileDashboard() {
 
         <div className="p-[1.5px] rounded-3xl bg-gradient-to-tr from-violet-500/20 via-fuchsia-500/20 to-cyan-500/25 shadow-2xl">
           <div className="bg-slate-950/90 rounded-[23px] p-6 sm:p-8 backdrop-blur-2xl shadow-xl min-h-[50vh]">
+          
+          {/* TAB 0: Executive Dashboard Overview */}
+          {activeTab === 'overview' && (
+            <div className="space-y-8 animate-fade-in text-left">
+              {/* Header profile banner details */}
+              <div className="p-6 rounded-2xl bg-gradient-to-r from-violet-600/10 via-fuchsia-600/10 to-cyan-600/10 border border-white/10 relative overflow-hidden flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                  <h4 className="text-xl font-black text-white tracking-tight">{fullName || 'User Profile'}</h4>
+                  <p className="text-xs text-violet-400 font-bold mt-1 uppercase tracking-wider">{profile?.role?.replace('_', ' ')}</p>
+                  <p className="text-slate-400 text-xs mt-2 leading-relaxed max-w-xl font-medium">{bio || 'No professional summary set yet. Update personal details to describe your focus.'}</p>
+                </div>
+                <button 
+                  onClick={() => setActiveTab('personal')}
+                  className="px-4 py-2 border border-white/10 hover:bg-white/5 text-slate-350 hover:text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+                >
+                  <Pencil size={12} />
+                  <span>Edit Profile</span>
+                </button>
+              </div>
+
+              {/* Grid block layout */}
+              <div className="grid md:grid-cols-12 gap-6">
+                
+                {/* Left Side: Stats & Skills & Resumes (5 cols) */}
+                <div className="md:col-span-5 space-y-6">
+                  {/* Stats list */}
+                  <div className="p-5 rounded-2xl bg-slate-900/35 border border-white/5 space-y-4">
+                    <h5 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Connect Handles</h5>
+                    <div className="space-y-2.5 text-xs text-slate-350 font-semibold">
+                      {profile?.phone && (
+                        <div className="flex items-center gap-2">
+                          <Phone size={13} className="text-slate-500" />
+                          <span>{profile.phone}</span>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-2">
+                        <Mail size={13} className="text-slate-500" />
+                        <span className="truncate">{profile?.email}</span>
+                      </div>
+                      {portfolioUrl && (
+                        <a href={portfolioUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-violet-400 hover:underline">
+                          <Globe size={13} className="text-violet-500" />
+                          <span className="truncate">Portfolio Link</span>
+                        </a>
+                      )}
+                      {githubUrl && (
+                        <a href={githubUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-violet-400 hover:underline">
+                          <ExternalLink size={13} className="text-violet-500" />
+                          <span className="truncate">GitHub Profile</span>
+                        </a>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Skills summary block */}
+                  <div className="p-5 rounded-2xl bg-slate-900/35 border border-white/5 space-y-4">
+                    <div className="flex justify-between items-center">
+                      <h5 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Technical Skills</h5>
+                      <button onClick={() => setActiveTab('skills')} className="text-violet-400 hover:underline text-[10px] font-extrabold cursor-pointer">Edit</button>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {skills.length === 0 ? (
+                        <p className="text-slate-550 text-xxs font-semibold">No skills added yet.</p>
+                      ) : (
+                        skills.map(skill => (
+                          <span key={skill} className="px-2.5 py-1 rounded bg-white/5 border border-white/5 text-slate-300 text-xxs font-extrabold">
+                            {skill}
+                          </span>
+                        ))
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Active Resume list */}
+                  <div className="p-5 rounded-2xl bg-slate-900/35 border border-white/5 space-y-4">
+                    <div className="flex justify-between items-center">
+                      <h5 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Resumes</h5>
+                      <button onClick={() => setActiveTab('resume')} className="text-violet-400 hover:underline text-[10px] font-extrabold cursor-pointer">Manage</button>
+                    </div>
+                    <div className="space-y-3">
+                      {profile?.resumes && profile.resumes.length > 0 ? (
+                        profile.resumes.map(res => (
+                          <div key={res.id} className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5">
+                            <div className="min-w-0 flex items-center space-x-2">
+                              <FileText size={14} className="text-violet-400 shrink-0" />
+                              <span className="text-xxs text-slate-300 font-bold truncate max-w-[120px]">{res.filename}</span>
+                            </div>
+                            <span className="text-[9px] text-slate-500 font-semibold">{new Date(res.uploaded_at).toLocaleDateString()}</span>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-slate-550 text-xxs font-semibold">No resumes uploaded.</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right Side: Timeline History & AI Analysis (7 cols) */}
+                <div className="md:col-span-7 space-y-6">
+                  
+                  {/* Experience Timeline Summary */}
+                  <div className="p-5 rounded-2xl bg-slate-900/35 border border-white/5 space-y-4">
+                    <div className="flex justify-between items-center">
+                      <h5 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Work History</h5>
+                      <button onClick={() => setActiveTab('experience')} className="text-violet-400 hover:underline text-[10px] font-extrabold cursor-pointer">Manage</button>
+                    </div>
+                    <div className="space-y-4 relative border-l border-white/5 pl-4 ml-1">
+                      {profile?.experience && profile.experience.length > 0 ? (
+                        profile.experience.map(exp => (
+                          <div key={exp.id} className="relative space-y-1">
+                            <span className="absolute -left-[21.5px] top-1 w-2.5 h-2.5 rounded-full bg-violet-650 ring-4 ring-slate-950" />
+                            <div className="flex justify-between items-start text-xs">
+                              <h6 className="font-extrabold text-white">{exp.job_title}</h6>
+                              <span className="text-[9px] text-slate-500 font-extrabold uppercase">{new Date(exp.start_date).getFullYear()} - {exp.is_current ? 'Present' : exp.end_date ? new Date(exp.end_date).getFullYear() : ''}</span>
+                            </div>
+                            <p className="text-violet-450 text-xxs font-bold">{exp.company_name}</p>
+                            <p className="text-slate-400 text-xxs leading-relaxed font-semibold line-clamp-2 mt-1">{exp.description}</p>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-slate-550 text-xxs font-semibold pl-2">No work history records found.</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* AI resume Analysis Overview */}
+                  <div className="p-5 rounded-2xl bg-slate-900/35 border border-white/5 space-y-4">
+                    <div className="flex justify-between items-center">
+                      <h5 className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
+                        <Sparkles size={12} className="text-violet-400" />
+                        <span>AI Optimization Score</span>
+                      </h5>
+                      <button onClick={() => setActiveTab('resume')} className="text-violet-400 hover:underline text-[10px] font-extrabold cursor-pointer">Analyze</button>
+                    </div>
+                    {aiAnalysis ? (
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-violet-600 to-fuchsia-600 flex items-center justify-center font-black text-white text-sm shadow-md">
+                            {aiAnalysis.score}%
+                          </div>
+                          <div>
+                            <span className="text-xs font-bold text-white">ATS Score Checklist</span>
+                            <span className="text-[10px] text-slate-500 font-semibold block mt-0.5">Recommendations populated</span>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center py-4 space-y-3">
+                        <p className="text-slate-550 text-xxs font-semibold">Analyze your resume to view ATS suggestions on this panel.</p>
+                      </div>
+                    )}
+                  </div>
+
+                </div>
+
+              </div>
+            </div>
+          )}
           
           {/* TAB 1: Personal Info */}
           {activeTab === 'personal' && (
