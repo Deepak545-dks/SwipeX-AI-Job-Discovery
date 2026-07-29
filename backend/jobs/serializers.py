@@ -75,12 +75,30 @@ class JobSerializer(serializers.ModelSerializer):
         matching_skills = user_skills.intersection(job_skills)
         skill_score = (len(matching_skills) / len(job_skills)) * 50
         
+        # Safely fetch experience level fallback
+        user_exp = getattr(user.profile, 'experience_level', None)
+        if not user_exp:
+            exp_count = user.profile.experiences.count()
+            if exp_count == 0:
+                user_exp = 'junior'
+            elif exp_count <= 2:
+                user_exp = 'mid'
+            else:
+                user_exp = 'senior'
+
         experience_score = 30
-        if getattr(user.profile, 'experience_level', None) == obj.experience_level:
+        if user_exp == obj.experience_level:
             experience_score = 40
 
+        # Safely fetch location fallback
+        user_location = getattr(user.profile, 'location', None)
+        if not user_location:
+            last_exp = user.profile.experiences.first()
+            if last_exp:
+                user_location = last_exp.location
+
         location_score = 10
-        if obj.job_type == 'remote' or (user.profile.location and user.profile.location.lower() in obj.location.lower()):
+        if obj.job_type == 'remote' or (user_location and user_location.lower() in obj.location.lower()):
             location_score = 10
 
         final_score = int(skill_score + experience_score + location_score)
