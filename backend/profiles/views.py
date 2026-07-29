@@ -177,8 +177,17 @@ class AIResumeAnalyzerView(APIView):
         if not profile:
             return Response({"error": "Profile not found"}, status=status.HTTP_404_NOT_FOUND)
 
+        resume_id = request.data.get('resume_id')
+        latest_resume = None
+        if resume_id:
+            try:
+                latest_resume = Resume.objects.get(id=resume_id, profile=profile)
+            except Resume.DoesNotExist:
+                return Response({"error": "Resume not found"}, status=status.HTTP_404_NOT_FOUND)
+        else:
+            latest_resume = profile.resumes.first()
+
         resume_text = ""
-        latest_resume = profile.resumes.first()
         if latest_resume and latest_resume.file:
             try:
                 with latest_resume.file.open('rb') as f:

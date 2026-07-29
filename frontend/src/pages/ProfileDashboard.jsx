@@ -395,7 +395,7 @@ export default function ProfileDashboard() {
   const handleGenerateAiAnalysis = async (resumeId) => {
     setAnalyzingResume(true);
     try {
-      const response = await api.post('/jobs/ai/analyze-resume/', { resume_id: resumeId });
+      const response = await api.post('/profiles/ai/analyze-resume/', { resume_id: resumeId });
       setAiAnalysis(response.data.analysis || response.data);
       showToast('AI Resume Analysis completed successfully.', 'success');
     } catch (err) {
