@@ -408,8 +408,8 @@ export default function ProfileDashboard() {
   if (loading) {
     return (
       <PageTransition className="max-w-7xl mx-auto px-6 py-12 flex items-center justify-center">
-        <div className="w-full max-w-sm h-72 bg-slate-50/40 border border-slate-100 rounded-3xl p-6 flex flex-col items-center justify-center backdrop-blur-xl shadow-2xl">
-          <Loader2 className="animate-spin text-violet-600" size={32} />
+        <div className="w-full max-w-sm h-72 glass-card-indigo-violet/40 border border-white/5 rounded-3xl p-6 flex flex-col items-center justify-center backdrop-blur-xl shadow-2xl">
+          <Loader2 className="animate-spin text-violet-400" size={32} />
           <span className="text-slate-500 text-xxs font-extrabold uppercase tracking-widest mt-4">Syncing Hub...</span>
         </div>
       </PageTransition>
@@ -428,7 +428,7 @@ export default function ProfileDashboard() {
         
         {/* Avatar Cover Card */}
         <div className="p-[1.5px] rounded-3xl bg-gradient-to-b from-violet-500/30 via-amber-500/30 to-yellow-500/10 shadow-2xl">
-          <div className="bg-white rounded-[23px] p-6 border border-slate-200/50 text-center relative group">
+          <div className="bg-slate-950 rounded-[23px] p-6 border border-white/10 text-center relative group">
             
             {/* Click avatar uploader */}
             <div className="relative w-20 h-20 mx-auto group">
@@ -436,21 +436,21 @@ export default function ProfileDashboard() {
                 <img 
                   src={profile.profile_picture} 
                   alt="Avatar" 
-                  className="w-20 h-20 rounded-full object-cover mx-auto border-2 border-violet-300 shadow-lg group-hover:border-violet-455 transition-colors" 
+                  className="w-20 h-20 rounded-full object-cover mx-auto border-2 border-violet-500/25 shadow-lg group-hover:border-violet-455 transition-colors" 
                 />
               ) : (
-                <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-violet-600 to-fuchsia-600 flex items-center justify-center text-2xl font-black text-slate-800 mx-auto shadow-md">
+                <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-violet-600 to-fuchsia-600 flex items-center justify-center text-2xl font-black text-white mx-auto shadow-md">
                   {fullName ? fullName.charAt(0).toUpperCase() : profile.email.charAt(0).toUpperCase()}
                 </div>
               )}
               
-              <label className="absolute inset-0 rounded-full bg-slate-900/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center cursor-pointer transition-opacity">
+              <label className="absolute inset-0 rounded-full bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center cursor-pointer transition-opacity">
                 {uploadingAvatar ? (
-                  <Loader2 size={16} className="animate-spin text-slate-800" />
+                  <Loader2 size={16} className="animate-spin text-white" />
                 ) : (
                   <>
-                    <Upload size={16} className="text-slate-800 animate-bounce" />
-                    <span className="text-[8px] text-slate-700 font-bold uppercase mt-1">Upload</span>
+                    <Upload size={16} className="text-white animate-bounce" />
+                    <span className="text-[8px] text-slate-300 font-bold uppercase mt-1">Upload</span>
                   </>
                 )}
                 <input 
@@ -462,15 +462,15 @@ export default function ProfileDashboard() {
               </label>
             </div>
 
-            <h2 className="text-base font-black text-slate-800 mt-4">{fullName || 'Add your name'}</h2>
-            <p className="text-slate-600 text-[10px] mt-1 uppercase tracking-wider font-extrabold">{profile.role.replace('_', ' ')}</p>
+            <h2 className="text-base font-black text-white mt-4">{fullName || 'Add your name'}</h2>
+            <p className="text-slate-400 text-[10px] mt-1 uppercase tracking-wider font-extrabold">{profile.role.replace('_', ' ')}</p>
             <p className="text-slate-500 text-xxs mt-2 break-all">{profile.email}</p>
           </div>
         </div>
 
         {/* Tab Selectors Panel */}
         <div className="p-[1.5px] rounded-3xl bg-gradient-to-b from-violet-500/10 via-amber-500/10 to-yellow-500/10 shadow-xl">
-          <div className="bg-white rounded-[23px] p-3 border border-slate-200/50 flex flex-col space-y-1">
+          <div className="bg-slate-950 rounded-[23px] p-3 border border-white/10 flex flex-col space-y-1">
             {[
               { id: 'overview', label: 'Overview Hub', icon: BarChart2 },
               { id: 'personal', label: 'Personal Info', icon: User },
@@ -487,8 +487,8 @@ export default function ProfileDashboard() {
                   onClick={() => { setActiveTab(tab.id); setError(''); setMessage(''); }}
                   className={`flex items-center space-x-3 px-4 py-3 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                     activeTab === tab.id
-                      ? 'bg-gradient-to-r from-violet-600 to-fuchsia-600 text-slate-800 shadow-md'
-                      : 'text-slate-600 hover:text-slate-850 hover:bg-slate-50'
+                      ? 'bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-md'
+                      : 'text-slate-400 hover:text-slate-850 hover:glass-card-indigo-violet'
                   }`}
                 >
                   <Icon size={15} />
@@ -503,36 +503,36 @@ export default function ProfileDashboard() {
       {/* RIGHT COLUMN: Tab Panel content consoles (3 col span) */}
       <div className="lg:col-span-3 space-y-6 text-left">
         {error && (
-          <div className="mb-6 p-4 rounded-2xl bg-rose-950/30 border border-rose-500/20 text-rose-600 text-xs font-bold">
+          <div className="mb-6 p-4 rounded-2xl bg-rose-950/30 border border-rose-500/20 text-rose-455 text-xs font-bold">
             {error}
           </div>
         )}
 
         {message && (
-          <div className="mb-6 p-4 rounded-2xl bg-emerald-950/30 border border-emerald-500/20 text-emerald-600 text-xs font-bold flex items-center space-x-2">
+          <div className="mb-6 p-4 rounded-2xl bg-emerald-950/30 border border-emerald-500/20 text-emerald-450 text-xs font-bold flex items-center space-x-2">
             <CheckCircle size={14} />
             <span>{message}</span>
           </div>
         )}
 
         <div className="p-[1.5px] rounded-3xl bg-gradient-to-tr from-violet-500/20 via-amber-500/20 to-yellow-500/25 shadow-2xl">
-          <div className="bg-white rounded-[23px] p-6 sm:p-8 shadow-xl min-h-[50vh] border border-slate-200/50">
+          <div className="bg-slate-950/80 rounded-[23px] p-6 sm:p-8 shadow-xl min-h-[50vh] border border-white/10 backdrop-blur-2xl">
             
             {/* TAB 0: Overview Hub */}
             {activeTab === 'overview' && (
               <div className="space-y-8 animate-fade-in">
                 
                 {/* Covers banner details: Frosted Glass Profile Card */}
-                <div className="p-6 rounded-3xl bg-slate-50 border border-slate-200 relative overflow-hidden flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 shadow-xl">
+                <div className="p-6 rounded-3xl glass-card-indigo-violet relative overflow-hidden flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 shadow-xl">
                   <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-violet-500 via-fuchsia-500 to-cyan-400" />
                   <div>
-                    <h4 className="text-2xl font-black text-slate-800 tracking-tight">{fullName || 'User Profile'}</h4>
-                    <p className="text-xs text-violet-600 font-black mt-1 uppercase tracking-wider">{profile?.role?.replace('_', ' ')}</p>
-                    <p className="text-slate-650 text-xs mt-3.5 leading-relaxed max-w-xl font-semibold">{bio || 'No professional summary set. Update personal details tab to describe your stack focus.'}</p>
+                    <h4 className="text-2xl font-black text-white tracking-tight">{fullName || 'User Profile'}</h4>
+                    <p className="text-xs text-violet-400 font-black mt-1 uppercase tracking-wider">{profile?.role?.replace('_', ' ')}</p>
+                    <p className="text-slate-350 text-xs mt-3.5 leading-relaxed max-w-xl font-semibold">{bio || 'No professional summary set. Update personal details tab to describe your stack focus.'}</p>
                   </div>
                   <button 
                     onClick={() => setActiveTab('personal')}
-                    className="px-5 py-3 border border-slate-200 hover:border-violet-500/30 hover:bg-slate-50 text-slate-700 hover:text-slate-800 rounded-2xl text-xs font-extrabold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 uppercase tracking-wider"
+                    className="px-5 py-3 border border-white/10 hover:border-violet-500/30 hover:glass-card-indigo-violet text-slate-300 hover:text-white rounded-2xl text-xs font-extrabold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 uppercase tracking-wider"
                   >
                     <Pencil size={12} />
                     <span>Edit Profile</span>
@@ -543,9 +543,9 @@ export default function ProfileDashboard() {
                   {/* Left stats/handles (5 cols) */}
                   <div className="md:col-span-5 space-y-6">
                     {/* Handles */}
-                    <div className="p-6 rounded-3xl bg-slate-50 border border-slate-200 space-y-5">
-                      <h5 className="text-[9px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-100 pb-2">Connect Links</h5>
-                      <div className="space-y-3.5 text-xs text-slate-650 font-bold">
+                    <div className="p-6 rounded-3xl glass-card-indigo-violet space-y-5">
+                      <h5 className="text-[9px] font-black text-slate-500 uppercase tracking-widest border-b border-white/5 pb-2">Connect Links</h5>
+                      <div className="space-y-3.5 text-xs text-slate-350 font-bold">
                         {profile?.phone && (
                           <div className="flex items-center gap-2.5">
                             <Phone size={13} className="text-slate-400" />
@@ -557,13 +557,13 @@ export default function ProfileDashboard() {
                           <span className="truncate">{profile?.email}</span>
                         </div>
                         {portfolioUrl && (
-                          <a href={portfolioUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2.5 text-violet-600 hover:underline">
+                          <a href={portfolioUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2.5 text-violet-400 hover:underline">
                             <Globe size={13} className="text-violet-550" />
                             <span className="truncate">Portfolio Link</span>
                           </a>
                         )}
                         {githubUrl && (
-                          <a href={githubUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2.5 text-violet-600 hover:underline">
+                          <a href={githubUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2.5 text-violet-400 hover:underline">
                             <ExternalLink size={13} className="text-violet-550" />
                             <span className="truncate">GitHub Profile</span>
                           </a>
@@ -572,10 +572,10 @@ export default function ProfileDashboard() {
                     </div>
 
                     {/* Skills Summary with simulated proficiency bars */}
-                    <div className="p-6 rounded-3xl bg-slate-50 border border-slate-200 space-y-5">
-                      <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+                    <div className="p-6 rounded-3xl glass-card-indigo-violet space-y-5">
+                      <div className="flex justify-between items-center border-b border-white/5 pb-2">
                         <h5 className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Technical Skills</h5>
-                        <button onClick={() => setActiveTab('skills')} className="text-violet-600 hover:underline text-[9px] font-black uppercase tracking-wider cursor-pointer">Edit</button>
+                        <button onClick={() => setActiveTab('skills')} className="text-violet-400 hover:underline text-[9px] font-black uppercase tracking-wider cursor-pointer">Edit</button>
                       </div>
                       <div className="space-y-4">
                         {skills.length === 0 ? (
@@ -586,11 +586,11 @@ export default function ProfileDashboard() {
                             const val = [92, 85, 78, 70][index % 4];
                             return (
                               <div key={skill} className="space-y-1.5">
-                                <div className="flex justify-between text-xxs font-bold text-slate-700">
+                                <div className="flex justify-between text-xxs font-bold text-slate-300">
                                   <span>{skill}</span>
-                                  <span className="text-violet-600">{val}%</span>
+                                  <span className="text-violet-400">{val}%</span>
                                 </div>
-                                <div className="h-1.5 bg-slate-50 rounded-full overflow-hidden border border-slate-100">
+                                <div className="h-1.5 glass-card-indigo-violet rounded-full overflow-hidden border border-white/5">
                                   <div 
                                     className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-500 rounded-full" 
                                     style={{ width: `${val}%` }}
@@ -612,22 +612,22 @@ export default function ProfileDashboard() {
                   {/* Right timelines/AI (7 cols) */}
                   <div className="md:col-span-7 space-y-6">
                     {/* Work history timeline */}
-                    <div className="p-6 rounded-3xl bg-slate-50 border border-slate-200 space-y-5">
-                      <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+                    <div className="p-6 rounded-3xl glass-card-indigo-violet space-y-5">
+                      <div className="flex justify-between items-center border-b border-white/5 pb-2">
                         <h5 className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Work History</h5>
-                        <button onClick={() => setActiveTab('experience')} className="text-violet-600 hover:underline text-[9px] font-black uppercase tracking-wider cursor-pointer">Manage</button>
+                        <button onClick={() => setActiveTab('experience')} className="text-violet-400 hover:underline text-[9px] font-black uppercase tracking-wider cursor-pointer">Manage</button>
                       </div>
-                      <div className="space-y-5 relative border-l border-slate-200 pl-4 ml-1">
+                      <div className="space-y-5 relative border-l border-white/10 pl-4 ml-1">
                         {profile?.experience && profile.experience.length > 0 ? (
                           profile.experience.map(exp => (
                             <div key={exp.id} className="relative space-y-1">
-                              <span className="absolute -left-[21.5px] top-1.5 w-2.5 h-2.5 rounded-full bg-violet-500 ring-4 ring-white" />
+                              <span className="absolute -left-[21.5px] top-1.5 w-2.5 h-2.5 rounded-full bg-violet-600/150 ring-4 ring-slate-950" />
                               <div className="flex justify-between items-start text-xs font-black">
-                                <h6 className="text-slate-800">{exp.job_title}</h6>
+                                <h6 className="text-white">{exp.job_title}</h6>
                                 <span className="text-[9px] text-slate-500 font-extrabold uppercase">{new Date(exp.start_date).getFullYear()} - {exp.is_current ? 'Present' : exp.end_date ? new Date(exp.end_date).getFullYear() : ''}</span>
                               </div>
-                              <p className="text-violet-600 text-[10px] font-extrabold mt-0.5">{exp.company_name}</p>
-                              <p className="text-slate-600 text-xxs leading-relaxed font-semibold line-clamp-2 mt-1">{exp.description}</p>
+                              <p className="text-violet-400 text-[10px] font-extrabold mt-0.5">{exp.company_name}</p>
+                              <p className="text-slate-400 text-xxs leading-relaxed font-semibold line-clamp-2 mt-1">{exp.description}</p>
                             </div>
                           ))
                         ) : (
@@ -637,13 +637,13 @@ export default function ProfileDashboard() {
                     </div>
 
                     {/* AI Resume Overview with Score Ring */}
-                    <div className="p-6 rounded-3xl bg-slate-50 border border-slate-200 space-y-5">
-                      <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+                    <div className="p-6 rounded-3xl glass-card-indigo-violet space-y-5">
+                      <div className="flex justify-between items-center border-b border-white/5 pb-2">
                         <h5 className="text-[9px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1">
-                          <Sparkles size={12} className="text-violet-600" />
+                          <Sparkles size={12} className="text-violet-400" />
                           <span>AI Score Analysis</span>
                         </h5>
-                        <button onClick={() => setActiveTab('resume')} className="text-violet-600 hover:underline text-[9px] font-black uppercase tracking-wider cursor-pointer">Analyze</button>
+                        <button onClick={() => setActiveTab('resume')} className="text-violet-400 hover:underline text-[9px] font-black uppercase tracking-wider cursor-pointer">Analyze</button>
                       </div>
                       {aiAnalysis ? (
                         <div className="flex items-center gap-6">
@@ -676,11 +676,11 @@ export default function ProfileDashboard() {
                                 </linearGradient>
                               </defs>
                             </svg>
-                            <span className="absolute text-xs font-black text-slate-800">{aiAnalysis.score || 85}%</span>
+                            <span className="absolute text-xs font-black text-white">{aiAnalysis.score || 85}%</span>
                           </div>
                           <div>
-                            <span className="text-xs font-black text-slate-800 block">ATS Target Checklist</span>
-                            <span className="text-slate-600 text-xxs font-semibold mt-1 block">Your resume keyword matching status is optimized for AI discovery queues.</span>
+                            <span className="text-xs font-black text-white block">ATS Target Checklist</span>
+                            <span className="text-slate-400 text-xxs font-semibold mt-1 block">Your resume keyword matching status is optimized for AI discovery queues.</span>
                           </div>
                         </div>
                       ) : (
@@ -698,8 +698,8 @@ export default function ProfileDashboard() {
             {/* TAB 1: Personal Info Details */}
             {activeTab === 'personal' && (
               <div className="space-y-6 animate-fade-in">
-                <h3 className="text-base font-black text-slate-800 tracking-tight mb-6 flex items-center gap-1.5">
-                  <User size={16} className="text-violet-600" />
+                <h3 className="text-base font-black text-white tracking-tight mb-6 flex items-center gap-1.5">
+                  <User size={16} className="text-violet-400" />
                   <span>Personal Details Console</span>
                 </h3>
                 <form onSubmit={handleSavePersonal} className="space-y-5">
@@ -710,7 +710,7 @@ export default function ProfileDashboard() {
                         type="text"
                         value={fullName}
                         onChange={(e) => setFullName(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-200 focus:border-violet-500 focus:bg-slate-50/95 focus:ring-4 focus:ring-violet-500/10 rounded-2xl py-3 px-4 text-slate-800 text-xs outline-none transition-all placeholder-slate-550 font-semibold"
+                        className="w-full glass-card-indigo-violet focus:border-violet-500 focus:glass-card-indigo-violet/95 focus:ring-4 focus:ring-violet-500/10 rounded-2xl py-3 px-4 text-white text-xs outline-none transition-all placeholder-slate-550 font-semibold"
                         placeholder="Jane Doe"
                       />
                     </div>
@@ -720,7 +720,7 @@ export default function ProfileDashboard() {
                         type="text"
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-200 focus:border-violet-500 focus:bg-slate-50/95 focus:ring-4 focus:ring-violet-500/10 rounded-2xl py-3 px-4 text-slate-800 text-xs outline-none transition-all placeholder-slate-550 font-semibold"
+                        className="w-full glass-card-indigo-violet focus:border-violet-500 focus:glass-card-indigo-violet/95 focus:ring-4 focus:ring-violet-500/10 rounded-2xl py-3 px-4 text-white text-xs outline-none transition-all placeholder-slate-550 font-semibold"
                         placeholder="+1 (234) 567-890"
                       />
                     </div>
@@ -732,7 +732,7 @@ export default function ProfileDashboard() {
                       value={bio}
                       onChange={(e) => setBio(e.target.value)}
                       rows={4}
-                      className="w-full bg-slate-50 border border-slate-200 focus:border-violet-500 focus:bg-slate-50/95 focus:ring-4 focus:ring-violet-500/10 rounded-2xl py-3 px-4 text-slate-800 text-xs outline-none resize-none transition-all placeholder-slate-555 font-semibold"
+                      className="w-full glass-card-indigo-violet focus:border-violet-500 focus:glass-card-indigo-violet/95 focus:ring-4 focus:ring-violet-500/10 rounded-2xl py-3 px-4 text-white text-xs outline-none resize-none transition-all placeholder-slate-555 font-semibold"
                       placeholder="Brief bio describing your field of expertise..."
                     />
                   </div>
@@ -744,7 +744,7 @@ export default function ProfileDashboard() {
                         type="url"
                         value={portfolioUrl}
                         onChange={(e) => setPortfolioUrl(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-200 focus:border-violet-500 focus:bg-slate-50/95 focus:ring-4 focus:ring-violet-500/10 rounded-2xl py-3 px-4 text-slate-800 text-xs outline-none transition-all placeholder-slate-555 font-semibold"
+                        className="w-full glass-card-indigo-violet focus:border-violet-500 focus:glass-card-indigo-violet/95 focus:ring-4 focus:ring-violet-500/10 rounded-2xl py-3 px-4 text-white text-xs outline-none transition-all placeholder-slate-555 font-semibold"
                         placeholder="https://myportfolio.com"
                       />
                     </div>
@@ -754,7 +754,7 @@ export default function ProfileDashboard() {
                         type="url"
                         value={githubUrl}
                         onChange={(e) => setGithubUrl(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-200 focus:border-violet-500 focus:bg-slate-50/95 focus:ring-4 focus:ring-violet-500/10 rounded-2xl py-3 px-4 text-slate-800 text-xs outline-none transition-all placeholder-slate-555 font-semibold"
+                        className="w-full glass-card-indigo-violet focus:border-violet-500 focus:glass-card-indigo-violet/95 focus:ring-4 focus:ring-violet-500/10 rounded-2xl py-3 px-4 text-white text-xs outline-none transition-all placeholder-slate-555 font-semibold"
                         placeholder="https://github.com/myusername"
                       />
                     </div>
@@ -764,7 +764,7 @@ export default function ProfileDashboard() {
                         type="url"
                         value={linkedinUrl}
                         onChange={(e) => setLinkedinUrl(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-200 focus:border-violet-500 focus:bg-slate-50/95 focus:ring-4 focus:ring-violet-500/10 rounded-2xl py-3 px-4 text-slate-800 text-xs outline-none transition-all placeholder-slate-555 font-semibold"
+                        className="w-full glass-card-indigo-violet focus:border-violet-500 focus:glass-card-indigo-violet/95 focus:ring-4 focus:ring-violet-500/10 rounded-2xl py-3 px-4 text-white text-xs outline-none transition-all placeholder-slate-555 font-semibold"
                         placeholder="https://linkedin.com/in/myusername"
                       />
                     </div>
@@ -773,7 +773,7 @@ export default function ProfileDashboard() {
                   <button
                     type="submit"
                     disabled={saving}
-                    className="px-6 py-3.5 bg-gradient-to-r from-violet-650 via-fuchsia-650 to-indigo-650 text-slate-800 rounded-2xl text-xs font-extrabold transition-all shadow-md active:scale-95 disabled:opacity-50 cursor-pointer uppercase tracking-wider"
+                    className="px-6 py-3.5 bg-gradient-to-r from-violet-650 via-fuchsia-650 to-indigo-650 text-white rounded-2xl text-xs font-extrabold transition-all shadow-md active:scale-95 disabled:opacity-50 cursor-pointer uppercase tracking-wider"
                   >
                     {saving ? 'Saving changes...' : 'Save Settings'}
                   </button>
@@ -784,8 +784,8 @@ export default function ProfileDashboard() {
             {/* TAB 2: Technical Skills */}
             {activeTab === 'skills' && (
               <div className="space-y-6 animate-fade-in">
-                <h3 className="text-base font-black text-slate-800 tracking-tight mb-6 flex items-center gap-1.5">
-                  <Code size={16} className="text-violet-600" />
+                <h3 className="text-base font-black text-white tracking-tight mb-6 flex items-center gap-1.5">
+                  <Code size={16} className="text-violet-400" />
                   <span>Technical Skills Editor</span>
                 </h3>
 
@@ -794,12 +794,12 @@ export default function ProfileDashboard() {
                     type="text"
                     value={skillInput}
                     onChange={(e) => setSkillInput(e.target.value)}
-                    className="flex-grow bg-slate-50 border border-slate-200 focus:border-violet-500 focus:bg-slate-50/95 focus:ring-4 focus:ring-violet-500/10 rounded-2xl py-3 px-4 text-slate-800 text-xs outline-none transition-all placeholder-slate-555 font-semibold"
+                    className="flex-grow glass-card-indigo-violet focus:border-violet-500 focus:glass-card-indigo-violet/95 focus:ring-4 focus:ring-violet-500/10 rounded-2xl py-3 px-4 text-white text-xs outline-none transition-all placeholder-slate-555 font-semibold"
                     placeholder="E.g., PyTorch, GraphQL, CUDA"
                   />
                   <button
                     type="submit"
-                    className="px-5 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-indigo-650 text-slate-800 rounded-2xl text-xs font-extrabold hover:scale-105 active:scale-95 transition-all cursor-pointer uppercase tracking-wider"
+                    className="px-5 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-indigo-650 text-white rounded-2xl text-xs font-extrabold hover:scale-105 active:scale-95 transition-all cursor-pointer uppercase tracking-wider"
                   >
                     Add
                   </button>
@@ -812,12 +812,12 @@ export default function ProfileDashboard() {
                     skills.map((skill) => (
                       <span 
                         key={skill} 
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 text-xxs font-extrabold"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl glass-card-indigo-violet text-slate-300 text-xxs font-extrabold"
                       >
                         <span>{skill}</span>
                         <button 
                           onClick={() => handleSkillRemove(skill)}
-                          className="p-0.5 hover:bg-white/15 rounded-md text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
+                          className="p-0.5 hover:bg-white/15 rounded-md text-slate-500 hover:text-white transition-colors cursor-pointer"
                         >
                           <X size={10} />
                         </button>
@@ -831,13 +831,13 @@ export default function ProfileDashboard() {
             {/* TAB 3: Experience Logs */}
             {activeTab === 'experience' && (
               <div className="space-y-8 animate-fade-in">
-                <h3 className="text-base font-black text-slate-800 tracking-tight mb-6 flex items-center gap-1.5">
-                  <Briefcase size={16} className="text-violet-600" />
+                <h3 className="text-base font-black text-white tracking-tight mb-6 flex items-center gap-1.5">
+                  <Briefcase size={16} className="text-violet-400" />
                   <span>Work History Console</span>
                 </h3>
 
-                <form onSubmit={handleAddExperience} className="space-y-4 p-5 rounded-2xl bg-slate-50 border border-slate-200">
-                  <h4 className="text-xs font-black uppercase tracking-wider text-slate-600">Add Experience Record</h4>
+                <form onSubmit={handleAddExperience} className="space-y-4 p-5 rounded-2xl glass-card-indigo-violet">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-slate-400">Add Experience Record</h4>
                   
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div>
@@ -846,7 +846,7 @@ export default function ProfileDashboard() {
                         type="text"
                         value={expTitle}
                         onChange={(e) => setExpTitle(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-slate-800 text-xs outline-none placeholder-slate-550 font-semibold"
+                        className="w-full glass-card-indigo-violet rounded-xl py-2.5 px-3 text-white text-xs outline-none placeholder-slate-550 font-semibold"
                         placeholder="Systems Architect"
                       />
                     </div>
@@ -856,7 +856,7 @@ export default function ProfileDashboard() {
                         type="text"
                         value={expCompany}
                         onChange={(e) => setExpCompany(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-slate-800 text-xs outline-none placeholder-slate-550 font-semibold"
+                        className="w-full glass-card-indigo-violet rounded-xl py-2.5 px-3 text-white text-xs outline-none placeholder-slate-550 font-semibold"
                         placeholder="Google Inc."
                       />
                     </div>
@@ -869,7 +869,7 @@ export default function ProfileDashboard() {
                         type="date"
                         value={expStartDate}
                         onChange={(e) => setExpStartDate(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-slate-800 text-xs outline-none font-semibold text-slate-600"
+                        className="w-full glass-card-indigo-violet rounded-xl py-2.5 px-3 text-white text-xs outline-none font-semibold text-slate-400"
                       />
                     </div>
                     <div>
@@ -879,7 +879,7 @@ export default function ProfileDashboard() {
                         value={expEndDate}
                         disabled={expIsCurrent}
                         onChange={(e) => setExpEndDate(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-slate-800 text-xs outline-none font-semibold text-slate-600 disabled:opacity-50"
+                        className="w-full glass-card-indigo-violet rounded-xl py-2.5 px-3 text-white text-xs outline-none font-semibold text-slate-400 disabled:opacity-50"
                       />
                     </div>
                     <div className="flex items-center space-x-2 pt-5">
@@ -887,10 +887,10 @@ export default function ProfileDashboard() {
                         type="checkbox"
                         checked={expIsCurrent}
                         onChange={(e) => setExpIsCurrent(e.target.checked)}
-                        className="rounded border-slate-200 bg-white focus:ring-violet-600 cursor-pointer"
+                        className="rounded border-white/10 bg-slate-900 focus:ring-violet-500 cursor-pointer"
                         id="expCurrent"
                       />
-                      <label htmlFor="expCurrent" className="text-xxs font-bold text-slate-600 uppercase tracking-wider cursor-pointer">Current Role</label>
+                      <label htmlFor="expCurrent" className="text-xxs font-bold text-slate-400 uppercase tracking-wider cursor-pointer">Current Role</label>
                     </div>
                   </div>
 
@@ -900,7 +900,7 @@ export default function ProfileDashboard() {
                       type="text"
                       value={expLocation}
                       onChange={(e) => setExpLocation(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-slate-800 text-xs outline-none placeholder-slate-550 font-semibold"
+                      className="w-full glass-card-indigo-violet rounded-xl py-2.5 px-3 text-white text-xs outline-none placeholder-slate-550 font-semibold"
                       placeholder="Mountain View, CA"
                     />
                   </div>
@@ -911,14 +911,14 @@ export default function ProfileDashboard() {
                       value={expDescription}
                       onChange={(e) => setExpDescription(e.target.value)}
                       rows={3}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-slate-800 text-xs outline-none resize-none placeholder-slate-555 font-semibold"
+                      className="w-full glass-card-indigo-violet rounded-xl py-2.5 px-3 text-white text-xs outline-none resize-none placeholder-slate-555 font-semibold"
                       placeholder="Detail technical actions, pipeline metrics, teams led..."
                     />
                   </div>
 
                   <button
                     type="submit"
-                    className="px-5 py-2.5 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-indigo-650 text-slate-800 rounded-xl text-xs font-extrabold hover:scale-102 active:scale-95 transition-all cursor-pointer uppercase tracking-wider"
+                    className="px-5 py-2.5 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-indigo-650 text-white rounded-xl text-xs font-extrabold hover:scale-102 active:scale-95 transition-all cursor-pointer uppercase tracking-wider"
                   >
                     Add Experience
                   </button>
@@ -926,16 +926,16 @@ export default function ProfileDashboard() {
 
                 <div className="space-y-4">
                   {profile.experience?.map((exp) => (
-                    <div key={exp.id} className="flex justify-between items-start p-5 rounded-2xl bg-slate-50/50 border border-slate-200">
+                    <div key={exp.id} className="flex justify-between items-start p-5 rounded-2xl glass-card-indigo-violet">
                       <div>
-                        <h4 className="text-sm font-extrabold text-slate-800">{exp.job_title}</h4>
-                        <span className="text-violet-600 text-xxs font-bold">{exp.company_name}</span>
+                        <h4 className="text-sm font-extrabold text-white">{exp.job_title}</h4>
+                        <span className="text-violet-400 text-xxs font-bold">{exp.company_name}</span>
                         <p className="text-slate-500 text-xxs mt-1 font-semibold">{exp.start_date} - {exp.is_current ? 'Present' : exp.end_date}</p>
-                        <p className="text-slate-600 text-xxs mt-3 leading-relaxed font-semibold">{exp.description}</p>
+                        <p className="text-slate-400 text-xxs mt-3 leading-relaxed font-semibold">{exp.description}</p>
                       </div>
                       <button 
                         onClick={() => handleDeleteExperience(exp.id)}
-                        className="p-2 hover:bg-rose-50 border border-slate-200 hover:border-rose-500/30 text-slate-500 hover:text-rose-500 rounded-xl transition-all cursor-pointer shrink-0"
+                        className="p-2 hover:bg-rose-500/10 border border-white/10 hover:border-rose-500/30 text-slate-500 hover:text-rose-500 rounded-xl transition-all cursor-pointer shrink-0"
                       >
                         <Trash2 size={13} />
                       </button>
@@ -948,13 +948,13 @@ export default function ProfileDashboard() {
             {/* TAB 4: Education Hub */}
             {activeTab === 'education' && (
               <div className="space-y-8 animate-fade-in">
-                <h3 className="text-base font-black text-slate-800 tracking-tight mb-6 flex items-center gap-1.5">
-                  <GraduationCap size={16} className="text-violet-600" />
+                <h3 className="text-base font-black text-white tracking-tight mb-6 flex items-center gap-1.5">
+                  <GraduationCap size={16} className="text-violet-400" />
                   <span>Education Hub Console</span>
                 </h3>
 
-                <form onSubmit={handleAddEducation} className="space-y-4 p-5 rounded-2xl bg-slate-50 border border-slate-200">
-                  <h4 className="text-xs font-black uppercase tracking-wider text-slate-600">Add Academic Record</h4>
+                <form onSubmit={handleAddEducation} className="space-y-4 p-5 rounded-2xl glass-card-indigo-violet">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-slate-400">Add Academic Record</h4>
 
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div>
@@ -963,7 +963,7 @@ export default function ProfileDashboard() {
                         type="text"
                         value={eduInstitution}
                         onChange={(e) => setEduInstitution(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-slate-800 text-xs outline-none placeholder-slate-550 font-semibold"
+                        className="w-full glass-card-indigo-violet rounded-xl py-2.5 px-3 text-white text-xs outline-none placeholder-slate-550 font-semibold"
                         placeholder="Stanford University"
                       />
                     </div>
@@ -973,7 +973,7 @@ export default function ProfileDashboard() {
                         type="text"
                         value={eduDegree}
                         onChange={(e) => setEduDegree(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-slate-800 text-xs outline-none placeholder-slate-550 font-semibold"
+                        className="w-full glass-card-indigo-violet rounded-xl py-2.5 px-3 text-white text-xs outline-none placeholder-slate-550 font-semibold"
                         placeholder="Master of Science (M.S.)"
                       />
                     </div>
@@ -986,7 +986,7 @@ export default function ProfileDashboard() {
                         type="date"
                         value={eduStartDate}
                         onChange={(e) => setEduStartDate(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-slate-800 text-xs outline-none font-semibold text-slate-600"
+                        className="w-full glass-card-indigo-violet rounded-xl py-2.5 px-3 text-white text-xs outline-none font-semibold text-slate-400"
                       />
                     </div>
                     <div>
@@ -996,7 +996,7 @@ export default function ProfileDashboard() {
                         value={eduEndDate}
                         disabled={eduIsCurrent}
                         onChange={(e) => setEduEndDate(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-slate-800 text-xs outline-none font-semibold text-slate-600 disabled:opacity-50"
+                        className="w-full glass-card-indigo-violet rounded-xl py-2.5 px-3 text-white text-xs outline-none font-semibold text-slate-400 disabled:opacity-50"
                       />
                     </div>
                     <div className="flex items-center space-x-2 pt-5">
@@ -1004,10 +1004,10 @@ export default function ProfileDashboard() {
                         type="checkbox"
                         checked={eduIsCurrent}
                         onChange={(e) => setEduIsCurrent(e.target.checked)}
-                        className="rounded border-slate-200 bg-white focus:ring-violet-600 cursor-pointer"
+                        className="rounded border-white/10 bg-slate-900 focus:ring-violet-500 cursor-pointer"
                         id="eduCurrent"
                       />
-                      <label htmlFor="eduCurrent" className="text-xxs font-bold text-slate-600 uppercase tracking-wider cursor-pointer">Enrolled</label>
+                      <label htmlFor="eduCurrent" className="text-xxs font-bold text-slate-400 uppercase tracking-wider cursor-pointer">Enrolled</label>
                     </div>
                   </div>
 
@@ -1017,14 +1017,14 @@ export default function ProfileDashboard() {
                       type="text"
                       value={eduField}
                       onChange={(e) => setEduField(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-slate-800 text-xs outline-none placeholder-slate-550 font-semibold"
+                      className="w-full glass-card-indigo-violet rounded-xl py-2.5 px-3 text-white text-xs outline-none placeholder-slate-550 font-semibold"
                       placeholder="Computer Science & ML"
                     />
                   </div>
 
                   <button
                     type="submit"
-                    className="px-5 py-2.5 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-indigo-650 text-slate-800 rounded-xl text-xs font-extrabold hover:scale-102 active:scale-95 transition-all cursor-pointer uppercase tracking-wider"
+                    className="px-5 py-2.5 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-indigo-650 text-white rounded-xl text-xs font-extrabold hover:scale-102 active:scale-95 transition-all cursor-pointer uppercase tracking-wider"
                   >
                     Add Education
                   </button>
@@ -1032,15 +1032,15 @@ export default function ProfileDashboard() {
 
                 <div className="space-y-4">
                   {profile.education?.map((edu) => (
-                    <div key={edu.id} className="flex justify-between items-start p-5 rounded-2xl bg-slate-50/50 border border-slate-200">
+                    <div key={edu.id} className="flex justify-between items-start p-5 rounded-2xl glass-card-indigo-violet">
                       <div>
-                        <h4 className="text-sm font-extrabold text-slate-800">{edu.degree} in {edu.field_of_study}</h4>
-                        <span className="text-violet-600 text-xxs font-bold">{edu.institution_name}</span>
+                        <h4 className="text-sm font-extrabold text-white">{edu.degree} in {edu.field_of_study}</h4>
+                        <span className="text-violet-400 text-xxs font-bold">{edu.institution_name}</span>
                         <p className="text-slate-500 text-xxs mt-1 font-semibold">{edu.start_date} - {edu.is_current ? 'Present' : edu.end_date}</p>
                       </div>
                       <button 
                         onClick={() => handleDeleteEducation(edu.id)}
-                        className="p-2 hover:bg-rose-50 border border-slate-200 hover:border-rose-500/30 text-slate-500 hover:text-rose-500 rounded-xl transition-all cursor-pointer shrink-0"
+                        className="p-2 hover:bg-rose-500/10 border border-white/10 hover:border-rose-500/30 text-slate-500 hover:text-rose-500 rounded-xl transition-all cursor-pointer shrink-0"
                       >
                         <Trash2 size={13} />
                       </button>
@@ -1053,13 +1053,13 @@ export default function ProfileDashboard() {
             {/* TAB 5: Projects Showcase */}
             {activeTab === 'projects' && (
               <div className="space-y-8 animate-fade-in">
-                <h3 className="text-base font-black text-slate-800 tracking-tight mb-6 flex items-center gap-1.5">
-                  <Folder size={16} className="text-violet-600" />
+                <h3 className="text-base font-black text-white tracking-tight mb-6 flex items-center gap-1.5">
+                  <Folder size={16} className="text-violet-400" />
                   <span>Projects Showcase Console</span>
                 </h3>
 
-                <form onSubmit={handleAddProject} className="space-y-4 p-5 rounded-2xl bg-slate-50 border border-slate-200">
-                  <h4 className="text-xs font-black uppercase tracking-wider text-slate-600">Add Project Record</h4>
+                <form onSubmit={handleAddProject} className="space-y-4 p-5 rounded-2xl glass-card-indigo-violet">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-slate-400">Add Project Record</h4>
 
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div>
@@ -1068,7 +1068,7 @@ export default function ProfileDashboard() {
                         type="text"
                         value={projName}
                         onChange={(e) => setProjName(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-slate-800 text-xs outline-none placeholder-slate-550 font-semibold"
+                        className="w-full glass-card-indigo-violet rounded-xl py-2.5 px-3 text-white text-xs outline-none placeholder-slate-550 font-semibold"
                         placeholder="Decentralized Database Sync"
                       />
                     </div>
@@ -1078,7 +1078,7 @@ export default function ProfileDashboard() {
                         type="url"
                         value={projUrl}
                         onChange={(e) => setProjUrl(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-slate-800 text-xs outline-none placeholder-slate-555 font-semibold"
+                        className="w-full glass-card-indigo-violet rounded-xl py-2.5 px-3 text-white text-xs outline-none placeholder-slate-555 font-semibold"
                         placeholder="https://github.com/myusername/project"
                       />
                     </div>
@@ -1091,7 +1091,7 @@ export default function ProfileDashboard() {
                         type="date"
                         value={projStartDate}
                         onChange={(e) => setProjStartDate(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-slate-800 text-xs outline-none font-semibold text-slate-600"
+                        className="w-full glass-card-indigo-violet rounded-xl py-2.5 px-3 text-white text-xs outline-none font-semibold text-slate-400"
                       />
                     </div>
                     <div>
@@ -1101,7 +1101,7 @@ export default function ProfileDashboard() {
                         value={projEndDate}
                         disabled={projIsCurrent}
                         onChange={(e) => setProjEndDate(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-slate-800 text-xs outline-none font-semibold text-slate-600 disabled:opacity-50"
+                        className="w-full glass-card-indigo-violet rounded-xl py-2.5 px-3 text-white text-xs outline-none font-semibold text-slate-400 disabled:opacity-50"
                       />
                     </div>
                     <div className="flex items-center space-x-2 pt-5">
@@ -1109,10 +1109,10 @@ export default function ProfileDashboard() {
                         type="checkbox"
                         checked={projIsCurrent}
                         onChange={(e) => setProjIsCurrent(e.target.checked)}
-                        className="rounded border-slate-200 bg-white focus:ring-violet-600 cursor-pointer"
+                        className="rounded border-white/10 bg-slate-900 focus:ring-violet-500 cursor-pointer"
                         id="projCurrent"
                       />
-                      <label htmlFor="projCurrent" className="text-xxs font-bold text-slate-600 uppercase tracking-wider cursor-pointer">In Development</label>
+                      <label htmlFor="projCurrent" className="text-xxs font-bold text-slate-400 uppercase tracking-wider cursor-pointer">In Development</label>
                     </div>
                   </div>
 
@@ -1122,14 +1122,14 @@ export default function ProfileDashboard() {
                       value={projDescription}
                       onChange={(e) => setProjDescription(e.target.value)}
                       rows={3}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-3 text-slate-800 text-xs outline-none resize-none placeholder-slate-555 font-semibold"
+                      className="w-full glass-card-indigo-violet rounded-xl py-2.5 px-3 text-white text-xs outline-none resize-none placeholder-slate-555 font-semibold"
                       placeholder="Build stack details, challenges met, throughput..."
                     />
                   </div>
 
                   <button
                     type="submit"
-                    className="px-5 py-2.5 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-indigo-650 text-slate-800 rounded-xl text-xs font-extrabold hover:scale-102 active:scale-95 transition-all cursor-pointer uppercase tracking-wider"
+                    className="px-5 py-2.5 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-indigo-650 text-white rounded-xl text-xs font-extrabold hover:scale-102 active:scale-95 transition-all cursor-pointer uppercase tracking-wider"
                   >
                     Add Project
                   </button>
@@ -1137,22 +1137,22 @@ export default function ProfileDashboard() {
 
                 <div className="space-y-4">
                   {profile.projects?.map((proj) => (
-                    <div key={proj.id} className="flex justify-between items-start p-5 rounded-2xl bg-slate-50/50 border border-slate-200">
+                    <div key={proj.id} className="flex justify-between items-start p-5 rounded-2xl glass-card-indigo-violet">
                       <div>
-                        <h4 className="text-sm font-extrabold text-slate-800 flex items-center gap-1.5">
+                        <h4 className="text-sm font-extrabold text-white flex items-center gap-1.5">
                           <span>{proj.project_name}</span>
                           {proj.project_url && (
-                            <a href={proj.project_url} target="_blank" rel="noreferrer" className="text-slate-500 hover:text-slate-800 transition-colors">
+                            <a href={proj.project_url} target="_blank" rel="noreferrer" className="text-slate-500 hover:text-white transition-colors">
                               <LinkIcon size={12} />
                             </a>
                           )}
                         </h4>
                         <p className="text-slate-500 text-xxs mt-1 font-semibold">{proj.start_date} - {proj.is_current ? 'Present' : proj.end_date}</p>
-                        <p className="text-slate-600 text-xxs mt-3 leading-relaxed font-semibold">{proj.description}</p>
+                        <p className="text-slate-400 text-xxs mt-3 leading-relaxed font-semibold">{proj.description}</p>
                       </div>
                       <button 
                         onClick={() => handleDeleteProject(proj.id)}
-                        className="p-2 hover:bg-rose-50 border border-slate-200 hover:border-rose-500/30 text-slate-500 hover:text-rose-500 rounded-xl transition-all cursor-pointer shrink-0"
+                        className="p-2 hover:bg-rose-500/10 border border-white/10 hover:border-rose-500/30 text-slate-500 hover:text-rose-500 rounded-xl transition-all cursor-pointer shrink-0"
                       >
                         <Trash2 size={13} />
                       </button>
@@ -1165,30 +1165,30 @@ export default function ProfileDashboard() {
             {/* TAB 6: Resumes & AI Optimization */}
             {activeTab === 'resume' && (
               <div className="space-y-8 animate-fade-in">
-                <h3 className="text-base font-black text-slate-800 tracking-tight mb-6 flex items-center gap-1.5">
-                  <FileText size={16} className="text-violet-600" />
+                <h3 className="text-base font-black text-white tracking-tight mb-6 flex items-center gap-1.5">
+                  <FileText size={16} className="text-violet-400" />
                   <span>Resume & AI Optimization Console</span>
                 </h3>
 
-                <form onSubmit={handleResumeUpload} className="p-6 rounded-2xl border border-dashed border-slate-200 bg-slate-50/40 text-center space-y-4">
-                  <div className="w-12 h-12 rounded-xl bg-violet-600/10 border border-violet-500/20 flex items-center justify-center text-violet-600 mx-auto">
+                <form onSubmit={handleResumeUpload} className="p-6 rounded-2xl border border-dashed border-white/10 glass-card-indigo-violet/40 text-center space-y-4">
+                  <div className="w-12 h-12 rounded-xl bg-violet-600/10 border border-violet-500/20 flex items-center justify-center text-violet-400 mx-auto">
                     <Upload size={22} className="animate-bounce" />
                   </div>
                   <div>
-                    <span className="text-xs font-bold text-slate-800 block">Upload CV (PDF format only)</span>
+                    <span className="text-xs font-bold text-white block">Upload CV (PDF format only)</span>
                     <span className="text-[10px] text-slate-400 block mt-1 font-semibold">Max file limit: 5MB</span>
                   </div>
                   <input
                     type="file"
                     accept=".pdf"
                     onChange={(e) => setResumeFile(e.target.files[0])}
-                    className="mx-auto block text-xxs text-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xxs file:font-extrabold file:bg-slate-50 file:text-slate-700 file:hover:bg-slate-100 file:cursor-pointer"
+                    className="mx-auto block text-xxs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xxs file:font-extrabold file:glass-card-indigo-violet file:text-slate-300 file:hover:bg-slate-900 file:cursor-pointer"
                   />
                   {resumeFile && (
                     <button
                       type="submit"
                       disabled={uploadingResume}
-                      className="px-6 py-2.5 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-indigo-650 text-slate-800 rounded-xl text-xs font-extrabold hover:scale-105 active:scale-95 transition-all disabled:opacity-50 cursor-pointer uppercase tracking-wider"
+                      className="px-6 py-2.5 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-indigo-650 text-white rounded-xl text-xs font-extrabold hover:scale-105 active:scale-95 transition-all disabled:opacity-50 cursor-pointer uppercase tracking-wider"
                     >
                       {uploadingResume ? 'Uploading...' : 'Confirm Upload'}
                     </button>
@@ -1196,20 +1196,20 @@ export default function ProfileDashboard() {
                 </form>
 
                 <div className="space-y-5">
-                  <h4 className="text-xs font-black uppercase tracking-wider text-slate-400 border-b border-slate-100 pb-2">Active Resumes</h4>
+                  <h4 className="text-xs font-black uppercase tracking-wider text-slate-400 border-b border-white/5 pb-2">Active Resumes</h4>
                   
                   {profile.resumes?.length === 0 ? (
                     <p className="text-slate-500 text-xs py-4">No CV files uploaded yet.</p>
                   ) : (
                     profile.resumes?.map((res) => (
-                      <div key={res.id} className="space-y-4 p-5 rounded-2xl bg-slate-50 border border-slate-200">
+                      <div key={res.id} className="space-y-4 p-5 rounded-2xl glass-card-indigo-violet">
                         <div className="flex justify-between items-center">
                           <div className="flex items-center space-x-3 min-w-0">
-                            <div className="w-10 h-10 rounded-xl bg-violet-600/10 border border-violet-500/20 flex items-center justify-center text-violet-600 shrink-0">
+                            <div className="w-10 h-10 rounded-xl bg-violet-600/10 border border-violet-500/20 flex items-center justify-center text-violet-400 shrink-0">
                               <FileText size={18} />
                             </div>
                             <div className="min-w-0">
-                              <span className="text-xs font-extrabold text-slate-800 truncate block max-w-[200px]">{res.filename}</span>
+                              <span className="text-xs font-extrabold text-white truncate block max-w-[200px]">{res.filename}</span>
                               <span className="text-[10px] text-slate-500 font-semibold block mt-0.5">Uploaded {new Date(res.uploaded_at).toLocaleDateString()}</span>
                             </div>
                           </div>
@@ -1218,13 +1218,13 @@ export default function ProfileDashboard() {
                             <button
                               onClick={() => handleGenerateAiAnalysis(res.id)}
                               disabled={analyzingResume}
-                              className="px-4 py-2 border border-violet-500/20 hover:border-violet-500/40 bg-violet-600/10 hover:bg-violet-600/25 text-violet-600 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
+                              className="px-4 py-2 border border-violet-500/20 hover:border-violet-500/40 bg-violet-600/10 hover:bg-violet-600/25 text-violet-400 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
                             >
                               {analyzingResume ? 'Analyzing...' : 'AI Review'}
                             </button>
                             <button
                               onClick={() => handleDeleteResume(res.id)}
-                              className="p-2 hover:bg-rose-50 border border-slate-200 hover:border-rose-500/30 text-slate-400 hover:text-rose-500 rounded-xl transition-all cursor-pointer"
+                              className="p-2 hover:bg-rose-500/10 border border-white/10 hover:border-rose-500/30 text-slate-400 hover:text-rose-500 rounded-xl transition-all cursor-pointer"
                             >
                               <Trash2 size={13} />
                             </button>
@@ -1233,22 +1233,22 @@ export default function ProfileDashboard() {
 
                         {/* AI resume Analysis report cache */}
                         {aiAnalysis && (
-                          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 shadow-sm space-y-4 text-left animate-fade-in font-semibold">
+                          <div className="p-4 rounded-xl glass-card-indigo-violet shadow-sm space-y-4 text-left animate-fade-in font-semibold">
                             <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-violet-650 to-fuchsia-650 flex items-center justify-center font-black text-slate-800 text-xs shadow-md">
+                              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-violet-650 to-fuchsia-650 flex items-center justify-center font-black text-white text-xs shadow-md">
                                 {aiAnalysis.score}%
                               </div>
                               <div>
-                                <span className="text-xs font-bold text-slate-800">AI Optimization Index</span>
+                                <span className="text-xs font-bold text-white">AI Optimization Index</span>
                                 <span className="text-[10px] text-slate-500 font-semibold block mt-0.5">ATS score evaluation</span>
                               </div>
                             </div>
 
                             {/* Improvements */}
                             {aiAnalysis.improvements && aiAnalysis.improvements.length > 0 && (
-                              <div className="space-y-2 pt-2 border-t border-slate-100">
+                              <div className="space-y-2 pt-2 border-t border-white/5">
                                 <h5 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">ATS Checklist suggestions</h5>
-                                <ul className="space-y-1.5 text-xxs text-slate-650 list-disc list-inside leading-relaxed">
+                                <ul className="space-y-1.5 text-xxs text-slate-350 list-disc list-inside leading-relaxed">
                                   {aiAnalysis.improvements.map((item, i) => (
                                     <li key={i} className="leading-relaxed">{item}</li>
                                   ))}

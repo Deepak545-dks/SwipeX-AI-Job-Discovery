@@ -120,21 +120,25 @@ export default function CalendarDashboard() {
   };
 
   return (
-    <PageTransition className="max-w-7xl mx-auto px-6 py-12 space-y-10 relative z-10 text-slate-800">
+    <PageTransition className="max-w-7xl mx-auto px-6 py-12 space-y-10 relative z-10 text-white">
       
+      {/* Background spotlights: Orange + Purple Theme for Calendar Page */}
+      <div className="absolute top-[10%] left-[20%] w-[420px] h-[420px] bg-gradient-to-tr from-orange-500/15 via-violet-650/10 to-transparent rounded-full blur-[125px] -z-10 pointer-events-none" />
+      <div className="absolute bottom-[20%] right-[20%] w-[380px] h-[380px] bg-gradient-to-tr from-violet-600/15 via-orange-500/10 to-transparent rounded-full blur-[125px] -z-10 pointer-events-none" />
+
       {/* Upper header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-slate-200 pb-8 text-left">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-white/10 pb-8 text-left">
         <div>
           <h1 className="text-3xl font-black tracking-tight flex items-center gap-2">
-            <Cpu className="text-violet-600" />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 via-blue-600 to-cyan-500">Interviews & Schedules</span>
+            <Cpu className="text-orange-400" />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-amber-400 to-violet-400">Interviews & Schedules</span>
           </h1>
-          <p className="text-slate-500 text-xs mt-1.5 font-semibold">Track pending calls, access WebRTC video panels, and deploy calendar slots.</p>
+          <p className="text-slate-400 text-xs mt-1.5 font-semibold">Track pending calls, access WebRTC video panels, and deploy calendar slots.</p>
         </div>
       </div>
 
       {error && (
-        <div className="p-4 bg-rose-50 border border-rose-200 text-rose-805 text-xs font-semibold rounded-2xl flex items-center space-x-3 text-left">
+        <div className="p-4 bg-rose-500/10 border border-rose-200/20 text-rose-400 text-xs font-semibold rounded-2xl flex items-center space-x-3 text-left">
           <AlertCircle size={16} className="shrink-0" />
           <span>{error}</span>
         </div>
@@ -143,17 +147,17 @@ export default function CalendarDashboard() {
       <div className="grid lg:grid-cols-3 gap-8">
         
         {/* Left Column: List of scheduled interviews */}
-        <div className="lg:col-span-2 p-[1px] rounded-3xl bg-gradient-to-b from-slate-200 to-transparent shadow-lg">
-          <div className="bg-white rounded-[23px] p-6 space-y-6 text-left border border-white">
-            <h2 className="text-base font-black text-slate-850 tracking-tight border-b border-slate-100 pb-4">Meeting Agenda Feed</h2>
+        <div className="lg:col-span-2 p-[1.5px] rounded-3xl bg-gradient-to-b from-white/10 to-transparent shadow-xl">
+          <div className="bg-slate-950/80 backdrop-blur-2xl p-6 rounded-[23px] space-y-6 text-left border border-white/5">
+            <h2 className="text-base font-black text-white tracking-tight border-b border-white/5 pb-4">Meeting Agenda Feed</h2>
             
             {loading ? (
               <div className="flex justify-center py-20">
-                <Loader2 size={24} className="animate-spin text-violet-605" />
+                <Loader2 size={24} className="animate-spin text-orange-400" />
               </div>
             ) : interviews.length === 0 ? (
-              <div className="text-center py-16 space-y-4 bg-slate-50 border border-slate-200 border-dashed rounded-2xl">
-                <CalendarIcon size={32} className="text-slate-400 mx-auto" />
+              <div className="text-center py-16 space-y-4 bg-slate-900/40 border border-white/5 border-dashed rounded-2xl">
+                <CalendarIcon size={32} className="text-slate-650 mx-auto" />
                 <p className="text-slate-500 text-xs font-bold">No interviews scheduled yet.</p>
               </div>
             ) : (
@@ -174,47 +178,47 @@ export default function CalendarDashboard() {
                   return (
                     <div 
                       key={meeting.id}
-                      className={`p-5 rounded-2xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
+                      className={`p-5 rounded-2xl transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4 border ${
                         isAccepted 
-                          ? 'bg-slate-50/50 border-slate-200 hover:border-violet-500/40 shadow-sm' 
+                          ? 'glass-card-orange-gold text-white border-orange-500/30 shadow-md' 
                           : isDeclined 
-                            ? 'bg-rose-50/30 border-rose-200 opacity-60 text-slate-500' 
-                            : 'bg-white border-slate-200 border-dashed border-2'
+                            ? 'bg-rose-950/10 border-rose-900/30 opacity-60 text-slate-400' 
+                            : 'bg-slate-900/40 border-white/5 border-dashed'
                       }`}
                     >
                       <div className="space-y-2.5">
                         <div className="flex items-center space-x-2.5">
                           <span className={`px-2.5 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border ${
                             isAccepted 
-                              ? 'bg-emerald-50 border-emerald-250 text-emerald-650' 
+                              ? 'bg-emerald-600/20 border-emerald-500/30 text-emerald-400' 
                               : isDeclined 
-                                ? 'bg-rose-50 border-rose-250 text-rose-650' 
-                                : 'bg-amber-50 border-amber-250 text-amber-650'
+                                ? 'bg-rose-600/20 border-rose-500/30 text-rose-400' 
+                                : 'bg-amber-600/20 border-amber-500/30 text-amber-400'
                           }`}>
                             {meeting.status}
                           </span>
                           {meeting.google_calendar_event_id && (
-                            <span className="text-[8px] font-black text-violet-650 bg-violet-50 border border-violet-200 px-2 py-0.5 rounded uppercase tracking-wider">Google Synced</span>
+                            <span className="text-[8px] font-black text-orange-400 bg-orange-500/10 border border-orange-500/20 px-2 py-0.5 rounded uppercase tracking-wider">Google Synced</span>
                           )}
                         </div>
 
                         <div>
-                          <h4 className="text-sm font-bold text-slate-850 tracking-tight">{meeting.title}</h4>
-                          <p className="text-slate-500 text-xxs mt-0.5 font-semibold">{targetName} • {companyDetails}</p>
+                          <h4 className="text-sm font-bold text-white tracking-tight">{meeting.title}</h4>
+                          <p className="text-slate-400 text-xxs mt-0.5 font-semibold">{targetName} • {companyDetails}</p>
                         </div>
 
                         <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-slate-500 text-xxs font-semibold">
                           <span className="flex items-center space-x-1.5">
-                            <CalendarIcon size={12} className="text-slate-400" />
+                            <CalendarIcon size={12} className="text-slate-650" />
                             <span>{formattedDate}</span>
                           </span>
                           <span className="flex items-center space-x-1.5">
-                            <Clock size={12} className="text-slate-400" />
+                            <Clock size={12} className="text-slate-655" />
                             <span>{formattedTime}</span>
                           </span>
                         </div>
                         {meeting.description && (
-                          <p className="text-slate-600 text-xxs bg-white border border-slate-200 px-3 py-2 rounded-xl max-w-lg font-semibold shadow-sm">
+                          <p className="text-slate-400 text-xxs bg-slate-900/60 border border-white/5 px-3 py-2 rounded-xl max-w-lg font-semibold">
                             {meeting.description}
                           </p>
                         )}
@@ -226,7 +230,7 @@ export default function CalendarDashboard() {
                           <>
                             <button
                               onClick={() => handleResponse(meeting.id, 'accepted')}
-                              className="px-4 py-2 bg-emerald-605 hover:bg-emerald-500 text-white rounded-xl text-xxs font-black transition-all flex items-center space-x-1 cursor-pointer uppercase tracking-wider border border-emerald-550"
+                              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xxs font-black transition-all flex items-center space-x-1 cursor-pointer uppercase tracking-wider border border-emerald-550"
                             >
                               <Check size={12} />
                               <span>Accept</span>
@@ -244,7 +248,7 @@ export default function CalendarDashboard() {
                         {isAccepted && (
                           <button
                             onClick={() => navigate(`/call/${meeting.id}?opponent=${targetName}`)}
-                            className="px-5 py-3 bg-gradient-to-r from-violet-600 to-indigo-650 hover:from-violet-500 hover:to-indigo-500 text-white rounded-xl text-xxs font-extrabold transition-all flex items-center space-x-1.5 shadow-md cursor-pointer uppercase tracking-wider border border-violet-550"
+                            className="px-5 py-3 bg-gradient-to-r from-orange-600 to-violet-605 hover:from-orange-500 hover:to-violet-500 text-white rounded-xl text-xxs font-extrabold transition-all flex items-center space-x-1.5 shadow-md cursor-pointer uppercase tracking-wider border border-orange-550"
                           >
                             <Video size={13} />
                             <span>Join Video Call</span>
@@ -261,17 +265,17 @@ export default function CalendarDashboard() {
         </div>
 
         {/* Right Column: Recruiter scheduling wizard form */}
-        <div className="lg:col-span-1 p-[1px] rounded-3xl bg-gradient-to-b from-slate-200 to-transparent shadow-lg">
+        <div className="lg:col-span-1 p-[1.5px] rounded-3xl bg-gradient-to-b from-white/10 to-transparent shadow-xl">
           {user.role === 'recruiter' ? (
-            <div className="bg-white p-6 rounded-[23px] space-y-6 text-left border border-white">
+            <div className="bg-slate-950/80 backdrop-blur-2xl p-6 rounded-[23px] space-y-6 text-left border border-white/5">
               <div>
-                <h3 className="text-sm font-bold text-slate-800 tracking-tight">Schedule Interview</h3>
-                <p className="text-slate-500 text-xxs mt-0.5 font-semibold">Invite shortlisted seekers to virtual calls</p>
+                <h3 className="text-sm font-bold text-white tracking-tight">Schedule Interview</h3>
+                <p className="text-slate-400 text-xxs mt-0.5 font-semibold">Invite shortlisted seekers to virtual calls</p>
               </div>
 
               {loadingApps ? (
                 <div className="flex justify-center py-6">
-                  <Loader2 size={16} className="animate-spin text-violet-600" />
+                  <Loader2 size={16} className="animate-spin text-orange-400" />
                 </div>
               ) : applications.length === 0 ? (
                 <p className="text-slate-500 text-xxs leading-relaxed font-semibold">No candidates are currently shortlisted or awaiting schedules.</p>
@@ -284,7 +288,7 @@ export default function CalendarDashboard() {
                     <select
                       value={selectedAppId}
                       onChange={(e) => setSelectedAppId(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 focus:border-violet-550 focus:bg-white rounded-xl py-3 px-4 text-slate-900 text-xs outline-none transition-all cursor-pointer font-semibold"
+                      className="w-full bg-slate-900 border border-white/10 focus:border-orange-500 rounded-xl py-3 px-4 text-white text-xs outline-none transition-all cursor-pointer font-semibold"
                     >
                       {applications.map((app) => (
                         <option key={app.id} value={app.id}>
@@ -303,7 +307,7 @@ export default function CalendarDashboard() {
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
                       placeholder="e.g. Technical Round 1"
-                      className="w-full bg-slate-50 border border-slate-200 focus:border-violet-550 focus:bg-white rounded-xl py-3 px-4 text-slate-900 text-xs outline-none transition-all placeholder-slate-400 font-semibold"
+                      className="w-full bg-slate-900 border border-white/10 focus:border-orange-500 rounded-xl py-3 px-4 text-white text-xs outline-none transition-all placeholder-slate-500 font-semibold"
                     />
                   </div>
 
@@ -315,7 +319,7 @@ export default function CalendarDashboard() {
                       onChange={(e) => setDescription(e.target.value)}
                       placeholder="Meeting notes or links..."
                       rows={3}
-                      className="w-full bg-slate-50 border border-slate-200 focus:border-violet-550 focus:bg-white rounded-xl py-3 px-4 text-slate-900 text-xs outline-none resize-none transition-all placeholder-slate-400 font-semibold"
+                      className="w-full bg-slate-900 border border-white/10 focus:border-orange-500 rounded-xl py-3 px-4 text-white text-xs outline-none resize-none transition-all placeholder-slate-500 font-semibold"
                     />
                   </div>
 
@@ -328,7 +332,7 @@ export default function CalendarDashboard() {
                         required
                         value={startDate}
                         onChange={(e) => setStartDate(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-200 focus:border-violet-550 focus:bg-white rounded-xl py-3 px-4 text-slate-900 text-xs outline-none transition-all cursor-pointer font-semibold"
+                        className="w-full bg-slate-900 border border-white/10 focus:border-orange-500 rounded-xl py-3 px-4 text-white text-xs outline-none transition-all cursor-pointer font-semibold"
                       />
                     </div>
                     <div className="space-y-1.5">
@@ -338,7 +342,7 @@ export default function CalendarDashboard() {
                         required
                         value={startTime}
                         onChange={(e) => setStartTime(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-200 focus:border-violet-550 focus:bg-white rounded-xl py-3 px-4 text-slate-900 text-xs outline-none transition-all cursor-pointer font-semibold"
+                        className="w-full bg-slate-900 border border-white/10 focus:border-orange-500 rounded-xl py-3 px-4 text-white text-xs outline-none transition-all cursor-pointer font-semibold"
                       />
                     </div>
                   </div>
@@ -349,7 +353,7 @@ export default function CalendarDashboard() {
                     <select
                       value={duration}
                       onChange={(e) => setDuration(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 focus:border-violet-550 focus:bg-white rounded-xl py-3 px-4 text-slate-900 text-xs outline-none transition-all cursor-pointer font-semibold"
+                      className="w-full bg-slate-900 border border-white/10 focus:border-orange-500 rounded-xl py-3 px-4 text-white text-xs outline-none transition-all cursor-pointer font-semibold"
                     >
                       <option value="30">30 Minutes</option>
                       <option value="45">45 Minutes</option>
@@ -359,12 +363,12 @@ export default function CalendarDashboard() {
                   </div>
 
                   {/* Google Calendar Sync */}
-                  <label className="flex items-center space-x-3 cursor-pointer py-1 text-slate-600 text-xxs font-extrabold select-none">
+                  <label className="flex items-center space-x-3 cursor-pointer py-1 text-slate-300 text-xxs font-extrabold select-none">
                     <input
                       type="checkbox"
                       checked={syncCalendar}
                       onChange={(e) => setSyncCalendar(e.target.checked)}
-                      className="rounded border-slate-350 bg-white text-violet-600 focus:ring-violet-500/5 w-4 h-4 cursor-pointer"
+                      className="rounded border-white/10 bg-slate-900 text-orange-505 focus:ring-orange-500/5 w-4 h-4 cursor-pointer"
                     />
                     <span className="uppercase tracking-wider">Sync Google Calendar</span>
                   </label>
@@ -372,7 +376,7 @@ export default function CalendarDashboard() {
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="w-full py-3.5 bg-gradient-to-r from-violet-650 via-fuchsia-650 to-indigo-650 hover:from-violet-500 hover:via-fuchsia-500 hover:to-indigo-500 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all disabled:opacity-30 shadow-md cursor-pointer border border-violet-550"
+                    className="w-full py-3.5 bg-gradient-to-r from-orange-600 via-amber-600 to-violet-650 hover:from-orange-500 hover:to-violet-550 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all disabled:opacity-30 shadow-md cursor-pointer border border-orange-550"
                   >
                     {submitting ? (
                       <Loader2 size={14} className="animate-spin" />
@@ -389,13 +393,13 @@ export default function CalendarDashboard() {
 
             </div>
           ) : (
-            <div className="bg-white p-6 rounded-[23px] space-y-4 text-left border border-white shadow-sm">
-              <div className="w-10 h-10 rounded-xl bg-violet-50 border border-violet-200 flex items-center justify-center text-violet-605">
+            <div className="bg-slate-950/80 backdrop-blur-2xl p-6 rounded-[23px] space-y-4 text-left border border-white/5 shadow-xl">
+              <div className="w-10 h-10 rounded-xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center text-orange-400">
                 <Sparkles size={16} />
               </div>
               <div>
-                <h3 className="text-slate-805 font-black text-xs tracking-tight uppercase tracking-wider">Schedules Radar</h3>
-                <p className="text-slate-500 text-xxs mt-2.5 leading-relaxed font-semibold">
+                <h3 className="text-white font-black text-xs tracking-tight uppercase tracking-wider">Schedules Radar</h3>
+                <p className="text-slate-400 text-xxs mt-2.5 leading-relaxed font-semibold">
                   Scheduled interview slots proposed by recruiters will automatically sync here. Accept invites to lock schedules and enable WebRTC communication rooms.
                 </p>
               </div>
