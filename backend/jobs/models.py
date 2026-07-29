@@ -18,6 +18,7 @@ class Company(models.Model):
     employee_count = models.IntegerField(null=True, blank=True)
     headquarters = models.CharField(max_length=255, blank=True)
     founded_year = models.IntegerField(null=True, blank=True)
+    rating = models.FloatField(default=4.0)
 
     def __str__(self):
         return self.name
@@ -64,6 +65,11 @@ class Job(models.Model):
     experience_level = models.CharField(max_length=20, choices=EXPERIENCE_LEVEL_CHOICES, default='mid')
     skills_required = models.ManyToManyField('profiles.Skill', blank=True, related_name='jobs')
     is_active = models.BooleanField(default=True, db_index=True)
+    country = models.CharField(max_length=100, default='United States', db_index=True)
+    state = models.CharField(max_length=100, blank=True, db_index=True)
+    city = models.CharField(max_length=100, blank=True, db_index=True)
+    apply_url = models.URLField(blank=True, max_length=1000)
+    ai_match_score = models.IntegerField(default=0, db_index=True)
     provider = models.CharField(max_length=50, default='native', db_index=True)
     provider_job_id = models.CharField(max_length=255, blank=True, null=True, db_index=True)
     original_url = models.URLField(blank=True, max_length=1000)

@@ -560,6 +560,122 @@ class AISkillGapAnalysisView(APIView):
         res = AIService.analyze_skill_gap(profile, job)
         return Response(res, status=status.HTTP_200_OK)
 
+import csv
+import json
+import io
+import random
+from datetime import timedelta
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
+
+class BulkJobUploadView(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+    parser_classes = (MultiPartParser, FormParser, JSONParser)
+
+    @extend_schema(responses={201: dict})
+    def post(self, request):
+        uploaded_file = request.FILES.get('file')
+        raw_text = request.data.get('raw_text')
+        file_format = request.data.get('format', 'json')
+
+        raw_data = []
+        if uploaded_file:
+            filename = uploaded_file.name.lower()
+            content = uploaded_file.read().decode('utf-8')
+            if filename.endswith('.csv') or file_format == 'csv':
+                reader = csv.DictReader(io.StringIO(content))
+                raw_data = list(reader)
+            else:
+                try:
+                    raw_data = json.loads(content)
+                except Exception:
+                    return Response({"error": "Failed to parse uploaded JSON file."}, status=status.HTTP_400_BAD_REQUEST)
+        elif raw_text:
+            if file_format == 'csv':
+                reader = csv.DictReader(io.StringIO(raw_text))
+                raw_data = list(reader)
+            else:
+                try:
+                    raw_data = json.loads(raw_text)
+                except Exception:
+                    return Response({"error": "Failed to parse text copy-paste JSON payload."}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            raw_data = request.data.get('jobs', [])
+            if not raw_data and isinstance(request.data, list):
+                raw_data = request.data
+
+        if not raw_data:
+            return Response({"error": "No job records parsed. Ensure you upload a CSV/JSON file or copy-paste correct formats."}, status=status.HTTP_400_BAD_REQUEST)
+
+        admin_user = request.user
+        imported_count = 0
+        duplicate_count = 0
+        now = timezone.now()
+
+        for index, item in enumerate(raw_data):
+            try:
+                title = item.get('title') or item.get('Job Title') or item.get('Title')
+                company_name = item.get('company_name') or item.get('Company Name') or item.get('company') or item.get('Company')
+                description = item.get('description') or item.get('Description') or "No description provided."
+                
+                if not title or not company_name:
+                    continue
+
+                provider_job_id = item.get('provider_job_id') or f"bulk-{index}-{random.randint(10000, 99999)}"
+                provider = item.get('provider') or "JSON/CSV Bulk Import"
+                
+                if Job.objects.filter(provider=provider, provider_job_id=provider_job_id).exists():
+                    duplicate_count += 1
+                    continue
+
+                company, _ = Company.objects.get_or_create(
+                    name=company_name.strip(),
+                    defaults={
+                        "website": item.get('website', ''),
+                        "logo_url": item.get('logo_url') or item.get('logo') or item.get('Company Logo') or 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=120&auto=format&fit=crop&q=60',
+                        "industry": item.get('industry') or 'Technology',
+                    }
+                )
+
+                job = Job.objects.create(
+                    recruiter=admin_user,
+                    company=company,
+                    title=title,
+                    description=description,
+                    requirements=item.get('requirements', ''),
+                    salary_min=int(item.get('salary_min') or 80000),
+                    salary_max=int(item.get('salary_max') or 120000),
+                    location=item.get('location') or 'Remote',
+                    country=item.get('country') or 'United States',
+                    state=item.get('state') or '',
+                    city=item.get('city') or '',
+                    apply_url=item.get('apply_url') or '',
+                    job_type=item.get('job_type') or 'remote',
+                    employment_type=item.get('employment_type') or 'full_time',
+                    experience_level=item.get('experience_level') or 'mid',
+                    provider=provider,
+                    provider_job_id=provider_job_id,
+                    expires_at=now + timedelta(days=60),
+                    is_active=True,
+                    status='published'
+                )
+
+                skills_str = item.get('skills') or item.get('Skills')
+                if skills_str:
+                    skills_list = [s.strip() for s in skills_str.split(',') if s.strip()] if isinstance(skills_str, str) else skills_str
+                    for s_name in skills_list:
+                        skill, _ = Skill.objects.get_or_create(name=s_name)
+                        job.skills_required.add(skill)
+
+                imported_count += 1
+            except Exception as e:
+                print(f"Error importing row {index}: {e}")
+
+        return Response({
+            "message": "Bulk import completed successfully.",
+            "imported": imported_count,
+            "skipped_duplicates": duplicate_count
+        }, status=status.HTTP_201_CREATED)
+
 
 
 

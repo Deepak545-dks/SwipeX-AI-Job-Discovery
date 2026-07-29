@@ -19,10 +19,12 @@ from .views import (
     ResetSwipesView,
     AICoverLetterGeneratorView,
     AIInterviewQuestionsView,
-    AISkillGapAnalysisView
+    AISkillGapAnalysisView,
+    BulkJobUploadView
 )
 
 urlpatterns = [
+    path('bulk-upload/', BulkJobUploadView.as_view(), name='bulk_job_upload'),
     path('', JobCreateView.as_view(), name='job_create'),
     path('recruiter-jobs/', RecruiterJobsListView.as_view(), name='recruiter_jobs_list'),
     path('recruiter-analytics/', RecruiterAnalyticsView.as_view(), name='recruiter_analytics'),

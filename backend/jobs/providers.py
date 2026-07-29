@@ -176,7 +176,11 @@ PROVIDERS = [
     MockProvider("Foundit"),
     MockProvider("Wellfound"),
     MockProvider("Internshala"),
-    MockProvider("RemoteOK")
+    MockProvider("RemoteOK"),
+    MockProvider("We Work Remotely"),
+    MockProvider("YC Jobs"),
+    MockProvider("Company Career Pages"),
+    MockProvider("Manual Admin Upload")
 ]
 
 def sync_all_providers(limit_per_provider=5):

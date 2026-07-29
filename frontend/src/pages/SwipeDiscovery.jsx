@@ -38,6 +38,8 @@ export default function SwipeDiscovery() {
   const [error, setError] = useState('');
   const [hasResume, setHasResume] = useState(true);
   const [resetting, setResetting] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [alternativeJobs, setAlternativeJobs] = useState([]);
   
   // Undo memory
   const [lastSwipedJob, setLastSwipedJob] = useState(null);
@@ -86,6 +88,34 @@ export default function SwipeDiscovery() {
     }
   };
 
+  const fetchMoreRecommendations = async () => {
+    if (loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const response = await api.get('/jobs/recommendations/');
+      const newJobs = response.data.results || response.data || [];
+      setDeck(prev => {
+        const existingIds = new Set(prev.map(j => j.id));
+        const filtered = newJobs.filter(j => !existingIds.has(j.id));
+        return [...prev, ...filtered];
+      });
+    } catch (err) {
+      console.error("Failed to load more recommendation batch cards:", err);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
+  useEffect(() => {
+    if (deck.length === 0 && !loading) {
+      api.get('/jobs/search/?limit=3')
+        .then(res => {
+          setAlternativeJobs(res.data.results || res.data || []);
+        })
+        .catch(err => console.error("Failed to load alternative matching list:", err));
+    }
+  }, [deck, loading]);
+
   useEffect(() => {
     checkUserResume();
     fetchRecommendations();
@@ -116,7 +146,14 @@ export default function SwipeDiscovery() {
 
     const swipedJob = deck.find(j => j.id === jobId);
     setLastSwipedJob(swipedJob);
-    setDeck(prev => prev.filter(j => j.id !== jobId));
+    
+    const remainingDeck = deck.filter(j => j.id !== jobId);
+    setDeck(remainingDeck);
+    
+    if (remainingDeck.length < 20) {
+      fetchMoreRecommendations();
+    }
+    
     setDragX(0);
     setDragY(0);
 
@@ -268,6 +305,31 @@ export default function SwipeDiscovery() {
                     We parsed your active resume matching indices. Based on your skill base, the recommendation engine has matched and applied to all high-matching vacancies in your region. To unlock more matching jobs, update your skills index or broaden your location parameters.
                   </p>
                 </div>
+
+                {/* AI Recommended Alternatives */}
+                {alternativeJobs.length > 0 && (
+                  <div className="space-y-3">
+                    <span className="text-[9px] font-black uppercase tracking-widest text-violet-400 block">AI Recommended Alternatives</span>
+                    <div className="grid grid-cols-1 gap-2.5">
+                      {alternativeJobs.map((job) => (
+                        <div key={job.id} className="p-3.5 rounded-2xl bg-slate-950/60 border border-white/5 flex items-center justify-between hover:border-violet-500/20 transition-all">
+                          <div className="min-w-0">
+                            <span className="text-xxs font-extrabold text-white block truncate">{job.title}</span>
+                            <span className="text-[9px] text-slate-400 block mt-0.5">{job.company?.name || job.company_name} • {job.location}</span>
+                          </div>
+                          <button
+                            onClick={() => {
+                              setDrawerJob(job);
+                            }}
+                            className="px-3 py-1.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer shrink-0"
+                          >
+                            View Job
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Notification Toggle & Improve button */}
                 <div className="flex flex-col sm:flex-row gap-4 justify-between items-center p-4 rounded-2xl bg-slate-950/40 border border-white/5">

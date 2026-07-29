@@ -6,7 +6,7 @@ from profiles.serializers import SkillSlugRelatedField, ResumeSerializer, Profil
 class CompanySerializer(serializers.ModelSerializer):
     class Meta:
         model = Company
-        fields = ('id', 'name', 'website', 'logo_url', 'description', 'company_type', 'industry', 'employee_count', 'headquarters', 'founded_year')
+        fields = ('id', 'name', 'website', 'logo_url', 'description', 'company_type', 'industry', 'employee_count', 'headquarters', 'founded_year', 'rating')
 
 class JobSerializer(serializers.ModelSerializer):
     company_name = serializers.CharField(write_only=True)
@@ -19,18 +19,72 @@ class JobSerializer(serializers.ModelSerializer):
         required=False
     )
     recruiter_email = serializers.EmailField(source='recruiter.email', read_only=True)
+    ai_match_score = serializers.SerializerMethodField()
+    similar_jobs = serializers.SerializerMethodField()
 
     class Meta:
         model = Job
         fields = (
             'id', 'company', 'company_name', 'company_type', 'title', 'description',
             'requirements', 'salary_min', 'salary_max', 'location',
+            'country', 'state', 'city', 'apply_url', 'ai_match_score',
             'job_type', 'employment_type', 'experience_level',
             'skills_required', 'is_active', 'status', 'recruiter_email',
-            'provider', 'original_url', 'expires_at',
+            'provider', 'original_url', 'expires_at', 'similar_jobs',
             'created_at', 'updated_at'
         )
         read_only_fields = ('id', 'company', 'recruiter_email', 'provider', 'original_url', 'expires_at', 'created_at', 'updated_at')
+
+    def get_similar_jobs(self, obj):
+        qs = Job.objects.filter(
+            is_active=True, 
+            status='published'
+        ).exclude(id=obj.id).select_related('company')
+        
+        # Match by industry first
+        similar = qs.filter(company__industry=obj.company.industry)[:3]
+        if not similar.exists():
+            # Fallback to similar job title names
+            similar = qs.filter(title__icontains=obj.title.split()[0])[:3]
+        
+        return [{
+            "id": s.id,
+            "title": s.title,
+            "company_name": s.company.name,
+            "location": s.location,
+            "salary_min": s.salary_min,
+            "salary_max": s.salary_max
+        } for s in similar]
+
+    def get_ai_match_score(self, obj):
+        request = self.context.get('request')
+        if not request or not request.user or not request.user.is_authenticated:
+            return obj.ai_match_score or 75
+
+        user = request.user
+        if not hasattr(user, 'profile'):
+            return obj.ai_match_score or 75
+
+        # Real-time parsing: skills matching
+        user_skills = set(user.profile.skills.values_list('name', flat=True))
+        job_skills = set(obj.skills_required.values_list('name', flat=True))
+        
+        if not job_skills:
+            return 80
+
+        matching_skills = user_skills.intersection(job_skills)
+        skill_score = (len(matching_skills) / len(job_skills)) * 50
+        
+        experience_score = 30
+        if getattr(user.profile, 'experience_level', None) == obj.experience_level:
+            experience_score = 40
+
+        location_score = 10
+        if obj.job_type == 'remote' or (user.profile.location and user.profile.location.lower() in obj.location.lower()):
+            location_score = 10
+
+        final_score = int(skill_score + experience_score + location_score)
+        return min(100, max(30, final_score))
 
     def create(self, validated_data):
         company_name = validated_data.pop('company_name')
