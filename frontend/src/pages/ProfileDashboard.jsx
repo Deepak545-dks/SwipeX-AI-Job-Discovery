@@ -1326,14 +1326,25 @@ export default function ProfileDashboard() {
 
                         {/* AI resume Analysis report cache */}
                         {aiAnalysis && (() => {
-                          const atsScore = parseInt(aiAnalysis.ats_score || aiAnalysis.score || aiAnalysis.overall_score) || 85;
-                          const formattingScore = Math.floor(atsScore * 0.96);
-                          const readabilityScore = Math.floor(atsScore * 0.92);
-                          const grammarScore = Math.floor(atsScore * 0.98);
-                          const projectsScore = profile?.projects?.length > 0 ? 95 : 55;
-                          const educationScore = profile?.education?.length > 0 ? 90 : 60;
-                          const experienceScore = profile?.experiences?.length > 0 ? 92 : 45;
-                          const certificationsScore = profile?.skills?.length > 4 ? 88 : 65;
+                          const formattingScore = aiAnalysis.formatting_score !== undefined ? aiAnalysis.formatting_score : 85;
+                          const keywordScore = aiAnalysis.keyword_score !== undefined ? aiAnalysis.keyword_score : 80;
+                          const skillsScore = aiAnalysis.skills_score !== undefined ? aiAnalysis.skills_score : (profile?.skills?.length ? Math.min(100, profile.skills.length * 20) : 60);
+                          const experienceScore = aiAnalysis.experience_score !== undefined ? aiAnalysis.experience_score : (profile?.experiences?.length >= 2 ? 100 : (profile?.experiences?.length === 1 ? 80 : 40));
+                          const educationScore = aiAnalysis.education_score !== undefined ? aiAnalysis.education_score : (profile?.education?.length > 0 ? 100 : 50);
+                          const projectsScore = aiAnalysis.projects_score !== undefined ? aiAnalysis.projects_score : (profile?.projects?.length >= 2 ? 100 : (profile?.projects?.length === 1 ? 80 : 40));
+                          const certificationsScore = aiAnalysis.certifications_score !== undefined ? aiAnalysis.certifications_score : 75;
+                          const grammarScore = aiAnalysis.grammar_score !== undefined ? aiAnalysis.grammar_score : 90;
+
+                          const atsScore = Math.floor(
+                            (formattingScore * 0.15) +
+                            (keywordScore * 0.25) +
+                            (skillsScore * 0.20) +
+                            (experienceScore * 0.15) +
+                            (educationScore * 0.05) +
+                            (projectsScore * 0.10) +
+                            (certificationsScore * 0.05) +
+                            (grammarScore * 0.05)
+                          );
                           
                           const scoreData = getScoreData(atsScore);
                           const interviewProbability = Math.floor(atsScore * 0.88 + 3);
@@ -1341,13 +1352,14 @@ export default function ProfileDashboard() {
                           const estimatedImprovement = Math.max(5, 100 - atsScore);
 
                           const scoreBreakdown = [
-                            { label: 'Resume Formatting', score: formattingScore, color: 'bg-indigo-500' },
-                            { label: 'Readability Index', score: readabilityScore, color: 'bg-violet-500' },
-                            { label: 'Grammar & Syntax', score: grammarScore, color: 'bg-fuchsia-500' },
-                            { label: 'Projects Completeness', score: projectsScore, color: 'bg-purple-500' },
-                            { label: 'Education Quality', score: educationScore, color: 'bg-pink-500' },
-                            { label: 'Experience Depth', score: experienceScore, color: 'bg-emerald-500' },
-                            { label: 'Certifications Weight', score: certificationsScore, color: 'bg-cyan-500' },
+                            { label: 'Resume Formatting (15%)', score: formattingScore, color: 'bg-indigo-500' },
+                            { label: 'Keyword Match (25%)', score: keywordScore, color: 'bg-emerald-500' },
+                            { label: 'Skills Match (20%)', score: skillsScore, color: 'bg-violet-500' },
+                            { label: 'Experience Depth (15%)', score: experienceScore, color: 'bg-blue-500' },
+                            { label: 'Education Quality (5%)', score: educationScore, color: 'bg-pink-500' },
+                            { label: 'Projects Showcase (10%)', score: projectsScore, color: 'bg-purple-500' },
+                            { label: 'Certifications (5%)', score: certificationsScore, color: 'bg-cyan-500' },
+                            { label: 'Grammar & Readability (5%)', score: grammarScore, color: 'bg-fuchsia-500' },
                           ];
 
                           const compatibilityChecks = [

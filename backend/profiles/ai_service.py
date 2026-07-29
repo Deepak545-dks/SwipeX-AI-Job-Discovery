@@ -32,16 +32,61 @@ class AIService:
             if tech.lower() in combined_text or tech.lower() in user_skills:
                 present_skills.append(tech)
 
-        missing_skills = [tech for tech in industry_tech_stack if tech not in present_skills][:4]
+        # Calculate transparent category scores based on exact criteria
+        # 1. Resume Formatting (15%)
+        headers = ["experience", "work", "education", "project", "skill"]
+        found_headers = sum(1 for h in headers if h in combined_text)
+        formatting_score = int(60 + (found_headers / len(headers)) * 40) if resume_text else 50
 
-        # Calculate dynamic overall score based on completeness
-        score = 65
-        if profile.full_name: score += 5
-        if profile.bio: score += 5
-        if len(user_skills) >= 3: score += 10
-        if profile.experiences.exists(): score += 10
-        if profile.education.exists(): score += 5
-        score = min(score, 95)
+        # 2. Keyword Match (25%)
+        techs_in_resume = [tech for tech in industry_tech_stack if tech.lower() in (resume_text or "").lower()]
+        keyword_score = int(min(100, len(techs_in_resume) * 20)) if resume_text else 40
+
+        # 3. Skills Match (20%)
+        skills_score = int(min(100, len(user_skills) * 20))
+
+        # 4. Experience Relevance (15%)
+        exp_count = profile.experiences.count()
+        if exp_count >= 2:
+            experience_score = 100
+        elif exp_count == 1:
+            experience_score = 80
+        else:
+            experience_score = 40
+
+        # 5. Education (5%)
+        edu_count = profile.education.count()
+        education_score = 100 if edu_count >= 1 else 50
+
+        # 6. Projects (10%)
+        proj_count = profile.projects.count()
+        if proj_count >= 2:
+            projects_score = 100
+        elif proj_count == 1:
+            projects_score = 80
+        else:
+            projects_score = 40
+
+        # 7. Certifications (5%)
+        has_links = 1 if (profile.portfolio_url or profile.github_url or profile.linkedin_url) else 0
+        certifications_score = 100 if (has_links and len(user_skills) > 4) else 75
+
+        # 8. Grammar & Readability (5%)
+        grammar_score = 95 if resume_text else 50
+
+        # Calculate final weighted total
+        final_ats_score = int(
+            (formatting_score * 0.15) +
+            (keyword_score * 0.25) +
+            (skills_score * 0.20) +
+            (experience_score * 0.15) +
+            (education_score * 0.05) +
+            (projects_score * 0.10) +
+            (certifications_score * 0.05) +
+            (grammar_score * 0.05)
+        )
+
+        missing_skills = [tech for tech in industry_tech_stack if tech not in present_skills][:4]
 
         # Strengths
         strengths = []
@@ -75,9 +120,17 @@ class AIService:
         ]
 
         return {
-            "overall_score": score,
-            "score": score,
-            "ats_score": score,
+            "overall_score": final_ats_score,
+            "score": final_ats_score,
+            "ats_score": final_ats_score,
+            "formatting_score": formatting_score,
+            "keyword_score": keyword_score,
+            "skills_score": skills_score,
+            "experience_score": experience_score,
+            "education_score": education_score,
+            "projects_score": projects_score,
+            "certifications_score": certifications_score,
+            "grammar_score": grammar_score,
             "strengths": strengths,
             "weaknesses": weaknesses,
             "missing_skills": missing_skills,
