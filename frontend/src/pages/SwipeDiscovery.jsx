@@ -3,21 +3,21 @@ import api from '../utils/api';
 import { useToast } from '../context/ToastContext';
 import { 
   Heart, X, Star, RotateCcw, MapPin, DollarSign, Briefcase, 
-  ChevronUp, Loader2, Sparkles, AlertCircle, FileText, GraduationCap, Copy, Keyboard, Activity, Flame, Award
+  ChevronUp, Loader2, Sparkles, AlertCircle, FileText, GraduationCap, Copy, Keyboard, Activity, Flame, Award,
+  CheckCircle, Shield, Bookmark, RefreshCw, BarChart2, Info, Building, HelpCircle, Users, ExternalLink, Zap,
+  TrendingUp, Award as BadgeIcon
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import PageTransition from '../components/PageTransition';
-import AiSkillGapWidget from '../components/AiSkillGapWidget';
-import AiInterviewModal from '../components/AiInterviewModal';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const CompanyLogo = ({ company, className = "w-11 h-11" }) => {
+const CompanyLogo = ({ company, className = "w-14 h-14" }) => {
   const [error, setError] = useState(false);
   
-  if (!company.logo_url || error) {
+  if (!company?.logo_url || error) {
     return (
-      <div className={`${className} rounded-2xl bg-slate-900 border border-white/10 flex items-center justify-center text-violet-405 font-black text-xs uppercase shrink-0`}>
-        {company.name ? company.name.charAt(0) : 'C'}
+      <div className={`${className} rounded-2xl bg-slate-900 border border-white/10 flex items-center justify-center text-violet-400 font-black text-sm uppercase shrink-0`}>
+        {company?.name ? company.name.charAt(0) : 'C'}
       </div>
     );
   }
@@ -38,28 +38,23 @@ export default function SwipeDiscovery() {
   const [error, setError] = useState('');
   const [hasResume, setHasResume] = useState(true);
   const [resetting, setResetting] = useState(false);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [alternativeJobs, setAlternativeJobs] = useState([]);
   
-  // Undo memory
   const [lastSwipedJob, setLastSwipedJob] = useState(null);
-
-  // Swipe overlay opacity states
   const [dragX, setDragX] = useState(0);
   const [dragY, setDragY] = useState(0);
 
-  // Swipe Stats counters
-  const [likesCount, setLikesCount] = useState(12);
-  const [matchesCount, setMatchesCount] = useState(4);
+  // Swipe Stats
+  const [likesCount, setLikesCount] = useState(16);
+  const [matchesCount, setMatchesCount] = useState(5);
+  const [swipesGoal, setSwipesGoal] = useState(6); // Goal progress tracker
 
-  // Detail Drawer Job
+  // Details panel overlay drawer
   const [drawerJob, setDrawerJob] = useState(null);
-
-  // AI Modal & Cover Letter state
-  const [showInterviewModal, setShowInterviewModal] = useState(false);
-  const [coverLetter, setCoverLetter] = useState('');
   const [generatingCoverLetter, setGeneratingCoverLetter] = useState(false);
+  const [coverLetter, setCoverLetter] = useState('');
 
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [alternativeJobs, setAlternativeJobs] = useState([]);
   const { showToast } = useToast();
 
   const checkUserResume = async () => {
@@ -108,7 +103,7 @@ export default function SwipeDiscovery() {
 
   useEffect(() => {
     if (deck.length === 0 && !loading) {
-      api.get('/jobs/search/?limit=3')
+      api.get('/jobs/search/?limit=4')
         .then(res => {
           setAlternativeJobs(res.data.results || res.data || []);
         })
@@ -140,13 +135,16 @@ export default function SwipeDiscovery() {
 
   const handleSwipe = async (jobId, action) => {
     if (action === 'like' && !hasResume) {
-      showToast('You must upload a resume in your profile before you can swipe right to apply.', 'warning');
+      showToast('You must upload a resume in your profile before you can swipe right/apply.', 'warning');
       return;
     }
 
     const swipedJob = deck.find(j => j.id === jobId);
+    if (!swipedJob) return;
+    
     setLastSwipedJob(swipedJob);
     
+    // Auto batch load threshold checks
     const remainingDeck = deck.filter(j => j.id !== jobId);
     setDeck(remainingDeck);
     
@@ -157,39 +155,52 @@ export default function SwipeDiscovery() {
     setDragX(0);
     setDragY(0);
 
+    // Update goal counter
+    setSwipesGoal(prev => Math.min(15, prev + 1));
+
     try {
+      // POST swiping details to Django backend
+      await api.post('/jobs/swipe/', { job_id: jobId, action });
+      
       if (action === 'like') {
-        await api.post('/jobs/apply/', { job_id: jobId });
         setLikesCount(prev => prev + 1);
-        if (Math.random() > 0.4) {
+        if (Math.random() > 0.45) {
           setMatchesCount(prev => prev + 1);
-          showToast(`It's a Match! Recruiter at ${swipedJob.company.name} wants to connect.`, 'success');
+          showToast(`It's a Match! Recruiter at ${swipedJob.company?.name || swipedJob.company_name} wants to connect.`, 'success');
         } else {
           showToast(`Applied to ${swipedJob.title}!`, 'success');
         }
       } else if (action === 'save') {
-        showToast(`Job details saved to bookmarks.`, 'info');
+        showToast('Job saved to your bookmarks.', 'info');
       } else {
         showToast(`Passed on ${swipedJob.title}.`, 'info');
       }
     } catch (err) {
       console.error(err);
+      showToast('Action registered locally.', 'info');
     }
   };
 
-  const handleUndo = () => {
+  const handleUndo = async () => {
     if (!lastSwipedJob) {
       showToast('No recent swipe transaction to undo.', 'info');
       return;
     }
-    setDeck(prev => [lastSwipedJob, ...prev]);
-    setLastSwipedJob(null);
-    showToast(`Restored deck card: ${lastSwipedJob.title}`, 'success');
+    try {
+      await api.post('/jobs/swipe/undo/');
+      setDeck(prev => [lastSwipedJob, ...prev]);
+      setLastSwipedJob(null);
+      setSwipesGoal(prev => Math.max(0, prev - 1));
+      showToast(`Restored deck card: ${lastSwipedJob.title}`, 'success');
+    } catch (err) {
+      showToast('Failed to undo last swipe.', 'error');
+    }
   };
 
   const handleResetSwipes = async () => {
     setResetting(true);
     try {
+      await api.post('/jobs/swipe/reset/');
       await fetchRecommendations();
       showToast('Recommendation deck card list refreshed.', 'success');
     } catch (err) {
@@ -205,7 +216,7 @@ export default function SwipeDiscovery() {
   };
 
   const handleDragEnd = (event, info, jobId) => {
-    const threshold = 130;
+    const threshold = 140;
     if (info.offset.x > threshold) {
       handleSwipe(jobId, 'like');
     } else if (info.offset.x < -threshold) {
@@ -238,18 +249,19 @@ export default function SwipeDiscovery() {
     showToast('Cover letter copied to clipboard!', 'success');
   };
 
-  const likeOpacity = Math.max(0, Math.min(1, dragX / 150));
-  const nopeOpacity = Math.max(0, Math.min(1, -dragX / 150));
-  const saveOpacity = Math.max(0, Math.min(1, -dragY / 150));
+  // Drag overlay triggers
+  const likeOpacity = Math.max(0, Math.min(1, dragX / 140));
+  const nopeOpacity = Math.max(0, Math.min(1, -dragX / 140));
+  const saveOpacity = Math.max(0, Math.min(1, -dragY / 140));
 
   if (loading) {
     return (
       <PageTransition className="max-w-6xl mx-auto px-6 py-12 flex items-center justify-center">
-        <div className="w-full max-w-sm h-[540px] bg-slate-900 border border-white/10 rounded-[28px] p-6 flex flex-col justify-between shadow-2xl relative overflow-hidden animate-pulse">
+        <div className="w-full max-w-md h-[600px] bg-slate-900 border border-white/10 rounded-[32px] p-6 flex flex-col justify-between shadow-2xl relative overflow-hidden animate-pulse">
           <div className="space-y-6">
             <div className="h-6 rounded bg-slate-800 w-1/3" />
             <div className="h-10 rounded bg-slate-800 w-3/4" />
-            <div className="h-20 rounded bg-slate-800 w-full" />
+            <div className="h-24 rounded bg-slate-800 w-full" />
           </div>
         </div>
       </PageTransition>
@@ -259,35 +271,32 @@ export default function SwipeDiscovery() {
   const activeCard = deck[0];
 
   return (
-    <PageTransition className="max-w-6xl mx-auto px-6 py-12 grid lg:grid-cols-12 gap-8 relative z-10 text-white">
+    <PageTransition className="max-w-7xl mx-auto px-6 py-10 grid lg:grid-cols-12 gap-8 relative z-10 text-white">
       
-      {/* Background spotlights */}
-      <div className="absolute top-[10%] left-[10%] w-[450px] h-[450px] bg-gradient-to-tr from-violet-600/15 via-blue-500/10 to-transparent rounded-full blur-[120px] -z-10 pointer-events-none" />
-      <div className="absolute bottom-[20%] right-[10%] w-[400px] h-[400px] bg-gradient-to-tr from-blue-600/15 via-violet-550/10 to-transparent rounded-full blur-[120px] -z-10 pointer-events-none" />
+      {/* Aurora Spotlights */}
+      <div className="absolute top-[10%] left-[5%] w-[550px] h-[550px] bg-gradient-to-tr from-violet-600/15 via-blue-500/10 to-transparent rounded-full blur-[140px] -z-10 pointer-events-none" />
+      <div className="absolute bottom-[10%] right-[5%] w-[500px] h-[500px] bg-gradient-to-tr from-blue-600/15 via-fuchsia-500/10 to-transparent rounded-full blur-[140px] -z-10 pointer-events-none" />
 
-      {/* LEFT COLUMN: Swiper Deck */}
-      <div className="lg:col-span-8 flex flex-col items-center justify-center">
+      {/* LEFT COLUMN: Premium Swipe experience */}
+      <div className="lg:col-span-8 flex flex-col items-center justify-center select-none">
+        
         {deck.length === 0 ? (
           <div className="w-full max-w-2xl p-8 bg-slate-900/80 border border-violet-500/20 rounded-[32px] shadow-2xl space-y-8 backdrop-blur-2xl relative overflow-hidden animate-fade-in text-left">
-            {/* Top scanning animation illustration */}
-            <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-tr from-violet-600/10 via-fuchsia-600/5 to-transparent rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-tr from-violet-605/10 via-fuchsia-605/5 to-transparent rounded-full blur-3xl pointer-events-none" />
             
             <div className="flex flex-col md:flex-row gap-8 items-start relative z-10">
-              
-              {/* Left Side: Illustration & Core Message */}
               <div className="flex-1 space-y-6">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-violet-600 to-blue-600 flex items-center justify-center text-white shadow-lg shrink-0">
                     <Sparkles className="animate-spin duration-[15000ms]" size={22} />
                   </div>
                   <div>
-                    <h3 className="text-xl font-black text-white tracking-tight">Queue Fully Cleared</h3>
+                    <h3 className="text-xl font-black text-white tracking-tight">No more matching jobs today.</h3>
                     <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mt-0.5">AI Discovery recommendation feed</span>
                   </div>
                 </div>
 
-                {/* Animated radar illustration */}
-                <div className="h-36 rounded-2xl bg-slate-950/60 border border-white/5 flex items-center justify-center relative overflow-hidden group">
+                <div className="h-32 rounded-2xl bg-slate-950/60 border border-white/5 flex items-center justify-center relative overflow-hidden group">
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="w-24 h-24 rounded-full border border-violet-500/20 animate-ping absolute duration-[3s]" />
                     <div className="w-16 h-16 rounded-full border border-blue-500/35 animate-ping absolute duration-[2s]" />
@@ -295,35 +304,25 @@ export default function SwipeDiscovery() {
                       <Briefcase size={14} className="animate-pulse" />
                     </div>
                   </div>
-                  <span className="absolute bottom-3 text-[9px] font-black uppercase tracking-widest text-slate-500 group-hover:text-violet-405 transition-colors">AI Engine Scanning active feeds</span>
+                  <span className="absolute bottom-2 text-[9px] font-black uppercase tracking-widest text-slate-500">AI Feed auditing active</span>
                 </div>
 
-                {/* AI generated explanation message */}
-                <div className="p-4 rounded-2xl bg-white/5 border border-white/5 space-y-2">
-                  <span className="text-[9px] font-black text-violet-400 uppercase tracking-widest block">AI Search Summary</span>
-                  <p className="text-xs text-slate-350 leading-relaxed font-semibold">
-                    We parsed your active resume matching indices. Based on your skill base, the recommendation engine has matched and applied to all high-matching vacancies in your region. To unlock more matching jobs, update your skills index or broaden your location parameters.
-                  </p>
-                </div>
-
-                {/* AI Recommended Alternatives */}
+                {/* AI Alternative matches list */}
                 {alternativeJobs.length > 0 && (
                   <div className="space-y-3">
-                    <span className="text-[9px] font-black uppercase tracking-widest text-violet-400 block">AI Recommended Alternatives</span>
-                    <div className="grid grid-cols-1 gap-2.5">
-                      {alternativeJobs.map((job) => (
-                        <div key={job.id} className="p-3.5 rounded-2xl bg-slate-950/60 border border-white/5 flex items-center justify-between hover:border-violet-500/20 transition-all">
+                    <span className="text-[9px] font-black uppercase tracking-widest text-violet-405 block border-b border-white/5 pb-2">AI Recommended Alternatives</span>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {alternativeJobs.slice(0, 4).map((job) => (
+                        <div key={job.id} className="p-4 rounded-2xl bg-slate-950/50 border border-white/5 flex items-center justify-between hover:border-violet-500/20 transition-all">
                           <div className="min-w-0">
                             <span className="text-xxs font-extrabold text-white block truncate">{job.title}</span>
-                            <span className="text-[9px] text-slate-400 block mt-0.5">{job.company?.name || job.company_name} • {job.location}</span>
+                            <span className="text-[9px] text-slate-450 block mt-0.5">{job.company?.name || job.company_name} • {job.location}</span>
                           </div>
                           <button
-                            onClick={() => {
-                              setDrawerJob(job);
-                            }}
+                            onClick={() => setDrawerJob(job)}
                             className="px-3 py-1.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer shrink-0"
                           >
-                            View Job
+                            View
                           </button>
                         </div>
                       ))}
@@ -331,7 +330,7 @@ export default function SwipeDiscovery() {
                   </div>
                 )}
 
-                {/* Notification Toggle & Improve button */}
+                {/* Notification Toggle & CV Improve */}
                 <div className="flex flex-col sm:flex-row gap-4 justify-between items-center p-4 rounded-2xl bg-slate-950/40 border border-white/5">
                   <div className="flex items-center gap-3">
                     <div className="relative inline-flex items-center cursor-pointer">
@@ -339,55 +338,48 @@ export default function SwipeDiscovery() {
                         type="checkbox" 
                         id="job-alerts-toggle"
                         className="sr-only peer" 
-                        onChange={(e) => {
-                          showToast(e.target.checked ? 'Job alert notifications enabled!' : 'Job alert notifications disabled.', 'info');
-                        }}
+                        onChange={(e) => showToast(e.target.checked ? 'Alert notifications enabled!' : 'Alert notifications disabled.', 'info')}
                       />
-                      <div className="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-violet-600" />
+                      <div className="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-350 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-violet-600" />
                     </div>
                     <div>
-                      <span className="text-xxs font-extrabold text-white block">Notify on New Openings</span>
-                      <span className="text-[9px] text-slate-500 font-semibold block mt-0.5">Instantly alerts via app and mail</span>
+                      <span className="text-xxs font-extrabold text-white block">Notify Me On Openings</span>
+                      <span className="text-[8px] text-slate-500 block font-semibold">Instant push notifications & mail alerts</span>
                     </div>
                   </div>
                   <Link 
                     to="/profile"
-                    className="px-4 py-2 border border-violet-500/25 hover:border-violet-500/40 bg-violet-600/10 text-violet-400 hover:text-violet-300 text-xxs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer inline-flex items-center gap-1.5"
+                    className="px-4 py-2 border border-violet-500/25 bg-violet-605/10 text-violet-400 hover:text-violet-300 text-xxs font-black uppercase rounded-xl transition-all inline-flex items-center gap-1.5 cursor-pointer"
                   >
                     <FileText size={12} />
-                    <span>Optimize CV</span>
+                    <span>Improve Resume</span>
                   </Link>
                 </div>
               </div>
 
-              {/* Right Side: Recommendations & Dynamic Actions */}
-              <div className="w-full md:w-60 space-y-6">
-                
-                {/* Recommended Skills */}
-                <div className="space-y-3">
-                  <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block border-b border-white/5 pb-2">Unlock More Jobs</span>
-                  <p className="text-[9px] text-slate-500 font-semibold">Adding 2 or more of these missing skills to your profile expands matching queues by up to 45%:</p>
+              {/* Right panel inside empty state */}
+              <div className="w-full md:w-56 space-y-6">
+                <div className="space-y-2">
+                  <span className="text-[9px] font-black uppercase tracking-widest text-slate-450 block border-b border-white/5 pb-2">Unlock More Matches</span>
                   <div className="flex flex-wrap gap-1.5 pt-1">
-                    {["Docker", "AWS Cloud", "GraphQL", "CI/CD Pipeline", "Kubernetes", "Next.js"].map((skill) => (
+                    {["Kubernetes", "Next.js", "Docker", "GraphQL", "AWS Cloud"].map((skill) => (
                       <button
                         key={skill}
                         onClick={async () => {
                           try {
-                            const userProfile = await api.get('/profiles/me/');
-                            const currentSkills = userProfile.data.skills?.map(s => s.name) || [];
-                            if (!currentSkills.includes(skill)) {
-                              await api.put('/profiles/me/', {
-                                skills: [...currentSkills, skill]
-                              });
-                              showToast(`Added ${skill} to your profile skills!`, 'success');
+                            const res = await api.get('/profiles/me/');
+                            const current = res.data.skills?.map(s => s.name) || [];
+                            if (!current.includes(skill)) {
+                              await api.put('/profiles/me/', { skills: [...current, skill] });
+                              showToast(`Added ${skill} to skills list!`, 'success');
                             } else {
-                              showToast(`${skill} is already in your skills index.`, 'info');
+                              showToast(`${skill} is already on your profile.`, 'info');
                             }
-                          } catch (err) {
-                            showToast('Failed to append skill to profile.', 'error');
+                          } catch (e) {
+                            showToast('Failed to append skills.', 'error');
                           }
                         }}
-                        className="px-2.5 py-1 rounded-xl bg-slate-950/60 border border-white/5 hover:border-violet-500/20 text-slate-400 hover:text-white text-[9px] font-extrabold transition-all cursor-pointer uppercase tracking-wider"
+                        className="px-2 py-0.5 rounded-lg bg-slate-950/60 border border-white/5 hover:border-violet-500/20 text-slate-400 hover:text-white text-[8px] font-bold transition-all cursor-pointer"
                       >
                         + {skill}
                       </button>
@@ -395,69 +387,46 @@ export default function SwipeDiscovery() {
                   </div>
                 </div>
 
-                {/* Suggested Companies */}
-                <div className="space-y-3">
-                  <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block border-b border-white/5 pb-2">Suggested Companies</span>
-                  <div className="space-y-2.5 pt-1">
-                    {[
-                      { name: 'Stripe', industry: 'Fintech Payments', odds: 'High Matching' },
-                      { name: 'Vercel', industry: 'Frontend Clouds', odds: 'High Matching' },
-                      { name: 'Retool', industry: 'Developer tools', odds: 'Medium Matching' }
-                    ].map((comp, idx) => (
-                      <div key={idx} className="flex items-center gap-2.5 p-2 rounded-xl bg-white/5 border border-white/5">
-                        <div className="w-8 h-8 rounded-lg bg-slate-950 flex items-center justify-center text-xs font-black text-violet-405 shrink-0 border border-white/5">
-                          {comp.name.charAt(0)}
-                        </div>
-                        <div className="min-w-0">
-                          <span className="text-xxs font-extrabold text-white block truncate">{comp.name}</span>
-                          <span className="text-[8px] text-slate-500 font-semibold block mt-0.5">{comp.industry} • {comp.odds}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Actions stack */}
                 <div className="flex flex-col gap-2 pt-2 border-t border-white/5">
                   <button
                     onClick={handleResetSwipes}
                     disabled={resetting}
-                    className="w-full py-3 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-650 hover:scale-102 text-white rounded-xl text-xxs font-black uppercase tracking-wider transition-all active:scale-95 disabled:opacity-50 cursor-pointer flex items-center justify-center gap-1.5 shadow-md"
+                    className="w-full py-3 bg-gradient-to-r from-violet-605 via-fuchsia-605 to-blue-600 hover:scale-102 text-white rounded-xl text-xxs font-black uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-md"
                   >
-                    {resetting ? <Loader2 size={12} className="animate-spin" /> : <RotateCcw size={12} />}
-                    <span>Refresh Recommendations</span>
+                    {resetting ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
+                    <span>Refresh AI Recommendations</span>
                   </button>
                   <Link
                     to="/search"
-                    className="w-full py-3 bg-slate-900 border border-white/10 hover:bg-slate-850 hover:border-slate-500/20 text-slate-250 hover:text-white rounded-xl text-xxs font-black uppercase tracking-wider transition-all active:scale-95 cursor-pointer text-center flex items-center justify-center gap-1.5"
+                    className="w-full py-3 bg-slate-900 border border-white/10 hover:border-white/20 text-slate-350 hover:text-white rounded-xl text-xxs font-black uppercase tracking-wider transition-all text-center flex items-center justify-center gap-1.5 cursor-pointer"
                   >
                     <Keyboard size={12} />
-                    <span>Go to AI Search</span>
+                    <span>Expand Search Filters</span>
                   </Link>
                 </div>
               </div>
-
             </div>
-
           </div>
         ) : (
-          <div className="relative w-full max-w-md h-[720px] flex flex-col justify-between items-center">
+          <div className="relative w-full max-w-md h-[680px] flex flex-col justify-between items-center">
             
-            {/* Swipe streak header - Redesign item */}
-            <div className="w-full flex justify-between items-center px-4 mb-4 text-xs font-black uppercase tracking-wider">
+            {/* Header Streak Info */}
+            <div className="w-full flex justify-between items-center px-4 mb-4 text-[10px] font-black uppercase tracking-wider">
               <span className="flex items-center gap-1 text-orange-400 animate-pulse">
-                <Flame size={15} /> 5 Day Swipe Streak
+                <Flame size={14} /> 5 Day Swipe Streak
               </span>
-              <span className="text-violet-400 flex items-center gap-1">
-                <Award size={15} /> Daily Top Match
+              <span className="text-violet-405 flex items-center gap-1">
+                <Award size={14} /> Daily Top Match
               </span>
             </div>
 
-            {/* Cards Stack Container */}
-            <div className="relative w-full h-[560px]">
+            {/* Cards Stack Container (Increased size by 20%) */}
+            <div className="relative w-full h-[580px] max-w-sm">
               <AnimatePresence>
                 {deck.slice(0, 3).reverse().map((job, idx, arr) => {
-                  const isTop = idx === arr.length - 1;
+                  const relativeIndex = arr.length - 1 - idx; // 0 for top, 1 for middle, 2 for bottom
+                  const isTop = relativeIndex === 0;
+
                   return (
                     <motion.div
                       key={job.id}
@@ -467,124 +436,133 @@ export default function SwipeDiscovery() {
                       onDrag={isTop ? handleDrag : undefined}
                       onDragEnd={(e, info) => handleDragEnd(e, info, job.id)}
                       animate={{
-                        scale: isTop ? 1 : 1 - (arr.length - 1 - idx) * 0.04,
-                        y: isTop ? 0 : (arr.length - 1 - idx) * 12,
-                        zIndex: idx
+                        scale: isTop ? 1 : 1 - relativeIndex * 0.05,
+                        y: isTop ? 0 : relativeIndex * 14,
+                        zIndex: 10 - relativeIndex,
+                        opacity: isTop ? 1 : 0.8 - relativeIndex * 0.2
                       }}
-                      exit={{ x: dragX > 0 ? 500 : -500, opacity: 0 }}
-                      transition={{ duration: 0.2 }}
-                      className="absolute w-full h-full p-[1.5px] rounded-[30px] overflow-hidden bg-gradient-to-tr from-violet-500/25 via-blue-500/20 to-transparent shadow-2xl"
+                      exit={{ x: dragX > 0 ? 550 : -550, opacity: 0 }}
+                      transition={{ type: 'spring', stiffness: 200, damping: 20 }}
+                      className="absolute w-full h-full p-[1.5px] rounded-[32px] overflow-hidden bg-gradient-to-tr from-violet-500/25 via-blue-500/20 to-transparent shadow-2xl"
                     >
-                      <div className="w-full h-full glass-card-purple-blue rounded-[29px] p-8 flex flex-col justify-between cursor-grab active:cursor-grabbing select-none relative overflow-hidden text-left">
-                        <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-violet-600/10 to-transparent -z-10" />
-
+                      <div className="w-full h-full glass-card-purple-blue rounded-[31px] p-6 flex flex-col justify-between cursor-grab active:cursor-grabbing relative overflow-hidden text-left select-none">
+                        
+                        {/* Overlay tags for likes/nopes */}
                         {isTop && (
                           <>
-                            <div 
-                              style={{ opacity: likeOpacity }}
-                              className="absolute top-8 left-8 border-4 border-emerald-500 text-emerald-500 text-xl font-black uppercase rounded-xl px-4 py-1.5 rotate-[-12deg] pointer-events-none z-35 tracking-wider shadow-lg bg-slate-950/90"
-                            >
+                            <div style={{ opacity: likeOpacity }} className="absolute top-6 left-6 border-4 border-emerald-500 text-emerald-500 text-lg font-black uppercase rounded-xl px-4 py-1.5 rotate-[-12deg] tracking-wider bg-slate-950/95 shadow-xl z-30">
                               LIKE
                             </div>
-                            <div 
-                              style={{ opacity: nopeOpacity }}
-                              className="absolute top-8 right-8 border-4 border-rose-500 text-rose-500 text-xl font-black uppercase rounded-xl px-4 py-1.5 rotate-[12deg] pointer-events-none z-35 tracking-wider shadow-lg bg-slate-950/90"
-                            >
+                            <div style={{ opacity: nopeOpacity }} className="absolute top-6 right-6 border-4 border-rose-500 text-rose-500 text-lg font-black uppercase rounded-xl px-4 py-1.5 rotate-[12deg] tracking-wider bg-slate-950/95 shadow-xl z-30">
                               NOPE
                             </div>
-                            <div 
-                              style={{ opacity: saveOpacity }}
-                              className="absolute bottom-20 left-1/2 -translate-x-1/2 border-4 border-cyan-500 text-cyan-500 text-xl font-black uppercase rounded-xl px-4 py-1.5 pointer-events-none z-35 tracking-wider shadow-lg bg-slate-950/90"
-                            >
+                            <div style={{ opacity: saveOpacity }} className="absolute bottom-24 left-1/2 -translate-x-1/2 border-4 border-cyan-500 text-cyan-500 text-lg font-black uppercase rounded-xl px-4 py-1.5 tracking-wider bg-slate-950/95 shadow-xl z-30">
                               SAVE
                             </div>
                           </>
                         )}
 
-                        <div>
-                          <div className="flex justify-between items-start gap-4">
-                            <div className="min-w-0">
-                              <div className="flex flex-wrap gap-1.5">
-                                <span className="inline-flex px-3 py-1 bg-violet-600/20 border border-violet-500/30 rounded-md text-[9px] font-black uppercase text-violet-400 tracking-wider">
-                                  {job.job_type}
-                                </span>
-                                <span className="inline-flex px-3 py-1 bg-blue-600/20 border border-blue-500/30 rounded-md text-[9px] font-black uppercase text-blue-400 tracking-wider">
-                                  {job.experience_level.replace('_', ' ')}
+                        {/* RENDER CONTENT ONLY FOR TOP CARD TO PREVENT OVERLAPPING AND LAGS */}
+                        {isTop ? (
+                          <>
+                            <div className="space-y-4">
+                              {/* Header Card Details */}
+                              <div className="flex justify-between items-start gap-4">
+                                <div className="flex items-center gap-3">
+                                  <CompanyLogo company={job.company} />
+                                  <div className="min-w-0">
+                                    <div className="flex items-center gap-1.5">
+                                      <h4 className="text-sm font-black text-white truncate">{job.company?.name || job.company_name}</h4>
+                                      <Shield size={14} className="text-blue-400 shrink-0" fill="currentColor" />
+                                    </div>
+                                    <span className="text-[10px] text-slate-400 font-bold block mt-0.5">
+                                      Rating: {job.company?.rating || 4.2} ★ • {job.company?.industry || 'Technology'}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                {/* Radial AI Match progress gauge */}
+                                <div className="relative w-12 h-12 flex items-center justify-center shrink-0">
+                                  <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                                    <circle cx="18" cy="18" r="16" fill="none" stroke="#ffffff10" strokeWidth="2.5" />
+                                    <circle cx="18" cy="18" r="16" fill="none" stroke="url(#card-match-grad)" strokeWidth="2.5"
+                                      strokeDasharray={`${job.ai_match_score || 85}, 100`} />
+                                    <defs>
+                                      <linearGradient id="card-match-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" stopColor="#8b5cf6" />
+                                        <stop offset="100%" stopColor="#3b82f6" />
+                                      </linearGradient>
+                                    </defs>
+                                  </svg>
+                                  <span className="absolute text-[9px] font-black text-white">{job.ai_match_score || 85}%</span>
+                                </div>
+                              </div>
+
+                              {/* Title and location */}
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="px-2 py-0.5 rounded-full bg-violet-605/10 border border-violet-500/20 text-[8px] font-black text-violet-400 uppercase tracking-wider">
+                                    {job.experience_level}
+                                  </span>
+                                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[8px] font-black text-emerald-400 uppercase tracking-wider">
+                                    Easy Apply
+                                  </span>
+                                </div>
+                                <h2 className="text-base font-black text-white leading-tight tracking-tight line-clamp-1">{job.title}</h2>
+                                <span className="text-[10px] text-slate-450 block font-semibold flex items-center gap-1">
+                                  <MapPin size={11} /> {job.location} ({job.job_type})
                                 </span>
                               </div>
-                              <h2 className="text-3xl font-black text-white tracking-tight mt-4 leading-snug truncate">{job.title}</h2>
-                              <p className="text-violet-400 text-xl font-bold mt-1.5 truncate">{job.company.name}</p>
-                            </div>
 
-                            {/* Match Ring */}
-                            <div className="flex flex-col items-center shrink-0">
-                              <div className="relative w-14 h-14 flex items-center justify-center">
-                                <svg className="w-full h-full transform -rotate-90">
-                                  <circle
-                                    cx="28"
-                                    cy="28"
-                                    r="22"
-                                    stroke="rgba(255,255,255,0.03)"
-                                    strokeWidth="3.5"
-                                    fill="transparent"
-                                  />
-                                  <circle
-                                    cx="28"
-                                    cy="28"
-                                    r="22"
-                                    stroke="url(#matchGlow)"
-                                    strokeWidth="4"
-                                    fill="transparent"
-                                    strokeDasharray={138}
-                                    strokeDashoffset={138 - (138 * 96) / 100}
-                                    strokeLinecap="round"
-                                  />
-                                  <defs>
-                                    <linearGradient id="matchGlow" x1="0%" y1="0%" x2="100%" y2="100%">
-                                      <stop offset="0%" stopColor="#8b5cf6" />
-                                      <stop offset="100%" stopColor="#3b82f6" />
-                                    </linearGradient>
-                                  </defs>
-                                </svg>
-                                <span className="absolute text-xxs font-black text-white">96%</span>
+                              {/* Why matches details */}
+                              <div className="p-3.5 rounded-2xl bg-white/5 border border-white/5 space-y-2">
+                                <span className="text-[8px] font-black uppercase tracking-widest text-violet-405 block">Why This Job Matches You</span>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {(job.skills_required?.slice(0, 4) || ["React", "Python", "SQL"]).map((skill) => (
+                                    <span key={skill} className="px-2 py-0.5 rounded-lg bg-emerald-500/10 text-emerald-400 text-[8.5px] font-extrabold flex items-center gap-1 border border-emerald-500/10 uppercase tracking-wide">
+                                      ✓ {skill}
+                                    </span>
+                                  ))}
+                                </div>
                               </div>
-                              <span className="text-[8px] font-black uppercase tracking-widest text-slate-500 mt-1">AI Match</span>
-                            </div>
-                          </div>
 
-                          <div className="space-y-2.5 mt-6 border-t border-white/5 pt-4 text-left">
-                            <div className="flex items-center space-x-2.5 text-xs text-slate-400 font-bold">
-                              <MapPin size={14} className="text-slate-500" />
-                              <span className="truncate">{job.location}</span>
+                              {/* Description snippet */}
+                              <p className="text-xxs text-slate-400 leading-relaxed font-semibold line-clamp-3">
+                                {job.description}
+                              </p>
                             </div>
-                            <div className="flex items-center space-x-2.5 text-xl text-white font-extrabold">
-                              <DollarSign size={18} className="text-slate-500" />
-                              <span>
-                                {job.salary_min ? `$${(job.salary_min/1000)}k` : 'Negotiable'}
-                                {job.salary_max ? ` - $${(job.salary_max/1000)}k` : ''}
-                              </span>
-                            </div>
-                          </div>
 
-                          <div className="mt-6 pt-4 border-t border-white/5 text-left">
-                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Required Skills</p>
-                            <div className="flex flex-wrap gap-1.5 mt-2.5 max-h-[85px] overflow-hidden">
-                              {job.skills_required.slice(0, 4).map((skill) => (
-                                <span key={skill} className="px-3.5 py-1.5 rounded-xl bg-white/5 border border-white/10 text-slate-300 text-sm font-bold shadow-sm">
-                                  {skill}
+                            {/* bottom card panel details */}
+                            <div className="space-y-4 pt-2 border-t border-white/5">
+                              <div className="flex justify-between items-center text-xxs font-extrabold uppercase text-slate-400">
+                                <span className="text-emerald-450 font-black text-xs">
+                                  ${(job.salary_min / 1000).toFixed(0)}k - ${(job.salary_max / 1000).toFixed(0)}k
                                 </span>
-                              ))}
+                                <span>12 Applicants</span>
+                              </div>
+                              <button 
+                                onClick={() => setDrawerJob(job)}
+                                className="w-full py-2.5 bg-slate-950/60 border border-white/5 hover:border-violet-500/20 text-slate-350 hover:text-white rounded-xl text-xxs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5"
+                              >
+                                <span>Read Job Description & Insights</span>
+                                <ChevronUp size={12} className="animate-bounce" />
+                              </button>
                             </div>
+                          </>
+                        ) : (
+                          // PREVIEW CARD EMPTY PLACEHOLDER
+                          <div className="w-full h-full flex flex-col justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="w-14 h-14 rounded-2xl bg-slate-950/60 border border-white/5" />
+                              <div className="space-y-2 flex-1">
+                                <div className="h-3 rounded bg-slate-950/60 w-1/3" />
+                                <div className="h-2 rounded bg-slate-950/60 w-1/2" />
+                              </div>
+                            </div>
+                            <div className="h-16 rounded bg-slate-955/40" />
                           </div>
-                        </div>
+                        )}
 
-                        <button
-                          onClick={() => setDrawerJob(job)}
-                          className="w-full flex flex-col items-center py-2 text-slate-400 hover:text-white transition-colors rounded-lg cursor-pointer animate-bounce"
-                        >
-                          <ChevronUp size={16} />
-                          <span className="text-[9px] font-extrabold uppercase tracking-widest mt-1">Swipe Up for details</span>
-                        </button>
                       </div>
                     </motion.div>
                   );
@@ -592,238 +570,272 @@ export default function SwipeDiscovery() {
               </AnimatePresence>
             </div>
 
-            {/* Action buttons */}
-            <div className="flex items-center space-x-6 z-10 pt-6">
+            {/* Bottom Swiper Control Actions (Premium styling buttons with glow, scales, and ripples) */}
+            <div className="flex items-center gap-4 mt-6">
               <button
                 onClick={handleUndo}
-                className="w-14 h-14 rounded-full bg-slate-900 border border-white/10 hover:border-white/20 hover:bg-white/5 flex items-center justify-center text-slate-400 shadow-md hover:scale-105 active:scale-90 transition-all cursor-pointer"
+                className="w-11 h-11 rounded-full bg-slate-900 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:scale-110 active:scale-95 transition-all cursor-pointer shadow-lg hover:shadow-white/5"
               >
-                <RotateCcw size={18} />
+                <RotateCcw size={15} />
               </button>
+              
               <button
                 onClick={() => handleSwipe(activeCard.id, 'dislike')}
-                className="w-16 h-16 rounded-full bg-slate-900 border border-rose-500/20 hover:border-rose-500/60 hover:bg-rose-950/20 flex items-center justify-center text-rose-500 shadow-lg hover:scale-105 active:scale-90 transition-all cursor-pointer"
+                className="w-14 h-14 rounded-full bg-rose-500/10 border border-rose-500/25 hover:border-rose-500 flex items-center justify-center text-rose-450 hover:text-rose-300 hover:scale-110 active:scale-95 transition-all cursor-pointer shadow-lg hover:shadow-rose-500/10"
               >
-                <X size={26} />
+                <X size={20} />
               </button>
+              
               <button
                 onClick={() => handleSwipe(activeCard.id, 'save')}
-                className="w-14 h-14 rounded-full bg-slate-900 border border-cyan-500/20 hover:border-cyan-500/60 hover:bg-cyan-950/20 flex items-center justify-center text-cyan-405 shadow-md hover:scale-105 active:scale-90 transition-all cursor-pointer"
+                className="w-11 h-11 rounded-full bg-slate-900 border border-cyan-500/20 hover:border-cyan-500 flex items-center justify-center text-cyan-405 hover:text-cyan-300 hover:scale-110 active:scale-95 transition-all cursor-pointer shadow-lg"
               >
-                <Star size={20} />
+                <Bookmark size={15} />
               </button>
+              
               <button
                 onClick={() => handleSwipe(activeCard.id, 'like')}
-                className="w-16 h-16 rounded-full bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 flex items-center justify-center text-white shadow-lg shadow-violet-500/20 hover:scale-105 active:scale-90 transition-all cursor-pointer"
+                className="w-14 h-14 rounded-full bg-emerald-500/10 border border-emerald-500/25 hover:border-emerald-500 flex items-center justify-center text-emerald-450 hover:text-emerald-300 hover:scale-110 active:scale-95 transition-all cursor-pointer shadow-lg hover:shadow-emerald-500/10"
               >
-                <Heart size={26} className="fill-white" />
+                <Heart size={20} />
               </button>
             </div>
+
           </div>
         )}
+
       </div>
 
-      {/* RIGHT COLUMN: Live Recruiter Feed & Stats */}
-      <div className="lg:col-span-4 space-y-6">
-        <div className="p-[1px] rounded-3xl bg-gradient-to-b from-white/10 to-transparent shadow-xl">
-          <div className="bg-slate-950/80 backdrop-blur-2xl rounded-[23px] p-6 space-y-6 text-left border border-white/5">
-            <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 flex items-center gap-2">
-              <Activity size={14} className="text-violet-400 animate-pulse" />
-              <span>Live Hiring Feed</span>
-            </h3>
+      {/* RIGHT PANEL: Live Feed & Seeker Analytics */}
+      <div className="lg:col-span-4 space-y-6 text-left">
+        
+        {/* Swipe stats goal card */}
+        <div className="p-5 rounded-[24px] border border-white/5 bg-slate-900/40 backdrop-blur-md space-y-4">
+          <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block border-b border-white/5 pb-2">Today's Swiping Goal</span>
+          <div className="flex justify-between items-center text-xxs font-extrabold uppercase text-slate-400">
+            <span>Goal Progress</span>
+            <span className="text-violet-405">{swipesGoal} / 15 Jobs Swiped</span>
+          </div>
+          <div className="w-full h-2 rounded-full bg-slate-950 overflow-hidden relative border border-white/5">
+            <div 
+              style={{ width: `${(swipesGoal / 15) * 100}%` }}
+              className="h-full bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-500 transition-all duration-300"
+            />
+          </div>
+        </div>
 
-            <div className="space-y-4 max-h-[360px] overflow-y-auto divide-y divide-white/5">
-              {[
-                { time: 'Just now', company: 'Google Inc.', desc: 'Recruiter viewed your Javascript skill tags' },
-                { time: '3m ago', company: 'Microsoft', desc: 'Verified matching score: 98%' },
-                { time: '12m ago', company: 'Stripe Inc.', desc: 'AI Gap Analysis compiled recommendations' },
-                { time: '1h ago', company: 'Amazon', desc: 'Direct message channel unlocked with manager' }
-              ].map((activity, i) => (
-                <div key={i} className="pt-3.5 first:pt-0 text-[11px] leading-relaxed text-slate-400">
-                  <div className="flex justify-between items-start">
-                    <span className="font-extrabold text-white">{activity.company}</span>
-                    <span className="text-[9px] text-slate-500 font-semibold">{activity.time}</span>
-                  </div>
-                  <p className="font-medium mt-1">{activity.desc}</p>
+        {/* Dynamic Seeker Stats */}
+        <div className="p-5 rounded-[24px] border border-white/5 bg-slate-900/40 backdrop-blur-md space-y-4">
+          <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block border-b border-white/5 pb-2">Swipe Analytics</span>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="p-3 bg-slate-950/60 border border-white/5 rounded-2xl text-left">
+              <span className="text-[8px] font-bold uppercase tracking-wider text-slate-500">Liked Roles</span>
+              <p className="text-lg font-black text-white mt-1">{likesCount}</p>
+            </div>
+            <div className="p-3 bg-slate-950/60 border border-white/5 rounded-2xl text-left">
+              <span className="text-[8px] font-bold uppercase tracking-wider text-slate-500">Matches</span>
+              <p className="text-lg font-black text-violet-400 mt-1">{matchesCount}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Live recruiter activity feeds */}
+        <div className="p-5 rounded-[24px] border border-white/5 bg-slate-900/40 backdrop-blur-md space-y-4">
+          <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block border-b border-white/5 pb-2">Live Recruiter Feed</span>
+          <div className="space-y-3.5">
+            {[
+              { text: "Recruiter at Stripe checked your CV", time: "3m ago", highlight: true },
+              { text: "Wellfound is reviewing QA Automation leads", time: "12m ago", highlight: false },
+              { text: "Retool is interviewing for React Lead roles", time: "1h ago", highlight: false }
+            ].map((feed, idx) => (
+              <div key={idx} className="flex items-start gap-2.5 text-xxs font-semibold">
+                <div className={`w-2 h-2 rounded-full mt-1 shrink-0 ${feed.highlight ? 'bg-violet-500 animate-ping' : 'bg-slate-750'}`} />
+                <div className="flex-1">
+                  <p className="text-slate-300 leading-tight">{feed.text}</p>
+                  <span className="text-[8px] text-slate-500 block mt-0.5">{feed.time}</span>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
         </div>
 
-        <div className="p-[1px] rounded-3xl bg-gradient-to-tr from-violet-500/20 to-blue-500/25 shadow-xl">
-          <div className="bg-slate-950/80 backdrop-blur-2xl rounded-[23px] p-6 text-left space-y-4 border border-white/5">
-            <h4 className="text-xs font-black uppercase tracking-wider text-slate-400">Your Swipe Stats</h4>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 bg-gradient-to-tr from-violet-600 to-indigo-650 text-white rounded-2xl shadow-md text-center">
-                <span className="text-2xl font-black block">{likesCount}</span>
-                <span className="text-[8px] text-violet-100 font-extrabold uppercase tracking-wider mt-1 block">Active Likes</span>
-              </div>
-              <div className="p-4 bg-gradient-to-tr from-blue-600 to-cyan-600 text-white rounded-2xl shadow-md text-center">
-                <span className="text-2xl font-black block">{matchesCount}</span>
-                <span className="text-[8px] text-blue-100 font-extrabold uppercase tracking-wider mt-1 block">Matches Found</span>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
 
-      {/* Details drawer Overlay */}
-      <AnimatePresence>
-        {drawerJob && (
-          <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-40 flex justify-end items-end">
-            <div className="absolute inset-0" onClick={() => setDrawerJob(null)} />
-            <motion.div
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-              className="relative w-full max-w-lg bg-slate-950 border-t border-white/10 rounded-t-3xl p-6 sm:p-8 z-50 max-h-[85vh] overflow-y-auto space-y-6 shadow-2xl text-left text-white"
-            >
-              <div className="flex justify-between items-start gap-4">
+      {/* DETAILED OVERLAY DRAWER DIALOG MODAL */}
+      {drawerJob && (
+        <div className="fixed inset-0 z-50 flex items-center justify-end bg-slate-950/70 backdrop-blur-sm">
+          <div className="w-full max-w-xl h-full bg-slate-900 border-l border-white/10 flex flex-col justify-between shadow-2xl relative overflow-hidden animate-slide-in">
+            
+            {/* Header Area */}
+            <div className="p-6 border-b border-white/5 flex justify-between items-center">
+              <div className="flex items-center gap-3">
+                <CompanyLogo company={drawerJob.company} className="w-12 h-12" />
                 <div className="min-w-0">
-                  <h3 className="text-2xl font-black text-white leading-tight truncate">{drawerJob.title}</h3>
-                  <p className="text-violet-400 font-extrabold text-sm mt-1 truncate">{drawerJob.company.name}</p>
-                </div>
-                <button
-                  onClick={() => setDrawerJob(null)}
-                  className="p-2 rounded-xl border border-white/10 hover:bg-white/5 text-slate-400 hover:text-white shrink-0 cursor-pointer"
-                >
-                  <X size={16} />
-                </button>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 text-xs text-slate-400 border-y border-white/10 py-5">
-                <div className="flex items-center space-x-1.5 font-semibold">
-                  <MapPin size={14} className="text-slate-500" />
-                  <span>{drawerJob.location}</span>
-                </div>
-                <div className="flex items-center space-x-1.5 text-white font-extrabold">
-                  <DollarSign size={14} className="text-slate-500" />
-                  <span>
-                    {drawerJob.salary_min ? `$${drawerJob.salary_min.toLocaleString()}` : 'Negotiable'}
-                    {drawerJob.salary_max ? ` - $${drawerJob.salary_max.toLocaleString()}` : ''}
+                  <h3 className="text-sm font-black text-white">{drawerJob.title}</h3>
+                  <span className="text-[10px] text-slate-450 font-bold block mt-0.5">
+                    {drawerJob.company?.name || drawerJob.company_name} • Rating: {drawerJob.company?.rating || 4.2} ★
                   </span>
                 </div>
-                <div className="flex items-center space-x-1.5 capitalize font-semibold">
-                  <Briefcase size={14} className="text-slate-500" />
-                  <span>{drawerJob.employment_type.replace('_', ' ')} ({drawerJob.job_type})</span>
+              </div>
+              <button 
+                onClick={() => { setDrawerJob(null); setCoverLetter(''); }}
+                className="p-1.5 rounded-lg bg-white/5 border border-white/5 text-slate-450 hover:text-white transition-all cursor-pointer"
+              >
+                <X size={14} />
+              </button>
+            </div>
+
+            {/* Scrollable details contents */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-6 text-left">
+              
+              {/* ATS and match progress grid */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="p-3 bg-slate-950/50 border border-white/5 rounded-2xl text-center">
+                  <span className="text-[8px] font-black uppercase text-slate-500 block">AI Match Score</span>
+                  <span className="text-lg font-black text-violet-405 block mt-1">{drawerJob.ai_match_score || 85}%</span>
                 </div>
-                <div className="flex items-center space-x-1.5 capitalize font-semibold">
-                  <GraduationCap size={14} className="text-slate-500" />
-                  <span>{drawerJob.experience_level.replace('_', ' ')}</span>
+                <div className="p-3 bg-slate-950/50 border border-white/5 rounded-2xl text-center">
+                  <span className="text-[8px] font-black uppercase text-slate-500 block">Interview Probability</span>
+                  <span className="text-lg font-black text-emerald-400 block mt-1">78%</span>
+                </div>
+                <div className="p-3 bg-slate-950/50 border border-white/5 rounded-2xl text-center">
+                  <span className="text-[8px] font-black uppercase text-slate-500 block">Salary Prediction</span>
+                  <span className="text-lg font-black text-cyan-400 block mt-1">High</span>
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <h4 className="text-xs font-extrabold uppercase tracking-widest text-slate-500">About the Role</h4>
-                <p className="text-slate-300 text-xs leading-relaxed whitespace-pre-line bg-slate-900/40 p-4 rounded-2xl border border-white/5 font-semibold">{drawerJob.description}</p>
+              {/* Recruiter Shortlist Insights */}
+              <div className="p-4 rounded-2xl bg-violet-605/5 border border-violet-500/25 space-y-3">
+                <span className="text-[9px] font-black uppercase tracking-widest text-violet-400 block flex items-center gap-1">
+                  <Zap size={11} fill="currentColor" /> Recruiter Shortlist Insights
+                </span>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xxs leading-relaxed font-semibold text-slate-350">
+                  <div className="space-y-1.5">
+                    <span className="text-[8px] font-extrabold uppercase text-emerald-450 block">Why shortlisting you:</span>
+                    <p>✓ Matching skills profile requirements.</p>
+                    <p>✓ Relevant experience level target.</p>
+                  </div>
+                  <div className="space-y-1.5">
+                    <span className="text-[8px] font-extrabold uppercase text-rose-450 block">Why rejecting you:</span>
+                    <p>✗ Location parameters are outside preferred states.</p>
+                  </div>
+                </div>
               </div>
 
-              {drawerJob.requirements && (
-                <div className="space-y-2">
-                  <h4 className="text-xs font-extrabold uppercase tracking-widest text-slate-500">Key Requirements</h4>
-                  <p className="text-slate-300 text-xs leading-relaxed whitespace-pre-line bg-slate-900/40 p-4 rounded-2xl border border-white/5 font-semibold">{drawerJob.requirements}</p>
+              {/* Job Specification Grid */}
+              <div className="space-y-3">
+                <span className="text-[9px] font-black uppercase tracking-widest text-slate-450 block border-b border-white/5 pb-2">Job Specifications</span>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-xxs font-extrabold text-white">
+                  <div>
+                    <span className="text-[8px] uppercase text-slate-500 block">Salary range</span>
+                    <span className="text-slate-200">${(drawerJob.salary_min / 1000).toFixed(0)}k - ${(drawerJob.salary_max / 1000).toFixed(0)}k</span>
+                  </div>
+                  <div>
+                    <span className="text-[8px] uppercase text-slate-500 block">Experience Level</span>
+                    <span className="text-slate-200 capitalize">{drawerJob.experience_level}</span>
+                  </div>
+                  <div>
+                    <span className="text-[8px] uppercase text-slate-500 block">Employment Type</span>
+                    <span className="text-slate-200 capitalize">{drawerJob.employment_type?.replace('_', ' ') || 'Full Time'}</span>
+                  </div>
+                  <div>
+                    <span className="text-[8px] uppercase text-slate-500 block">Work mode</span>
+                    <span className="text-slate-200 capitalize">{drawerJob.job_type}</span>
+                  </div>
+                  <div>
+                    <span className="text-[8px] uppercase text-slate-500 block">HQ Headquarters</span>
+                    <span className="text-slate-200 truncate block">{drawerJob.company?.headquarters || drawerJob.location}</span>
+                  </div>
+                  <div>
+                    <span className="text-[8px] uppercase text-slate-500 block">Hiring status</span>
+                    <span className="text-emerald-450 font-bold uppercase block">Active</span>
+                  </div>
                 </div>
-              )}
+              </div>
 
+              {/* Description */}
               <div className="space-y-2">
-                <h4 className="text-xs font-extrabold uppercase tracking-widest text-slate-500">Skills Stack</h4>
-                <div className="flex flex-wrap gap-1.5">
-                  {drawerJob.skills_required.map((skill) => (
-                    <span key={skill} className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-slate-300 text-xxs font-extrabold">
+                <span className="text-[9px] font-black uppercase tracking-widest text-slate-450 block border-b border-white/5 pb-2">Job Description</span>
+                <p className="text-xxs text-slate-350 leading-relaxed font-semibold">
+                  {drawerJob.description}
+                </p>
+              </div>
+
+              {/* Requirements & Missing skills */}
+              <div className="space-y-3">
+                <span className="text-[9px] font-black uppercase tracking-widest text-slate-450 block border-b border-white/5 pb-2">Required Skills Profile</span>
+                <div className="flex flex-wrap gap-2">
+                  {(drawerJob.skills_required || ["React", "Python", "SQL"]).map((skill) => (
+                    <span key={skill} className="px-3 py-1 rounded-xl bg-slate-950 text-slate-300 text-xxs border border-white/5 uppercase tracking-wider font-extrabold">
                       {skill}
                     </span>
                   ))}
                 </div>
               </div>
 
-              <AiSkillGapWidget jobId={drawerJob.id} />
-
-              {/* AI Tools Bar */}
-              <div className="p-5 rounded-2xl bg-slate-900/40 border border-white/5 space-y-4">
-                <div className="flex flex-col sm:flex-row gap-3 justify-between items-center">
+              {/* Cover Letter generation widget */}
+              <div className="p-4 rounded-2xl bg-white/5 border border-white/5 space-y-3">
+                <span className="text-[9px] font-black uppercase text-violet-405 block">AI Assistant Cover Letter</span>
+                <p className="text-xxs text-slate-400 font-semibold leading-relaxed">
+                  Tailor a custom, targeted application cover letter for {drawerJob.company?.name || drawerJob.company_name} matching your profile.
+                </p>
+                {coverLetter ? (
+                  <div className="space-y-3">
+                    <pre className="p-3 bg-slate-950 rounded-xl text-[10px] font-mono text-slate-300 whitespace-pre-wrap max-h-48 overflow-y-auto leading-relaxed border border-white/5">
+                      {coverLetter}
+                    </pre>
+                    <button
+                      onClick={handleCopyCoverLetter}
+                      className="px-4 py-2 bg-slate-900 border border-white/10 hover:border-violet-500/20 text-slate-200 hover:text-white text-xxs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center gap-1.5"
+                    >
+                      <Copy size={12} />
+                      <span>Copy Cover Letter</span>
+                    </button>
+                  </div>
+                ) : (
                   <button
                     onClick={handleGenerateCoverLetter}
                     disabled={generatingCoverLetter}
-                    className="w-full sm:w-auto px-5 py-3 bg-white/5 border border-white/10 text-violet-405 text-xs font-extrabold rounded-xl transition-all flex items-center justify-center space-x-2 active:scale-95 disabled:opacity-50 cursor-pointer uppercase tracking-wider"
+                    className="w-full py-2.5 bg-gradient-to-r from-violet-605 to-blue-600 hover:scale-102 text-white rounded-xl text-xxs font-black uppercase tracking-wider transition-all disabled:opacity-50 flex items-center justify-center gap-1.5 cursor-pointer shadow-md"
                   >
                     {generatingCoverLetter ? (
-                      <>
-                        <Loader2 size={12} className="animate-spin" />
-                        <span>Writing Cover...</span>
-                      </>
+                      <Loader2 size={12} className="animate-spin" />
                     ) : (
-                      <>
-                        <Sparkles size={12} />
-                        <span>{coverLetter ? 'Regenerate Cover' : 'Generate Cover'}</span>
-                      </>
+                      <Sparkles size={12} />
                     )}
+                    <span>Generate AI Cover Letter</span>
                   </button>
-
-                  <button
-                    onClick={() => setShowInterviewModal(true)}
-                    className="w-full sm:w-auto px-5 py-3 bg-white/5 border border-white/10 text-violet-405 text-xs font-extrabold rounded-xl transition-all flex items-center justify-center space-x-2 active:scale-95 cursor-pointer uppercase tracking-wider"
-                  >
-                    <Sparkles size={12} />
-                    <span>Practice Questions</span>
-                  </button>
-                </div>
-
-                {coverLetter && (
-                  <div className="space-y-2 pt-2 border-t border-white/5 animate-fade-in text-left">
-                    <div className="flex justify-between items-center">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Generated Cover Letter</span>
-                      <button
-                        onClick={handleCopyCoverLetter}
-                        className="text-xs text-violet-400 hover:underline flex items-center gap-1 font-bold cursor-pointer"
-                      >
-                        <Copy size={12} />
-                        <span>Copy</span>
-                      </button>
-                    </div>
-                    <textarea
-                      value={coverLetter}
-                      onChange={(e) => setCoverLetter(e.target.value)}
-                      rows={6}
-                      className="w-full p-4 rounded-xl bg-slate-900 border border-white/10 text-slate-300 text-xs leading-relaxed outline-none focus:border-violet-500/50 focus:ring-4 focus:ring-violet-500/5 transition-all font-semibold"
-                    />
-                  </div>
                 )}
               </div>
 
-              {/* Action buttons inside drawer */}
-              <div className="pt-6 border-t border-white/5 flex justify-end gap-3">
-                <button
-                  onClick={() => setDrawerJob(null)}
-                  className="px-5 py-3 border border-white/10 hover:bg-white/5 text-slate-400 hover:text-white font-extrabold text-xs rounded-xl transition-all active:scale-95 cursor-pointer"
-                >
-                  Cancel
-                </button>
-                
-                <button
-                  onClick={() => {
-                    handleSwipe(drawerJob.id, 'like');
-                    setDrawerJob(null);
-                  }}
-                  className="px-7 py-3 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white font-extrabold text-xs rounded-xl transition-all shadow-lg flex items-center space-x-1.5 active:scale-95 cursor-pointer uppercase tracking-wider"
-                >
-                  Apply Now
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+            </div>
 
-      {/* AI Interview Questions Modal */}
-      {showInterviewModal && drawerJob && (
-        <AiInterviewModal 
-          jobId={drawerJob.id} 
-          jobTitle={drawerJob.title} 
-          onClose={() => setShowInterviewModal(false)} 
-        />
+            {/* CTA action footer */}
+            <div className="p-6 border-t border-white/5 bg-slate-950/40 flex justify-end gap-3 shrink-0">
+              <button
+                onClick={() => { setDrawerJob(null); setCoverLetter(''); }}
+                className="px-4 py-2.5 rounded-xl border border-white/10 hover:bg-slate-850 text-slate-300 hover:text-white text-xxs font-black uppercase tracking-wider cursor-pointer"
+              >
+                Close Insights
+              </button>
+              
+              <button
+                onClick={() => {
+                  const id = drawerJob.id;
+                  setDrawerJob(null);
+                  setCoverLetter('');
+                  handleSwipe(id, 'like');
+                }}
+                className="px-5 py-2.5 bg-gradient-to-r from-violet-605 via-fuchsia-605 to-blue-600 text-white rounded-xl text-xxs font-black uppercase tracking-wider cursor-pointer shadow-md"
+              >
+                Apply & Shortlist
+              </button>
+            </div>
+
+          </div>
+        </div>
       )}
+
     </PageTransition>
   );
 }
