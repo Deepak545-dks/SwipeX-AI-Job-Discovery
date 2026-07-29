@@ -102,7 +102,7 @@ export default function ProfileDashboard() {
       // If there is a resume analysis cache
       if (data.resumes && data.resumes.length > 0) {
         try {
-          const analysisResp = await api.get(`/jobs/ai/resume-analysis-history/`);
+          const analysisResp = await api.get('/profiles/ai/analyze-resume/');
           setAiAnalysis(analysisResp.data.analysis || analysisResp.data);
         } catch (e) {
           console.log("No previous resume analysis found.");

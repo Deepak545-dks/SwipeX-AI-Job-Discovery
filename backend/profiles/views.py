@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from django.shortcuts import get_object_or_404, get_list_or_404
 from django.db.models import Max
 from drf_spectacular.utils import extend_schema
+from django.core.exceptions import ValidationError
 
 from .models import Profile, Skill, Education, Experience, Resume, Project
 from .serializers import (
@@ -171,6 +172,26 @@ class AIResumeAnalyzerView(APIView):
     permission_classes = (permissions.IsAuthenticated,)
 
     @extend_schema(responses={200: dict})
+    def get(self, request):
+        user = request.user
+        profile = getattr(user, 'profile', None)
+        if not profile:
+            return Response({"error": "Profile not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        resume_text = ""
+        latest_resume = profile.resumes.first()
+        if latest_resume and latest_resume.file:
+            try:
+                with latest_resume.file.open('rb') as f:
+                    resume_text = extract_text_from_pdf(f)
+            except Exception as e:
+                import logging
+                logging.getLogger("profiles.views").warning(f"Failed to read resume file text: {e}")
+
+        analysis = AIService.analyze_resume(profile, resume_text)
+        return Response(analysis, status=status.HTTP_200_OK)
+
+    @extend_schema(responses={200: dict})
     def post(self, request):
         user = request.user
         profile = getattr(user, 'profile', None)
@@ -182,7 +203,7 @@ class AIResumeAnalyzerView(APIView):
         if resume_id:
             try:
                 latest_resume = Resume.objects.get(id=resume_id, profile=profile)
-            except Resume.DoesNotExist:
+            except (Resume.DoesNotExist, ValidationError, ValueError):
                 return Response({"error": "Resume not found"}, status=status.HTTP_404_NOT_FOUND)
         else:
             latest_resume = profile.resumes.first()

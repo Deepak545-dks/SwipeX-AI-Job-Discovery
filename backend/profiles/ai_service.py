@@ -76,6 +76,7 @@ class AIService:
 
         return {
             "overall_score": score,
+            "score": score,
             "strengths": strengths,
             "weaknesses": weaknesses,
             "missing_skills": missing_skills,
