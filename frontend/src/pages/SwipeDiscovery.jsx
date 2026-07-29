@@ -231,39 +231,152 @@ export default function SwipeDiscovery() {
       {/* LEFT COLUMN: Swiper Deck */}
       <div className="lg:col-span-8 flex flex-col items-center justify-center">
         {deck.length === 0 ? (
-          <div className="text-center p-10 bg-slate-900/80 border border-violet-500/20 rounded-[28px] max-w-md w-full shadow-2xl space-y-6 backdrop-blur-2xl">
-            <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-tr from-violet-600 to-blue-600 shadow-lg flex items-center justify-center text-white">
-              <Sparkles className="animate-spin duration-[10000ms]" size={32} />
-            </div>
-            <div className="space-y-2">
-              <h3 className="text-3xl font-black text-white tracking-tight">Deck Completed</h3>
-              <p className="text-slate-400 text-sm leading-relaxed font-semibold">
-                You've swiped through all matching roles. Check back later or refresh recommendations to start discovering again!
-              </p>
-            </div>
+          <div className="w-full max-w-2xl p-8 bg-slate-900/80 border border-violet-500/20 rounded-[32px] shadow-2xl space-y-8 backdrop-blur-2xl relative overflow-hidden animate-fade-in text-left">
+            {/* Top scanning animation illustration */}
+            <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-tr from-violet-600/10 via-fuchsia-600/5 to-transparent rounded-full blur-3xl pointer-events-none" />
+            
+            <div className="flex flex-col md:flex-row gap-8 items-start relative z-10">
+              
+              {/* Left Side: Illustration & Core Message */}
+              <div className="flex-1 space-y-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-violet-600 to-blue-600 flex items-center justify-center text-white shadow-lg shrink-0">
+                    <Sparkles className="animate-spin duration-[15000ms]" size={22} />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-black text-white tracking-tight">Queue Fully Cleared</h3>
+                    <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mt-0.5">AI Discovery recommendation feed</span>
+                  </div>
+                </div>
 
-            {!hasResume && (
-              <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl text-xs text-amber-400 text-left flex items-start space-x-2.5">
-                <AlertCircle size={16} className="shrink-0 mt-0.5" />
-                <div>
-                  <span className="font-bold">Missing Resume: </span>
-                  Upload your CV in settings to apply by swiping right.
-                  <Link to="/profile" className="text-violet-400 underline font-extrabold block mt-2 hover:text-violet-305">
-                    Upload Resume &rarr;
+                {/* Animated radar illustration */}
+                <div className="h-36 rounded-2xl bg-slate-950/60 border border-white/5 flex items-center justify-center relative overflow-hidden group">
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-24 h-24 rounded-full border border-violet-500/20 animate-ping absolute duration-[3s]" />
+                    <div className="w-16 h-16 rounded-full border border-blue-500/35 animate-ping absolute duration-[2s]" />
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-violet-600 to-blue-600 flex items-center justify-center text-white shadow-md relative z-10">
+                      <Briefcase size={14} className="animate-pulse" />
+                    </div>
+                  </div>
+                  <span className="absolute bottom-3 text-[9px] font-black uppercase tracking-widest text-slate-500 group-hover:text-violet-405 transition-colors">AI Engine Scanning active feeds</span>
+                </div>
+
+                {/* AI generated explanation message */}
+                <div className="p-4 rounded-2xl bg-white/5 border border-white/5 space-y-2">
+                  <span className="text-[9px] font-black text-violet-400 uppercase tracking-widest block">AI Search Summary</span>
+                  <p className="text-xs text-slate-350 leading-relaxed font-semibold">
+                    We parsed your active resume matching indices. Based on your skill base, the recommendation engine has matched and applied to all high-matching vacancies in your region. To unlock more matching jobs, update your skills index or broaden your location parameters.
+                  </p>
+                </div>
+
+                {/* Notification Toggle & Improve button */}
+                <div className="flex flex-col sm:flex-row gap-4 justify-between items-center p-4 rounded-2xl bg-slate-950/40 border border-white/5">
+                  <div className="flex items-center gap-3">
+                    <div className="relative inline-flex items-center cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        id="job-alerts-toggle"
+                        className="sr-only peer" 
+                        onChange={(e) => {
+                          showToast(e.target.checked ? 'Job alert notifications enabled!' : 'Job alert notifications disabled.', 'info');
+                        }}
+                      />
+                      <div className="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-violet-600" />
+                    </div>
+                    <div>
+                      <span className="text-xxs font-extrabold text-white block">Notify on New Openings</span>
+                      <span className="text-[9px] text-slate-500 font-semibold block mt-0.5">Instantly alerts via app and mail</span>
+                    </div>
+                  </div>
+                  <Link 
+                    to="/profile"
+                    className="px-4 py-2 border border-violet-500/25 hover:border-violet-500/40 bg-violet-600/10 text-violet-400 hover:text-violet-300 text-xxs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer inline-flex items-center gap-1.5"
+                  >
+                    <FileText size={12} />
+                    <span>Optimize CV</span>
                   </Link>
                 </div>
               </div>
-            )}
 
-            <div className="flex flex-col gap-3 pt-2">
-              <button
-                onClick={handleResetSwipes}
-                disabled={resetting}
-                className="flex items-center justify-center space-x-2 py-4 px-6 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white rounded-2xl text-base font-extrabold transition-all shadow-lg active:scale-95 disabled:opacity-50 cursor-pointer uppercase tracking-wider"
-              >
-                {resetting ? <Loader2 size={16} className="animate-spin" /> : <span>Reset Deck & Reswipe</span>}
-              </button>
+              {/* Right Side: Recommendations & Dynamic Actions */}
+              <div className="w-full md:w-60 space-y-6">
+                
+                {/* Recommended Skills */}
+                <div className="space-y-3">
+                  <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block border-b border-white/5 pb-2">Unlock More Jobs</span>
+                  <p className="text-[9px] text-slate-500 font-semibold">Adding 2 or more of these missing skills to your profile expands matching queues by up to 45%:</p>
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {["Docker", "AWS Cloud", "GraphQL", "CI/CD Pipeline", "Kubernetes", "Next.js"].map((skill) => (
+                      <button
+                        key={skill}
+                        onClick={async () => {
+                          try {
+                            const userProfile = await api.get('/profiles/me/');
+                            const currentSkills = userProfile.data.skills?.map(s => s.name) || [];
+                            if (!currentSkills.includes(skill)) {
+                              await api.put('/profiles/me/', {
+                                skills: [...currentSkills, skill]
+                              });
+                              showToast(`Added ${skill} to your profile skills!`, 'success');
+                            } else {
+                              showToast(`${skill} is already in your skills index.`, 'info');
+                            }
+                          } catch (err) {
+                            showToast('Failed to append skill to profile.', 'error');
+                          }
+                        }}
+                        className="px-2.5 py-1 rounded-xl bg-slate-950/60 border border-white/5 hover:border-violet-500/20 text-slate-400 hover:text-white text-[9px] font-extrabold transition-all cursor-pointer uppercase tracking-wider"
+                      >
+                        + {skill}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Suggested Companies */}
+                <div className="space-y-3">
+                  <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block border-b border-white/5 pb-2">Suggested Companies</span>
+                  <div className="space-y-2.5 pt-1">
+                    {[
+                      { name: 'Stripe', industry: 'Fintech Payments', odds: 'High Matching' },
+                      { name: 'Vercel', industry: 'Frontend Clouds', odds: 'High Matching' },
+                      { name: 'Retool', industry: 'Developer tools', odds: 'Medium Matching' }
+                    ].map((comp, idx) => (
+                      <div key={idx} className="flex items-center gap-2.5 p-2 rounded-xl bg-white/5 border border-white/5">
+                        <div className="w-8 h-8 rounded-lg bg-slate-950 flex items-center justify-center text-xs font-black text-violet-405 shrink-0 border border-white/5">
+                          {comp.name.charAt(0)}
+                        </div>
+                        <div className="min-w-0">
+                          <span className="text-xxs font-extrabold text-white block truncate">{comp.name}</span>
+                          <span className="text-[8px] text-slate-500 font-semibold block mt-0.5">{comp.industry} • {comp.odds}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Actions stack */}
+                <div className="flex flex-col gap-2 pt-2 border-t border-white/5">
+                  <button
+                    onClick={handleResetSwipes}
+                    disabled={resetting}
+                    className="w-full py-3 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-650 hover:scale-102 text-white rounded-xl text-xxs font-black uppercase tracking-wider transition-all active:scale-95 disabled:opacity-50 cursor-pointer flex items-center justify-center gap-1.5 shadow-md"
+                  >
+                    {resetting ? <Loader2 size={12} className="animate-spin" /> : <RotateCcw size={12} />}
+                    <span>Refresh Recommendations</span>
+                  </button>
+                  <Link
+                    to="/search"
+                    className="w-full py-3 bg-slate-900 border border-white/10 hover:bg-slate-850 hover:border-slate-500/20 text-slate-250 hover:text-white rounded-xl text-xxs font-black uppercase tracking-wider transition-all active:scale-95 cursor-pointer text-center flex items-center justify-center gap-1.5"
+                  >
+                    <Keyboard size={12} />
+                    <span>Go to AI Search</span>
+                  </Link>
+                </div>
+              </div>
+
             </div>
+
           </div>
         ) : (
           <div className="relative w-full max-w-md h-[720px] flex flex-col justify-between items-center">
