@@ -4,6 +4,8 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import ProtectedRoute from './components/ProtectedRoute';
 import ErrorBoundary from './components/ErrorBoundary';
+import CommandMenu from './components/CommandMenu';
+import AiAssistantWidget from './components/AiAssistantWidget';
 
 // Lazy load page components for code-splitting
 const Home = lazy(() => import('./pages/Home'));
@@ -22,6 +24,7 @@ const RecruiterDashboard = lazy(() => import('./pages/RecruiterDashboard'));
 const ChatPanel = lazy(() => import('./pages/ChatPanel'));
 const VideoInterview = lazy(() => import('./pages/VideoInterview'));
 const CalendarDashboard = lazy(() => import('./pages/CalendarDashboard'));
+const SettingsDashboard = lazy(() => import('./pages/SettingsDashboard'));
 const AdminPlaceholder = lazy(() => import('./pages/AdminPlaceholder'));
 
 // Center glassmorphic loading spinner fallback
@@ -50,6 +53,11 @@ export default function App() {
           <div className="aurora-shape aurora-emerald" />
           <div className="aurora-shape aurora-orange" />
         </div>
+        
+        {/* Global Utilities */}
+        <CommandMenu />
+        <AiAssistantWidget />
+
         <Navbar />
         <main className="flex-grow">
 
@@ -77,11 +85,12 @@ export default function App() {
                   <Route path="/recruiter" element={<RecruiterDashboard />} />
                 </Route>
 
-                {/* Shared Chat & Video Protected Routes */}
+                {/* Shared Chat, Settings & Video Protected Routes */}
                 <Route element={<ProtectedRoute allowedRoles={['job_seeker', 'recruiter']} />}>
                   <Route path="/messages" element={<ChatPanel />} />
                   <Route path="/call/:roomId" element={<VideoInterview />} />
                   <Route path="/calendar" element={<CalendarDashboard />} />
+                  <Route path="/settings" element={<SettingsDashboard />} />
                 </Route>
 
                 {/* Admin Protected Routes */}

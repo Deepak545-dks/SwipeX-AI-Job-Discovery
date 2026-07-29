@@ -180,9 +180,9 @@ export default function CalendarDashboard() {
                       key={meeting.id}
                       className={`p-5 rounded-2xl transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4 border ${
                         isAccepted 
-                          ? 'glass-card-orange-gold text-white border-orange-500/30 shadow-md' 
+                          ? 'glass-card-orange-gold text-white border-orange-500/30 shadow-md animate-pulse' 
                           : isDeclined 
-                            ? 'bg-rose-950/10 border-rose-900/30 opacity-60 text-slate-400' 
+                            ? 'bg-rose-955/10 border-rose-900/30 opacity-60 text-slate-400' 
                             : 'bg-slate-900/40 border-white/5 border-dashed'
                       }`}
                     >
@@ -197,61 +197,56 @@ export default function CalendarDashboard() {
                           }`}>
                             {meeting.status}
                           </span>
-                          {meeting.google_calendar_event_id && (
-                            <span className="text-[8px] font-black text-orange-400 bg-orange-500/10 border border-orange-500/20 px-2 py-0.5 rounded uppercase tracking-wider">Google Synced</span>
-                          )}
                         </div>
 
                         <div>
-                          <h4 className="text-sm font-bold text-white tracking-tight">{meeting.title}</h4>
-                          <p className="text-slate-400 text-xxs mt-0.5 font-semibold">{targetName} • {companyDetails}</p>
+                          <h4 className="text-sm font-black text-white">{meeting.title}</h4>
+                          <p className="text-xxs text-slate-400 font-semibold">{companyDetails}</p>
                         </div>
 
-                        <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-slate-500 text-xxs font-semibold">
-                          <span className="flex items-center space-x-1.5">
-                            <CalendarIcon size={12} className="text-slate-650" />
+                        <div className="space-y-1 text-xxs text-slate-400 font-semibold">
+                          <div className="flex items-center space-x-1.5">
+                            <CalendarIcon size={12} className="text-slate-500" />
                             <span>{formattedDate}</span>
-                          </span>
-                          <span className="flex items-center space-x-1.5">
-                            <Clock size={12} className="text-slate-655" />
+                          </div>
+                          <div className="flex items-center space-x-1.5">
+                            <Clock size={12} className="text-slate-500" />
                             <span>{formattedTime}</span>
-                          </span>
+                          </div>
                         </div>
+
                         {meeting.description && (
-                          <p className="text-slate-400 text-xxs bg-slate-900/60 border border-white/5 px-3 py-2 rounded-xl max-w-lg font-semibold">
+                          <p className="text-[10px] text-slate-405 leading-relaxed bg-slate-950/40 p-2.5 rounded-lg border border-white/5 font-semibold">
                             {meeting.description}
                           </p>
                         )}
                       </div>
 
-                      {/* Action buttons */}
-                      <div className="flex items-center gap-3 shrink-0 self-end sm:self-auto">
-                        {user.role === 'job_seeker' && isPending && (
+                      <div className="flex sm:flex-col gap-2 shrink-0 justify-end">
+                        {isPending && user.role === 'job_seeker' && (
                           <>
                             <button
                               onClick={() => handleResponse(meeting.id, 'accepted')}
-                              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xxs font-black transition-all flex items-center space-x-1 cursor-pointer uppercase tracking-wider border border-emerald-550"
+                              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xxs font-black uppercase tracking-wider cursor-pointer"
                             >
-                              <Check size={12} />
-                              <span>Accept</span>
+                              Accept
                             </button>
                             <button
                               onClick={() => handleResponse(meeting.id, 'declined')}
-                              className="px-4 py-2 bg-rose-600 hover:bg-rose-550 text-white rounded-xl text-xxs font-black transition-all flex items-center space-x-1 cursor-pointer uppercase tracking-wider border border-rose-550"
+                              className="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-lg text-xxs font-black uppercase tracking-wider cursor-pointer"
                             >
-                              <X size={12} />
-                              <span>Decline</span>
+                              Decline
                             </button>
                           </>
                         )}
 
                         {isAccepted && (
                           <button
-                            onClick={() => navigate(`/call/${meeting.id}?opponent=${targetName}`)}
-                            className="px-5 py-3 bg-gradient-to-r from-orange-600 to-violet-605 hover:from-orange-500 hover:to-violet-500 text-white rounded-xl text-xxs font-extrabold transition-all flex items-center space-x-1.5 shadow-md cursor-pointer uppercase tracking-wider border border-orange-550"
+                            onClick={() => navigate(`/call/${meeting.id}`)}
+                            className="px-4.5 py-2.5 bg-gradient-to-r from-orange-600 to-violet-650 hover:from-orange-500 hover:to-violet-550 text-white rounded-xl text-xxs font-black uppercase tracking-widest flex items-center space-x-1.5 shadow border border-orange-500"
                           >
-                            <Video size={13} />
-                            <span>Join Video Call</span>
+                            <Video size={12} />
+                            <span>Launch Room</span>
                           </button>
                         )}
                       </div>
@@ -264,133 +259,130 @@ export default function CalendarDashboard() {
           </div>
         </div>
 
-        {/* Right Column: Recruiter scheduling wizard form */}
-        <div className="lg:col-span-1 p-[1.5px] rounded-3xl bg-gradient-to-b from-white/10 to-transparent shadow-xl">
+        {/* Right Column: Schedule / Radar info */}
+        <div>
           {user.role === 'recruiter' ? (
-            <div className="bg-slate-950/80 backdrop-blur-2xl p-6 rounded-[23px] space-y-6 text-left border border-white/5">
-              <div>
-                <h3 className="text-sm font-bold text-white tracking-tight">Schedule Interview</h3>
-                <p className="text-slate-400 text-xxs mt-0.5 font-semibold">Invite shortlisted seekers to virtual calls</p>
+            <div className="p-[1px] rounded-3xl bg-gradient-to-b from-white/10 to-transparent shadow-xl">
+              <div className="bg-slate-955 backdrop-blur-2xl p-6 rounded-[23px] space-y-6 text-left border border-white/5">
+                
+                <h3 className="text-base font-black text-white tracking-tight border-b border-white/5 pb-4 flex items-center gap-2">
+                  <CalendarPlus className="text-orange-400" />
+                  <span>Propose Call Slot</span>
+                </h3>
+
+                {loadingApps ? (
+                  <div className="flex justify-center py-6">
+                    <Loader2 size={16} className="animate-spin text-orange-400" />
+                  </div>
+                ) : applications.length === 0 ? (
+                  <p className="text-slate-500 text-xxs font-bold">No active candidates eligible for interviews.</p>
+                ) : (
+                  <form onSubmit={handleScheduleInterview} className="space-y-4">
+                    
+                    <div className="space-y-1.5">
+                      <label className="text-slate-500 text-[10px] font-extrabold uppercase tracking-widest">Select Candidate</label>
+                      <select
+                        value={selectedAppId}
+                        onChange={(e) => setSelectedAppId(e.target.value)}
+                        className="w-full bg-slate-900 border border-white/10 focus:border-orange-500 rounded-xl py-3 px-4 text-white text-xs outline-none cursor-pointer font-semibold"
+                      >
+                        {applications.map((app) => (
+                          <option key={app.id} value={app.id}>
+                            {app.seeker_name} - {app.job_title}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-slate-500 text-[10px] font-extrabold uppercase tracking-widest">Interview Title</label>
+                      <input
+                        type="text"
+                        required
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        placeholder="e.g. Technical Round 1"
+                        className="w-full bg-slate-900 border border-white/10 focus:border-orange-500 rounded-xl py-3 px-4 text-white text-xs outline-none transition-all placeholder-slate-550 font-semibold"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-slate-500 text-[10px] font-extrabold uppercase tracking-widest">Description</label>
+                      <textarea
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        placeholder="Meeting notes or links..."
+                        rows={3}
+                        className="w-full bg-slate-900 border border-white/10 focus:border-orange-500 rounded-xl py-3 px-4 text-white text-xs outline-none resize-none transition-all placeholder-slate-550 font-semibold"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <label className="text-slate-500 text-[10px] font-extrabold uppercase tracking-widest">Date</label>
+                        <input
+                          type="date"
+                          required
+                          value={startDate}
+                          onChange={(e) => setStartDate(e.target.value)}
+                          className="w-full bg-slate-900 border border-white/10 focus:border-orange-500 rounded-xl py-3 px-4 text-white text-xs outline-none transition-all cursor-pointer font-semibold"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-slate-500 text-[10px] font-extrabold uppercase tracking-widest">Time</label>
+                        <input
+                          type="time"
+                          required
+                          value={startTime}
+                          onChange={(e) => setStartTime(e.target.value)}
+                          className="w-full bg-slate-900 border border-white/10 focus:border-orange-500 rounded-xl py-3 px-4 text-white text-xs outline-none transition-all cursor-pointer font-semibold"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-slate-500 text-[10px] font-extrabold uppercase tracking-widest">Duration</label>
+                      <select
+                        value={duration}
+                        onChange={(e) => setDuration(e.target.value)}
+                        className="w-full bg-slate-900 border border-white/10 focus:border-orange-500 rounded-xl py-3 px-4 text-white text-xs outline-none cursor-pointer font-semibold"
+                      >
+                        <option value="30">30 Minutes</option>
+                        <option value="45">45 Minutes</option>
+                        <option value="60">1 Hour</option>
+                        <option value="90">1.5 Hours</option>
+                      </select>
+                    </div>
+
+                    <label className="flex items-center space-x-3 cursor-pointer py-1 text-slate-300 text-xxs font-extrabold select-none">
+                      <input
+                        type="checkbox"
+                        checked={syncCalendar}
+                        onChange={(e) => setSyncCalendar(e.target.checked)}
+                        className="rounded border-white/10 bg-slate-900 text-orange-505 focus:ring-orange-500/5 w-4 h-4 cursor-pointer"
+                      />
+                      <span className="uppercase tracking-wider">Sync Google Calendar</span>
+                    </label>
+
+                    <button
+                      type="submit"
+                      disabled={submitting}
+                      className="w-full py-3.5 bg-gradient-to-r from-orange-600 via-amber-600 to-violet-650 hover:from-orange-500 hover:to-violet-550 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all disabled:opacity-30 shadow-md cursor-pointer border border-orange-550"
+                    >
+                      {submitting ? (
+                        <Loader2 size={14} className="animate-spin mx-auto" />
+                      ) : (
+                        <>
+                          <CalendarPlus size={14} className="inline mr-1.5" />
+                          <span>Schedule Slot</span>
+                        </>
+                      )}
+                    </button>
+
+                  </form>
+                )}
+
               </div>
-
-              {loadingApps ? (
-                <div className="flex justify-center py-6">
-                  <Loader2 size={16} className="animate-spin text-orange-400" />
-                </div>
-              ) : applications.length === 0 ? (
-                <p className="text-slate-500 text-xxs leading-relaxed font-semibold">No candidates are currently shortlisted or awaiting schedules.</p>
-              ) : (
-                <form onSubmit={handleScheduleInterview} className="space-y-4">
-                  
-                  {/* Select application */}
-                  <div className="space-y-1.5">
-                    <label className="text-slate-500 text-[10px] font-extrabold uppercase tracking-widest">Candidate / Job</label>
-                    <select
-                      value={selectedAppId}
-                      onChange={(e) => setSelectedAppId(e.target.value)}
-                      className="w-full bg-slate-900 border border-white/10 focus:border-orange-500 rounded-xl py-3 px-4 text-white text-xs outline-none transition-all cursor-pointer font-semibold"
-                    >
-                      {applications.map((app) => (
-                        <option key={app.id} value={app.id}>
-                          {app.applicant_profile?.full_name || app.applicant?.email} - {app.job_title}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Title */}
-                  <div className="space-y-1.5">
-                    <label className="text-slate-500 text-[10px] font-extrabold uppercase tracking-widest">Interview Title</label>
-                    <input
-                      type="text"
-                      required
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                      placeholder="e.g. Technical Round 1"
-                      className="w-full bg-slate-900 border border-white/10 focus:border-orange-500 rounded-xl py-3 px-4 text-white text-xs outline-none transition-all placeholder-slate-500 font-semibold"
-                    />
-                  </div>
-
-                  {/* Description */}
-                  <div className="space-y-1.5">
-                    <label className="text-slate-500 text-[10px] font-extrabold uppercase tracking-widest">Description</label>
-                    <textarea
-                      value={description}
-                      onChange={(e) => setDescription(e.target.value)}
-                      placeholder="Meeting notes or links..."
-                      rows={3}
-                      className="w-full bg-slate-900 border border-white/10 focus:border-orange-500 rounded-xl py-3 px-4 text-white text-xs outline-none resize-none transition-all placeholder-slate-500 font-semibold"
-                    />
-                  </div>
-
-                  {/* Date & Time */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                      <label className="text-slate-500 text-[10px] font-extrabold uppercase tracking-widest">Date</label>
-                      <input
-                        type="date"
-                        required
-                        value={startDate}
-                        onChange={(e) => setStartDate(e.target.value)}
-                        className="w-full bg-slate-900 border border-white/10 focus:border-orange-500 rounded-xl py-3 px-4 text-white text-xs outline-none transition-all cursor-pointer font-semibold"
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-slate-500 text-[10px] font-extrabold uppercase tracking-widest">Time</label>
-                      <input
-                        type="time"
-                        required
-                        value={startTime}
-                        onChange={(e) => setStartTime(e.target.value)}
-                        className="w-full bg-slate-900 border border-white/10 focus:border-orange-500 rounded-xl py-3 px-4 text-white text-xs outline-none transition-all cursor-pointer font-semibold"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Duration */}
-                  <div className="space-y-1.5">
-                    <label className="text-slate-500 text-[10px] font-extrabold uppercase tracking-widest">Duration</label>
-                    <select
-                      value={duration}
-                      onChange={(e) => setDuration(e.target.value)}
-                      className="w-full bg-slate-900 border border-white/10 focus:border-orange-500 rounded-xl py-3 px-4 text-white text-xs outline-none transition-all cursor-pointer font-semibold"
-                    >
-                      <option value="30">30 Minutes</option>
-                      <option value="45">45 Minutes</option>
-                      <option value="60">1 Hour</option>
-                      <option value="90">1.5 Hours</option>
-                    </select>
-                  </div>
-
-                  {/* Google Calendar Sync */}
-                  <label className="flex items-center space-x-3 cursor-pointer py-1 text-slate-300 text-xxs font-extrabold select-none">
-                    <input
-                      type="checkbox"
-                      checked={syncCalendar}
-                      onChange={(e) => setSyncCalendar(e.target.checked)}
-                      className="rounded border-white/10 bg-slate-900 text-orange-505 focus:ring-orange-500/5 w-4 h-4 cursor-pointer"
-                    />
-                    <span className="uppercase tracking-wider">Sync Google Calendar</span>
-                  </label>
-
-                  <button
-                    type="submit"
-                    disabled={submitting}
-                    className="w-full py-3.5 bg-gradient-to-r from-orange-600 via-amber-600 to-violet-650 hover:from-orange-500 hover:to-violet-550 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all disabled:opacity-30 shadow-md cursor-pointer border border-orange-550"
-                  >
-                    {submitting ? (
-                      <Loader2 size={14} className="animate-spin" />
-                    ) : (
-                      <>
-                        <CalendarPlus size={14} className="inline mr-1.5" />
-                        <span>Schedule Slot</span>
-                      </>
-                    )}
-                  </button>
-
-                </form>
-              )}
-
             </div>
           ) : (
             <div className="bg-slate-950/80 backdrop-blur-2xl p-6 rounded-[23px] space-y-4 text-left border border-white/5 shadow-xl">

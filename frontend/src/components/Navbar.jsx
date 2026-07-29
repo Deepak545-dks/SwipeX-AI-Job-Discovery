@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-import { LogOut, User, Compass, Briefcase, BarChart2, Bell, Search, MessageSquare, Calendar, Shield, Sparkles } from 'lucide-react';
+import { LogOut, User, Compass, Briefcase, BarChart2, Bell, Search, MessageSquare, Calendar, Shield, Sparkles, Settings } from 'lucide-react';
 import { clearCredentials } from '../store/slices/authSlice';
 import api from '../utils/api';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -206,6 +206,18 @@ export default function Navbar() {
                   <User size={16} />
                   <span>Profile</span>
                 </Link>
+
+                <Link 
+                  to="/settings" 
+                  className={`flex items-center space-x-2 px-4.5 py-2.5 rounded-full text-base font-black transition-all border ${
+                    isActive('/settings') 
+                      ? 'bg-gradient-to-r from-violet-655 via-fuchsia-600 to-indigo-655 border-violet-500/30 text-white shadow-lg shadow-violet-500/10' 
+                      : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-white/5'
+                  }`}
+                >
+                  <Settings size={16} />
+                  <span>Settings</span>
+                </Link>
               </div>
 
               {/* Mobile Navigation Icons */}
@@ -223,6 +235,7 @@ export default function Navbar() {
                 <Link to="/calendar" className={`p-2.5 rounded-full text-slate-400 hover:text-violet-400 hover:bg-white/5 ${isActive('/calendar') && 'text-violet-400 bg-violet-500/5'}`} title="Calendar"><Calendar size={18} /></Link>
                 <Link to="/messages" className={`p-2.5 rounded-full text-slate-400 hover:text-violet-400 hover:bg-white/5 ${isActive('/messages') && 'text-violet-400 bg-violet-500/5'}`} title="Messages"><MessageSquare size={18} /></Link>
                 <Link to="/profile" className={`p-2.5 rounded-full text-slate-400 hover:text-violet-400 hover:bg-white/5 ${isActive('/profile') && 'text-violet-400 bg-violet-500/5'}`} title="Profile"><User size={18} /></Link>
+                <Link to="/settings" className={`p-2.5 rounded-full text-slate-400 hover:text-violet-400 hover:bg-white/5 ${isActive('/settings') && 'text-violet-400 bg-violet-500/5'}`} title="Settings"><Settings size={18} /></Link>
               </div>
 
               {/* Notifications Toggle */}

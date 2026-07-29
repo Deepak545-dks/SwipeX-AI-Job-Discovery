@@ -3,7 +3,7 @@ import api from '../utils/api';
 import { useToast } from '../context/ToastContext';
 import { 
   Heart, X, Star, RotateCcw, MapPin, DollarSign, Briefcase, 
-  ChevronUp, Loader2, Sparkles, AlertCircle, FileText, GraduationCap, Copy, Keyboard, Activity
+  ChevronUp, Loader2, Sparkles, AlertCircle, FileText, GraduationCap, Copy, Keyboard, Activity, Flame, Award
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import PageTransition from '../components/PageTransition';
@@ -38,8 +38,7 @@ export default function SwipeDiscovery() {
   const [error, setError] = useState('');
   const [hasResume, setHasResume] = useState(true);
   const [resetting, setResetting] = useState(false);
-  const [toastMessage, setToastMessage] = useState(null);
-
+  
   // Undo memory
   const [lastSwipedJob, setLastSwipedJob] = useState(null);
 
@@ -115,11 +114,8 @@ export default function SwipeDiscovery() {
       return;
     }
 
-    // Save for undo option
     const swipedJob = deck.find(j => j.id === jobId);
     setLastSwipedJob(swipedJob);
-
-    // Filter deck
     setDeck(prev => prev.filter(j => j.id !== jobId));
     setDragX(0);
     setDragY(0);
@@ -128,7 +124,6 @@ export default function SwipeDiscovery() {
       if (action === 'like') {
         await api.post('/jobs/apply/', { job_id: jobId });
         setLikesCount(prev => prev + 1);
-        // Randomly simulate recruiter match trigger
         if (Math.random() > 0.4) {
           setMatchesCount(prev => prev + 1);
           showToast(`It's a Match! Recruiter at ${swipedJob.company.name} wants to connect.`, 'success');
@@ -206,7 +201,6 @@ export default function SwipeDiscovery() {
     showToast('Cover letter copied to clipboard!', 'success');
   };
 
-  // Drag overlays opacity calculation
   const likeOpacity = Math.max(0, Math.min(1, dragX / 150));
   const nopeOpacity = Math.max(0, Math.min(1, -dragX / 150));
   const saveOpacity = Math.max(0, Math.min(1, -dragY / 150));
@@ -230,7 +224,7 @@ export default function SwipeDiscovery() {
   return (
     <PageTransition className="max-w-6xl mx-auto px-6 py-12 grid lg:grid-cols-12 gap-8 relative z-10 text-white">
       
-      {/* Background spotlights: Purple + Blue Theme for Discover Page */}
+      {/* Background spotlights */}
       <div className="absolute top-[10%] left-[10%] w-[450px] h-[450px] bg-gradient-to-tr from-violet-600/15 via-blue-500/10 to-transparent rounded-full blur-[120px] -z-10 pointer-events-none" />
       <div className="absolute bottom-[20%] right-[10%] w-[400px] h-[400px] bg-gradient-to-tr from-blue-600/15 via-violet-550/10 to-transparent rounded-full blur-[120px] -z-10 pointer-events-none" />
 
@@ -269,33 +263,22 @@ export default function SwipeDiscovery() {
               >
                 {resetting ? <Loader2 size={16} className="animate-spin" /> : <span>Reset Deck & Reswipe</span>}
               </button>
-              <div className="grid grid-cols-2 gap-2">
-                <Link
-                  to="/profile"
-                  className="flex items-center justify-center py-3.5 bg-white/5 hover:bg-white/10 text-slate-350 hover:text-white rounded-2xl text-sm font-bold transition-all border border-white/10 active:scale-95 uppercase tracking-wider text-center"
-                >
-                  Profile
-                </Link>
-                <button
-                  onClick={handleUndo}
-                  className="flex items-center justify-center space-x-1.5 py-3.5 border border-white/10 bg-white/5 hover:bg-white/10 text-slate-350 hover:text-white rounded-2xl text-sm font-bold transition-all active:scale-95 cursor-pointer uppercase tracking-wider"
-                >
-                  <RotateCcw size={14} />
-                  <span>Undo</span>
-                </button>
-              </div>
             </div>
           </div>
         ) : (
           <div className="relative w-full max-w-md h-[720px] flex flex-col justify-between items-center">
             
-            {/* Keyboard shortcuts */}
-            <div className="flex items-center space-x-2 text-[10px] text-slate-500 font-extrabold uppercase tracking-widest mb-4">
-              <Keyboard size={12} className="text-violet-400" />
-              <span>Use keyboard arrow keys to swipe</span>
+            {/* Swipe streak header - Redesign item */}
+            <div className="w-full flex justify-between items-center px-4 mb-4 text-xs font-black uppercase tracking-wider">
+              <span className="flex items-center gap-1 text-orange-400 animate-pulse">
+                <Flame size={15} /> 5 Day Swipe Streak
+              </span>
+              <span className="text-violet-400 flex items-center gap-1">
+                <Award size={15} /> Daily Top Match
+              </span>
             </div>
 
-            {/* Cards Stack Container - Redesigned glass-card-purple-blue */}
+            {/* Cards Stack Container */}
             <div className="relative w-full h-[560px]">
               <AnimatePresence>
                 {deck.slice(0, 3).reverse().map((job, idx, arr) => {
@@ -317,7 +300,7 @@ export default function SwipeDiscovery() {
                       transition={{ duration: 0.2 }}
                       className="absolute w-full h-full p-[1.5px] rounded-[30px] overflow-hidden bg-gradient-to-tr from-violet-500/25 via-blue-500/20 to-transparent shadow-2xl"
                     >
-                      <div className="w-full h-full glass-card-purple-blue rounded-[29px] p-8 flex flex-col justify-between cursor-grab active:cursor-grabbing select-none relative overflow-hidden">
+                      <div className="w-full h-full glass-card-purple-blue rounded-[29px] p-8 flex flex-col justify-between cursor-grab active:cursor-grabbing select-none relative overflow-hidden text-left">
                         <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-violet-600/10 to-transparent -z-10" />
 
                         {isTop && (
@@ -345,22 +328,20 @@ export default function SwipeDiscovery() {
 
                         <div>
                           <div className="flex justify-between items-start gap-4">
-                            <div className="min-w-0 text-left">
+                            <div className="min-w-0">
                               <div className="flex flex-wrap gap-1.5">
-                                <span className="inline-flex px-3 py-1 bg-violet-600/20 border border-violet-500/30 rounded-md text-[9px] font-black uppercase text-violet-405 tracking-wider">
+                                <span className="inline-flex px-3 py-1 bg-violet-600/20 border border-violet-500/30 rounded-md text-[9px] font-black uppercase text-violet-400 tracking-wider">
                                   {job.job_type}
                                 </span>
                                 <span className="inline-flex px-3 py-1 bg-blue-600/20 border border-blue-500/30 rounded-md text-[9px] font-black uppercase text-blue-400 tracking-wider">
                                   {job.experience_level.replace('_', ' ')}
                                 </span>
                               </div>
-                              {/* Large job title (32px / text-3xl) */}
                               <h2 className="text-3xl font-black text-white tracking-tight mt-4 leading-snug truncate">{job.title}</h2>
-                              {/* Large company name (20px / text-xl) */}
                               <p className="text-violet-400 text-xl font-bold mt-1.5 truncate">{job.company.name}</p>
                             </div>
 
-                            {/* Circular AI Match Score Progress Ring */}
+                            {/* Match Ring */}
                             <div className="flex flex-col items-center shrink-0">
                               <div className="relative w-14 h-14 flex items-center justify-center">
                                 <svg className="w-full h-full transform -rotate-90">
@@ -401,7 +382,6 @@ export default function SwipeDiscovery() {
                               <MapPin size={14} className="text-slate-500" />
                               <span className="truncate">{job.location}</span>
                             </div>
-                            {/* Salary with icon (22px / text-xl) */}
                             <div className="flex items-center space-x-2.5 text-xl text-white font-extrabold">
                               <DollarSign size={18} className="text-slate-500" />
                               <span>
@@ -411,7 +391,6 @@ export default function SwipeDiscovery() {
                             </div>
                           </div>
 
-                          {/* Beautiful skill chips (18px / text-sm) */}
                           <div className="mt-6 pt-4 border-t border-white/5 text-left">
                             <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Required Skills</p>
                             <div className="flex flex-wrap gap-1.5 mt-2.5 max-h-[85px] overflow-hidden">
@@ -420,18 +399,13 @@ export default function SwipeDiscovery() {
                                   {skill}
                                 </span>
                               ))}
-                              {job.skills_required.length > 4 && (
-                                <span className="px-2.5 py-1.5 text-slate-500 text-xs font-black">
-                                  +{job.skills_required.length - 4} more
-                                </span>
-                              )}
                             </div>
                           </div>
                         </div>
 
                         <button
                           onClick={() => setDrawerJob(job)}
-                          className="w-full flex flex-col items-center py-2 text-slate-400 hover:text-white transition-colors focus-visible:ring-2 focus-visible:ring-violet-500 rounded-lg cursor-pointer animate-bounce"
+                          className="w-full flex flex-col items-center py-2 text-slate-400 hover:text-white transition-colors rounded-lg cursor-pointer animate-bounce"
                         >
                           <ChevronUp size={16} />
                           <span className="text-[9px] font-extrabold uppercase tracking-widest mt-1">Swipe Up for details</span>
@@ -443,35 +417,29 @@ export default function SwipeDiscovery() {
               </AnimatePresence>
             </div>
 
-            {/* Action Controllers - Large Swipe buttons (18px) */}
+            {/* Action buttons */}
             <div className="flex items-center space-x-6 z-10 pt-6">
               <button
                 onClick={handleUndo}
                 className="w-14 h-14 rounded-full bg-slate-900 border border-white/10 hover:border-white/20 hover:bg-white/5 flex items-center justify-center text-slate-400 shadow-md hover:scale-105 active:scale-90 transition-all cursor-pointer"
-                title="Undo Last Swipe"
               >
                 <RotateCcw size={18} />
               </button>
               <button
                 onClick={() => handleSwipe(activeCard.id, 'dislike')}
                 className="w-16 h-16 rounded-full bg-slate-900 border border-rose-500/20 hover:border-rose-500/60 hover:bg-rose-950/20 flex items-center justify-center text-rose-500 shadow-lg hover:scale-105 active:scale-90 transition-all cursor-pointer"
-                title="Pass (Left Arrow)"
               >
                 <X size={26} />
               </button>
-              
               <button
                 onClick={() => handleSwipe(activeCard.id, 'save')}
                 className="w-14 h-14 rounded-full bg-slate-900 border border-cyan-500/20 hover:border-cyan-500/60 hover:bg-cyan-950/20 flex items-center justify-center text-cyan-405 shadow-md hover:scale-105 active:scale-90 transition-all cursor-pointer"
-                title="Save (Up Arrow)"
               >
                 <Star size={20} />
               </button>
-
               <button
                 onClick={() => handleSwipe(activeCard.id, 'like')}
                 className="w-16 h-16 rounded-full bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 flex items-center justify-center text-white shadow-lg shadow-violet-500/20 hover:scale-105 active:scale-90 transition-all cursor-pointer"
-                title="Apply (Right Arrow)"
               >
                 <Heart size={26} className="fill-white" />
               </button>
@@ -480,15 +448,13 @@ export default function SwipeDiscovery() {
         )}
       </div>
 
-      {/* RIGHT COLUMN: Recruiter Activity & Live Stats Feed (4 cols) */}
+      {/* RIGHT COLUMN: Live Recruiter Feed & Stats */}
       <div className="lg:col-span-4 space-y-6">
-        
-        {/* Live Match Activity */}
         <div className="p-[1px] rounded-3xl bg-gradient-to-b from-white/10 to-transparent shadow-xl">
           <div className="bg-slate-950/80 backdrop-blur-2xl rounded-[23px] p-6 space-y-6 text-left border border-white/5">
             <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 flex items-center gap-2">
               <Activity size={14} className="text-violet-400 animate-pulse" />
-              <span>Live Match Activity</span>
+              <span>Live Hiring Feed</span>
             </h3>
 
             <div className="space-y-4 max-h-[360px] overflow-y-auto divide-y divide-white/5">
@@ -498,19 +464,18 @@ export default function SwipeDiscovery() {
                 { time: '12m ago', company: 'Stripe Inc.', desc: 'AI Gap Analysis compiled recommendations' },
                 { time: '1h ago', company: 'Amazon', desc: 'Direct message channel unlocked with manager' }
               ].map((activity, i) => (
-                <div key={i} className="pt-3.5 first:pt-0 text-[11px] leading-relaxed text-slate-400 border-t border-white/5 first:border-0 pt-3">
+                <div key={i} className="pt-3.5 first:pt-0 text-[11px] leading-relaxed text-slate-400">
                   <div className="flex justify-between items-start">
                     <span className="font-extrabold text-white">{activity.company}</span>
                     <span className="text-[9px] text-slate-500 font-semibold">{activity.time}</span>
                   </div>
-                  <p className="font-medium mt-1 text-slate-400">{activity.desc}</p>
+                  <p className="font-medium mt-1">{activity.desc}</p>
                 </div>
               ))}
             </div>
           </div>
         </div>
 
-        {/* Swipe Stats Counters */}
         <div className="p-[1px] rounded-3xl bg-gradient-to-tr from-violet-500/20 to-blue-500/25 shadow-xl">
           <div className="bg-slate-950/80 backdrop-blur-2xl rounded-[23px] p-6 text-left space-y-4 border border-white/5">
             <h4 className="text-xs font-black uppercase tracking-wider text-slate-400">Your Swipe Stats</h4>
@@ -591,7 +556,7 @@ export default function SwipeDiscovery() {
                 <h4 className="text-xs font-extrabold uppercase tracking-widest text-slate-500">Skills Stack</h4>
                 <div className="flex flex-wrap gap-1.5">
                   {drawerJob.skills_required.map((skill) => (
-                    <span key={skill} className="px-3.5 py-1.5 rounded-xl bg-white/5 border border-white/10 text-slate-300 text-xxs font-extrabold">
+                    <span key={skill} className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-slate-300 text-xxs font-extrabold">
                       {skill}
                     </span>
                   ))}
@@ -606,7 +571,7 @@ export default function SwipeDiscovery() {
                   <button
                     onClick={handleGenerateCoverLetter}
                     disabled={generatingCoverLetter}
-                    className="w-full sm:w-auto px-5 py-3 bg-white/5 border border-white/10 text-violet-400 text-xs font-extrabold rounded-xl transition-all flex items-center justify-center space-x-2 active:scale-95 disabled:opacity-50 cursor-pointer uppercase tracking-wider"
+                    className="w-full sm:w-auto px-5 py-3 bg-white/5 border border-white/10 text-violet-405 text-xs font-extrabold rounded-xl transition-all flex items-center justify-center space-x-2 active:scale-95 disabled:opacity-50 cursor-pointer uppercase tracking-wider"
                   >
                     {generatingCoverLetter ? (
                       <>
@@ -623,7 +588,7 @@ export default function SwipeDiscovery() {
 
                   <button
                     onClick={() => setShowInterviewModal(true)}
-                    className="w-full sm:w-auto px-5 py-3 bg-white/5 border border-white/10 text-violet-400 text-xs font-extrabold rounded-xl transition-all flex items-center justify-center space-x-2 active:scale-95 cursor-pointer uppercase tracking-wider"
+                    className="w-full sm:w-auto px-5 py-3 bg-white/5 border border-white/10 text-violet-405 text-xs font-extrabold rounded-xl transition-all flex items-center justify-center space-x-2 active:scale-95 cursor-pointer uppercase tracking-wider"
                   >
                     <Sparkles size={12} />
                     <span>Practice Questions</span>

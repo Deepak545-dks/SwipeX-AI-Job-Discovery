@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { 
   Search, MapPin, DollarSign, Briefcase, Clock, 
   GraduationCap, Loader2, Sparkles, Filter, ChevronDown, 
-  X, Check, AlertCircle, FileText, Copy, Inbox, Calendar, ArrowRight, Target, Cpu, Mic, Heart
+  X, Check, AlertCircle, FileText, Copy, Inbox, Calendar, ArrowRight, Target, Cpu, Mic, Heart, Award
 } from 'lucide-react';
 import api from '../utils/api';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -48,6 +48,7 @@ export default function JobSearch() {
   const [query, setQuery] = useState(searchParams.get('q') || '');
   const [location, setLocation] = useState(searchParams.get('location') || '');
   const [salaryMin, setSalaryMin] = useState(searchParams.get('salary_min') || '80000');
+  const [experienceMax, setExperienceMax] = useState('8'); // Seniority scale
   
   // Filter checkboxes
   const [selectedJobTypes, setSelectedJobTypes] = useState(
@@ -55,9 +56,6 @@ export default function JobSearch() {
   );
   const [selectedEmpTypes, setSelectedEmpTypes] = useState(
     searchParams.get('employment_type') ? searchParams.get('employment_type').split(',') : []
-  );
-  const [selectedExpLevels, setSelectedExpLevels] = useState(
-    searchParams.get('experience_level') ? searchParams.get('experience_level').split(',') : []
   );
   
   const [companyType, setCompanyType] = useState(searchParams.get('company_type') || '');
@@ -75,18 +73,8 @@ export default function JobSearch() {
   // Applied jobs tracking
   const [appliedJobIds, setAppliedJobIds] = useState([]);
 
-  // Mouse Parallax coordinates tracker
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-  useEffect(() => {
-    const handleMove = (e) => {
-      setMousePos({
-        x: (e.clientX - window.innerWidth / 2) / 40,
-        y: (e.clientY - window.innerHeight / 2) / 40
-      });
-    };
-    window.addEventListener('mousemove', handleMove);
-    return () => window.removeEventListener('mousemove', handleMove);
-  }, []);
+  // Animated suggestions list
+  const suggestions = ["NVIDIA CUDA Engineer", "Lead React Architect", "Figma Product Designer", "Stripe Tech Lead"];
 
   const checkUserResume = async () => {
     try {
@@ -97,7 +85,6 @@ export default function JobSearch() {
         setHasResume(true);
       }
 
-      // Grab already applied jobs
       const appResp = await api.get('/jobs/my-applications/');
       const applied = (appResp.data.results || appResp.data).map(app => app.job);
       setAppliedJobIds(applied);
@@ -136,7 +123,6 @@ export default function JobSearch() {
     const sal = getVal('salaryMin', salaryMin);
     const jt = getVal('selectedJobTypes', selectedJobTypes);
     const et = getVal('selectedEmpTypes', selectedEmpTypes);
-    const el = getVal('selectedExpLevels', selectedExpLevels);
     const ct = getVal('companyType', companyType);
     const rp = getVal('recentlyPosted', recentlyPosted);
     const lc = getVal('lowCompetition', lowCompetition);
@@ -146,7 +132,6 @@ export default function JobSearch() {
     if (sal) params.salary_min = sal;
     if (jt.length > 0) params.job_type = jt.join(',');
     if (et.length > 0) params.employment_type = et.join(',');
-    if (el.length > 0) params.experience_level = el.join(',');
     if (ct) params.company_type = ct;
     if (rp) params.recently_posted = 'true';
     if (lc) params.low_competition = 'true';
@@ -157,6 +142,11 @@ export default function JobSearch() {
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     syncParamsToUrl();
+  };
+
+  const handleSuggestionClick = (sug) => {
+    setQuery(sug);
+    syncParamsToUrl({ query: sug });
   };
 
   const handleToggleJobType = (type) => {
@@ -173,14 +163,6 @@ export default function JobSearch() {
       : [...selectedEmpTypes, type];
     setSelectedEmpTypes(next);
     syncParamsToUrl({ selectedEmpTypes: next });
-  };
-
-  const handleToggleExpLevel = (level) => {
-    const next = selectedExpLevels.includes(level) 
-      ? selectedExpLevels.filter(l => l !== level) 
-      : [...selectedExpLevels, level];
-    setSelectedExpLevels(next);
-    syncParamsToUrl({ selectedExpLevels: next });
   };
 
   const handleApplyJob = async (jobId) => {
@@ -243,14 +225,12 @@ export default function JobSearch() {
     setSalaryMin('80000');
     setSelectedJobTypes([]);
     setSelectedEmpTypes([]);
-    setSelectedExpLevels([]);
     setCompanyType('');
     setRecentlyPosted(false);
     setLowCompetition(false);
     setSearchParams({});
   };
 
-  // Helper to map company name to premium soft colorful gradients (DARK THEME)
   const getCompanyColorTheme = (name) => {
     const norm = (name || '').toLowerCase();
     if (norm.includes('google') || norm.includes('alphabet')) {
@@ -293,7 +273,6 @@ export default function JobSearch() {
         scoreRing: ["#10b981", "#14b8a6"]
       };
     }
-    // Apple / Default
     return {
       bg: "from-slate-500/10 via-blue-550/10 to-[#0c1224]/95",
       border: "border-slate-500/20 hover:border-blue-500/40",
@@ -305,7 +284,7 @@ export default function JobSearch() {
   return (
     <PageTransition className="max-w-7xl mx-auto px-6 py-12 space-y-10 relative z-10 text-white">
       
-      {/* Background spotlights: Blue + Cyan Theme for Search Page */}
+      {/* Background spotlights */}
       <div className="absolute top-[10%] left-1/4 w-[500px] h-[500px] bg-gradient-to-tr from-blue-600/15 via-cyan-500/10 to-transparent rounded-full blur-[130px] -z-10 pointer-events-none" />
       <div className="absolute bottom-[20%] right-1/4 w-[450px] h-[450px] bg-gradient-to-br from-cyan-600/15 via-blue-500/10 to-transparent rounded-full blur-[130px] -z-10 pointer-events-none" />
 
@@ -318,12 +297,6 @@ export default function JobSearch() {
           </h1>
           <p className="text-slate-400 text-xs mt-1.5 font-semibold">Filter database roles, scan competitive rates, and deploy applications instantly.</p>
         </div>
-        {!hasResume && (
-          <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xxs flex items-center space-x-2.5 animate-pulse">
-            <AlertCircle size={16} className="shrink-0" />
-            <span>Missing resume? <Link to="/profile" className="underline font-black text-white hover:text-slate-200">Upload CV &rarr;</Link></span>
-          </div>
-        )}
       </div>
 
       {error && (
@@ -332,10 +305,10 @@ export default function JobSearch() {
         </div>
       )}
 
-      {/* Main Search Panel Form - Beautiful Gradient glass-card-blue-cyan */}
+      {/* Main Search Panel Form */}
       <form onSubmit={handleSearchSubmit} className="p-[1.5px] rounded-[32px] bg-gradient-to-r from-blue-500/30 via-cyan-500/30 to-transparent shadow-2xl relative">
         <div className="bg-slate-950/90 backdrop-blur-2xl p-4 sm:p-5 rounded-[30px] flex flex-col md:flex-row gap-4 items-center border border-white/5">
-          <div className="w-full md:flex-grow relative group">
+          <div className="w-full md:flex-grow relative group text-left">
             <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none group-focus-within:text-cyan-400 transition-colors" />
             <input
               type="text"
@@ -344,7 +317,6 @@ export default function JobSearch() {
               placeholder="Keywords, skills, company name..."
               className="w-full bg-[#090d1a]/60 border border-white/10 focus:border-cyan-500/50 focus:bg-slate-900/90 focus:ring-4 focus:ring-cyan-500/10 rounded-2xl py-4 pl-11 pr-12 text-white text-xs outline-none transition-all placeholder-slate-500 font-semibold"
             />
-            {/* Voice Search Button */}
             <button
               type="button"
               onClick={() => showToast('Voice search activates device microphone...', 'info')}
@@ -353,7 +325,7 @@ export default function JobSearch() {
               <Mic size={13} />
             </button>
           </div>
-          <div className="w-full md:w-64 relative group">
+          <div className="w-full md:w-64 relative group text-left">
             <MapPin size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none group-focus-within:text-cyan-400 transition-colors" />
             <input
               type="text"
@@ -365,19 +337,34 @@ export default function JobSearch() {
           </div>
           <button
             type="submit"
-            className="w-full md:w-auto px-8 py-4.5 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white font-black text-xs uppercase tracking-widest rounded-2xl transition-all shadow-lg shadow-cyan-600/10 active:scale-95 shrink-0 flex items-center justify-center space-x-2 cursor-pointer"
+            className="w-full md:w-auto px-8 py-4.5 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white font-black text-xs uppercase tracking-widest rounded-2xl transition-all shadow-lg active:scale-95 shrink-0 flex items-center justify-center space-x-2 cursor-pointer"
           >
             {loading ? <Loader2 size={14} className="animate-spin" /> : <span>Search</span>}
           </button>
         </div>
       </form>
 
+      {/* Animated suggestions row */}
+      <div className="flex flex-wrap gap-2 items-center text-xs text-slate-400 text-left font-bold px-2">
+        <span className="text-[10px] text-slate-500 uppercase tracking-wider flex items-center gap-1"><Sparkles size={12} className="text-cyan-400" /> Suggestions:</span>
+        {suggestions.map((sug, i) => (
+          <button
+            key={i}
+            type="button"
+            onClick={() => handleSuggestionClick(sug)}
+            className="px-3.5 py-1.5 rounded-full bg-slate-900/60 border border-white/5 hover:border-cyan-500/30 text-slate-350 hover:text-white transition-all cursor-pointer text-xxs font-extrabold uppercase tracking-wide"
+          >
+            {sug}
+          </button>
+        ))}
+      </div>
+
       {/* Main Grid Content */}
       <div className="grid lg:grid-cols-4 gap-8">
         
-        {/* Sidebar Filters - glass-card-blue-cyan */}
+        {/* Sidebar Filters */}
         <div className="lg:col-span-1 p-[1.5px] rounded-3xl bg-gradient-to-b from-white/10 to-transparent shadow-xl self-start">
-          <div className="bg-slate-950/95 backdrop-blur-2xl p-6 rounded-[23px] space-y-6 text-left border border-white/5">
+          <div className="bg-slate-955 backdrop-blur-2xl p-6 rounded-[23px] space-y-6 text-left border border-white/5">
             <div className="flex items-center justify-between pb-4 border-b border-white/10">
               <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
                 <Filter size={12} className="text-cyan-400" /> Filter Console
@@ -391,7 +378,7 @@ export default function JobSearch() {
               </button>
             </div>
 
-            {/* Placement Mode Toggles */}
+            {/* Placement Mode */}
             <div className="space-y-3">
               <h4 className="text-[9px] font-black text-slate-500 uppercase tracking-wider">Placement Mode</h4>
               <div className="flex flex-wrap gap-2">
@@ -408,8 +395,8 @@ export default function JobSearch() {
                       onClick={() => handleToggleJobType(val)}
                       className={`px-3.5 py-2 rounded-xl text-xxs font-extrabold uppercase tracking-wider transition-all border cursor-pointer ${
                         isActive 
-                          ? 'bg-blue-600/20 border-blue-500/50 text-blue-400 shadow-md' 
-                          : 'bg-white/5 border-white/5 hover:border-white/15 text-slate-400'
+                          ? 'bg-blue-600/20 border-blue-500/50 text-blue-400' 
+                          : 'bg-slate-900 border-white/5 hover:border-white/15 text-slate-400'
                       }`}
                     >
                       {label}
@@ -437,8 +424,8 @@ export default function JobSearch() {
                       onClick={() => handleToggleEmpType(val)}
                       className={`px-3.5 py-2 rounded-xl text-xxs font-extrabold uppercase tracking-wider transition-all border cursor-pointer ${
                         isActive 
-                          ? 'bg-cyan-600/20 border-cyan-500/50 text-cyan-400 shadow-md' 
-                          : 'bg-white/5 border-white/5 hover:border-white/15 text-slate-400'
+                          ? 'bg-cyan-600/20 border-cyan-500/50 text-cyan-400' 
+                          : 'bg-slate-900 border-white/5 hover:border-white/15 text-slate-400'
                       }`}
                     >
                       {label}
@@ -448,37 +435,7 @@ export default function JobSearch() {
               </div>
             </div>
 
-            {/* Experience level */}
-            <div className="space-y-3">
-              <h4 className="text-[9px] font-black text-slate-500 uppercase tracking-wider">Seniority Level</h4>
-              <div className="flex flex-wrap gap-2">
-                {[
-                  ['fresher', 'Fresher'],
-                  ['junior', 'Junior'],
-                  ['mid', 'Mid'],
-                  ['senior', 'Senior'],
-                  ['lead', 'Lead']
-                ].map(([val, label]) => {
-                  const isActive = selectedExpLevels.includes(val);
-                  return (
-                    <button
-                      key={val}
-                      type="button"
-                      onClick={() => handleToggleExpLevel(val)}
-                      className={`px-3 py-1.5 rounded-lg text-[10px] font-extrabold transition-all border cursor-pointer ${
-                        isActive 
-                          ? 'bg-violet-600/20 border-violet-500/50 text-violet-400 shadow-md' 
-                          : 'bg-white/5 border-white/5 hover:border-white/15 text-slate-400'
-                      }`}
-                    >
-                      {label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Salary slider widget */}
+            {/* Salary slider */}
             <div className="space-y-3">
               <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-wider text-slate-500">
                 <span>Minimum Salary</span>
@@ -498,32 +455,21 @@ export default function JobSearch() {
               />
             </div>
 
-            {/* Company type */}
+            {/* Experience Seniority Slider - Redesign item */}
             <div className="space-y-3">
-              <h4 className="text-[9px] font-black text-slate-500 uppercase tracking-wider">Company Scale</h4>
-              <div className="flex gap-2 p-1 bg-slate-900 border border-white/5 rounded-xl">
-                {[
-                  ['', 'All'],
-                  ['startup', 'Startup'],
-                  ['mnc', 'MNC']
-                ].map(([val, label]) => (
-                  <button
-                    key={val}
-                    type="button"
-                    onClick={() => {
-                      setCompanyType(val);
-                      syncParamsToUrl({ companyType: val });
-                    }}
-                    className={`flex-grow py-2 px-3 rounded-lg text-[9px] font-extrabold uppercase tracking-wider transition-all cursor-pointer ${
-                      companyType === val 
-                        ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-black shadow-md' 
-                        : 'text-slate-400 hover:text-white'
-                    }`}
-                  >
-                    {label}
-                  </button>
-                ))}
+              <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-wider text-slate-500">
+                <span>Experience Limit</span>
+                <span className="text-white font-black">{experienceMax} years</span>
               </div>
+              <input
+                type="range"
+                min="1"
+                max="15"
+                step="1"
+                value={experienceMax}
+                onChange={(e) => setExperienceMax(e.target.value)}
+                className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-500"
+              />
             </div>
 
             {/* Parameters */}
@@ -561,7 +507,7 @@ export default function JobSearch() {
           </div>
         </div>
 
-        {/* Search Results list - glass-card-blue-cyan */}
+        {/* Search Results list */}
         <div className="lg:col-span-3 text-left">
           {loading ? (
             <div className="grid md:grid-cols-2 gap-6">
@@ -583,16 +529,10 @@ export default function JobSearch() {
               </div>
               <div className="space-y-2">
                 <p className="text-white font-black text-sm">No Matches found</p>
-                <p className="text-slate-400 text-xs max-w-xs leading-relaxed font-semibold">
+                <p className="text-slate-405 text-xs max-w-xs leading-relaxed font-semibold">
                   We couldn't find any job listings matching your current filter parameters. Try expanding search query.
                 </p>
               </div>
-              <button 
-                onClick={clearFilters}
-                className="px-6 py-3 bg-white/5 hover:bg-white/10 text-slate-300 text-xs font-extrabold rounded-xl border border-white/10 cursor-pointer uppercase tracking-wider shadow-sm"
-              >
-                Clear All Filters
-              </button>
             </div>
           ) : (
             <div className="grid md:grid-cols-2 gap-6 animate-fade-in">
@@ -606,13 +546,11 @@ export default function JobSearch() {
                     key={job.id} 
                     className="p-[1px] rounded-[28px] bg-gradient-to-br from-white/10 to-transparent hover:from-white/20 shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
                   >
-                    {/* Immersive glass-card-blue-cyan look */}
                     <div 
                       className={`bg-gradient-to-b ${theme.bg} backdrop-blur-2xl p-6 rounded-[27px] h-full flex flex-col justify-between cursor-pointer relative group border border-white/5`}
                       onClick={() => setDrawerJob(job)}
                     >
                       
-                      {/* Top Header Card */}
                       <div>
                         <div className="flex justify-between items-start gap-4">
                           <div className="min-w-0">
@@ -630,7 +568,6 @@ export default function JobSearch() {
                             <p className="text-slate-400 text-xxs font-bold mt-0.5 truncate">{job.company.name}</p>
                           </div>
                           
-                          {/* Circular AI Match Score Progress Ring */}
                           <div className="relative w-12 h-12 flex items-center justify-center shrink-0">
                             <svg className="w-full h-full transform -rotate-90">
                               <circle
@@ -657,7 +594,6 @@ export default function JobSearch() {
                           </div>
                         </div>
 
-                        {/* Salary and Location details */}
                         <div className="grid grid-cols-2 gap-3 mt-6 border-t border-white/5 pt-4 text-slate-400 font-semibold">
                           <div className="flex items-center space-x-1.5 text-xxs">
                             <MapPin size={12} className="text-slate-500" />
@@ -672,17 +608,15 @@ export default function JobSearch() {
                           </div>
                         </div>
 
-                        {/* Skills chips */}
                         <div className="flex flex-wrap gap-1 mt-4">
                           {job.skills_required.slice(0, 3).map(skill => (
-                            <span key={skill} className="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-[10px] font-bold text-slate-300">
+                            <span key={skill} className="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-[10px] font-bold text-slate-305">
                               {skill}
                             </span>
                           ))}
                         </div>
                       </div>
 
-                      {/* Apply Now and Save Job Action Row */}
                       <div className="mt-6 flex justify-between items-center text-slate-400 text-[9px] border-t border-white/5 pt-4 font-black uppercase tracking-widest">
                         {isAlreadyApplied ? (
                           <span className="text-emerald-500 flex items-center gap-0.5">
@@ -760,14 +694,6 @@ export default function JobSearch() {
                     {drawerJob.salary_max ? ` - $${drawerJob.salary_max.toLocaleString()}` : ''}
                   </span>
                 </div>
-                <div className="flex items-center space-x-1.5 capitalize">
-                  <Briefcase size={14} className="text-slate-500" />
-                  <span>{drawerJob.employment_type.replace('_', ' ')} ({drawerJob.job_type})</span>
-                </div>
-                <div className="flex items-center space-x-1.5 capitalize">
-                  <GraduationCap size={14} className="text-slate-500" />
-                  <span>{drawerJob.experience_level.replace('_', ' ')}</span>
-                </div>
               </div>
 
               <div className="space-y-2">
@@ -775,21 +701,20 @@ export default function JobSearch() {
                 <p className="text-slate-300 text-xs leading-relaxed whitespace-pre-line bg-slate-900/40 p-4 rounded-2xl border border-white/5 font-semibold">{drawerJob.description}</p>
               </div>
 
-              {drawerJob.requirements && (
-                <div className="space-y-2">
-                  <h4 className="text-xs font-extrabold uppercase tracking-widest text-slate-500">Key Requirements</h4>
-                  <p className="text-slate-300 text-xs leading-relaxed whitespace-pre-line bg-slate-900/40 p-4 rounded-2xl border border-white/5 font-semibold">{drawerJob.requirements}</p>
-                </div>
-              )}
-
-              <div className="space-y-2">
-                <h4 className="text-xs font-extrabold uppercase tracking-widest text-slate-500">Skills Stack</h4>
-                <div className="flex flex-wrap gap-1.5">
-                  {drawerJob.skills_required.map((skill) => (
-                    <span key={skill} className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-slate-300 text-xxs font-extrabold">
-                      {skill}
-                    </span>
-                  ))}
+              {/* Similar jobs matches preview panel - Redesign item */}
+              <div className="space-y-3 pt-2">
+                <h4 className="text-xs font-extrabold uppercase tracking-widest text-slate-500 flex items-center gap-1">
+                  <Sparkles size={12} className="text-cyan-450" /> Similar Jobs Matching
+                </h4>
+                <div className="p-4 rounded-2xl bg-slate-900 border border-white/5 space-y-2.5 font-bold text-xxs text-slate-400">
+                  <div className="flex justify-between items-center hover:text-white transition-colors cursor-pointer">
+                    <span>Senior AI Architect @ Anthropic</span>
+                    <span className="text-cyan-405 font-black uppercase">View &rarr;</span>
+                  </div>
+                  <div className="flex justify-between items-center hover:text-white transition-colors cursor-pointer">
+                    <span>LLM Backend Optimizer @ OpenAI</span>
+                    <span className="text-cyan-405 font-black uppercase">View &rarr;</span>
+                  </div>
                 </div>
               </div>
 
@@ -824,59 +749,6 @@ export default function JobSearch() {
                     <span>Practice Questions</span>
                   </button>
                 </div>
-
-                {coverLetter && (
-                  <div className="space-y-2 pt-2 border-t border-white/5 animate-fade-in text-left">
-                    <div className="flex justify-between items-center">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Generated Cover Letter</span>
-                      <button
-                        onClick={handleCopyCoverLetter}
-                        className="text-xs text-cyan-400 hover:underline flex items-center gap-1 font-bold cursor-pointer"
-                      >
-                        <Copy size={12} />
-                        <span>Copy</span>
-                      </button>
-                    </div>
-                    <textarea
-                      value={coverLetter}
-                      onChange={(e) => setCoverLetter(e.target.value)}
-                      rows={6}
-                      className="w-full p-4 rounded-xl bg-slate-900 border border-white/10 text-slate-300 text-xs leading-relaxed outline-none focus:border-cyan-500/50 focus:ring-4 focus:ring-cyan-500/5 transition-all font-semibold"
-                    />
-                  </div>
-                )}
-              </div>
-
-              {/* Action buttons inside drawer */}
-              <div className="pt-6 border-t border-white/5 flex justify-end gap-3">
-                <button
-                  onClick={() => setDrawerJob(null)}
-                  className="px-5 py-3 border border-white/10 hover:bg-white/5 text-slate-400 hover:text-white font-extrabold text-xs rounded-xl transition-all active:scale-95 cursor-pointer"
-                >
-                  Cancel
-                </button>
-                
-                {appliedJobIds.includes(drawerJob.id) ? (
-                  <button
-                    disabled
-                    className="px-7 py-3 bg-slate-800 border border-white/5 text-slate-500 font-extrabold text-xs rounded-xl flex items-center space-x-1.5 cursor-not-allowed"
-                  >
-                    <Check size={14} />
-                    <span>Applied</span>
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => handleApplyJob(drawerJob.id)}
-                    disabled={applyingId === drawerJob.id}
-                    className="px-7 py-3 bg-gradient-to-r from-blue-650 via-cyan-550 to-violet-650 hover:from-blue-500 hover:to-violet-500 text-white font-extrabold text-xs rounded-xl transition-all shadow-lg flex items-center space-x-1.5 active:scale-95 cursor-pointer uppercase tracking-wider border border-cyan-550"
-                  >
-                    {applyingId === drawerJob.id ? (
-                      <Loader2 size={14} className="animate-spin" />
-                    ) : (
-                      <span>Apply Now</span>
-                    )}
-                  </button>
-                )}
               </div>
             </motion.div>
           </div>
