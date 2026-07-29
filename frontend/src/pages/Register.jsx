@@ -72,37 +72,37 @@ export default function Register() {
   return (
     <div className="min-h-screen grid lg:grid-cols-12 overflow-hidden relative">
       {/* LEFT SPLIT PANEL: Visual Pitch */}
-      <div className="hidden lg:flex lg:col-span-5 bg-slate-950 p-12 flex-col justify-between relative overflow-hidden border-r border-white/10">
+      <div className="hidden lg:flex lg:col-span-5 bg-gradient-to-br from-violet-50/50 via-indigo-50/30 to-white p-12 flex-col justify-between relative overflow-hidden border-r border-slate-200">
         <div className="absolute -top-20 -left-20 w-[450px] h-[450px] bg-gradient-to-tr from-fuchsia-600/20 to-violet-600/20 rounded-full blur-[110px] -z-10 animate-pulse duration-[7000ms]" />
         <div className="absolute -bottom-20 -right-20 w-[400px] h-[400px] bg-gradient-to-tr from-cyan-600/10 to-indigo-650/15 rounded-full blur-[100px] -z-10" />
 
         <Link to="/" className="flex items-center space-x-2.5 z-10">
           <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-tr from-violet-600 to-fuchsia-600 shadow-lg">
-            <Sparkles size={18} className="text-white" />
+            <Sparkles size={18} className="text-slate-800" />
           </div>
-          <span className="text-lg font-black tracking-tight text-white">SwipeX</span>
+          <span className="text-lg font-black tracking-tight text-slate-800">SwipeX</span>
         </Link>
 
         <div className="space-y-6 z-10 max-w-sm">
-          <h1 className="text-4xl md:text-5xl font-black text-white leading-tight">
+          <h1 className="text-4xl md:text-5xl font-black text-slate-800 leading-tight">
             Elevate your{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-fuchsia-400 to-cyan-400">
               recruiting experience.
             </span>
           </h1>
-          <p className="text-slate-400 text-sm leading-relaxed font-semibold">
+          <p className="text-slate-600 text-sm leading-relaxed font-semibold">
             Post listings, filter candidates, and interview using next-generation AI integrations.
           </p>
 
-          <div className="pt-4 border-t border-white/10 space-y-4">
-            <div className="flex items-center space-x-3 text-white">
-              <div className="p-1 rounded-lg bg-violet-500/10 border border-violet-500/20 text-violet-400">
+          <div className="pt-4 border-t border-slate-200 space-y-4">
+            <div className="flex items-center space-x-3 text-slate-800">
+              <div className="p-1 rounded-lg bg-violet-50 border border-violet-500/20 text-violet-600">
                 <Sparkle size={14} className="animate-spin" />
               </div>
               <span className="text-xs font-bold uppercase tracking-wider">AI resume score evaluation</span>
             </div>
-            <div className="flex items-center space-x-3 text-white">
-              <div className="p-1 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">
+            <div className="flex items-center space-x-3 text-slate-800">
+              <div className="p-1 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-600">
                 <Award size={14} />
               </div>
               <span className="text-xs font-bold uppercase tracking-wider">Instant matching pipeline</span>
@@ -116,7 +116,7 @@ export default function Register() {
       </div>
 
       {/* RIGHT SPLIT PANEL: Form Card */}
-      <div className="lg:col-span-7 flex items-center justify-center p-8 sm:p-12 min-h-screen bg-slate-900/10">
+      <div className="lg:col-span-7 flex items-center justify-center p-8 sm:p-12 min-h-screen bg-[#f8fafc]">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[450px] h-[450px] bg-gradient-to-tr from-violet-600/10 to-cyan-600/10 rounded-full blur-[120px] -z-20 lg:hidden" />
 
         <motion.div 
@@ -125,22 +125,22 @@ export default function Register() {
           transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
           className="w-full max-w-md relative p-[1px] rounded-3xl overflow-hidden bg-gradient-to-tr from-violet-500/25 via-fuchsia-500/25 to-cyan-500/30 shadow-2xl"
         >
-          <div className="w-full bg-slate-950/90 backdrop-blur-3xl rounded-[23px] p-8 sm:p-10 flex flex-col justify-between">
+          <div className="w-full bg-white/95 rounded-[23px] p-8 sm:p-10 border border-slate-200/50 shadow-lg text-slate-800 flex flex-col justify-between">
             <div>
               <div className="text-center mb-6">
-                <h2 className="text-3xl font-black text-white tracking-tight">Create Account</h2>
-                <p className="text-slate-400 mt-2 text-xs font-semibold">Join SwipeX and start exploring careers today</p>
+                <h2 className="text-3xl font-black text-slate-800 tracking-tight">Create Account</h2>
+                <p className="text-slate-600 mt-2 text-xs font-semibold">Join SwipeX and start exploring careers today</p>
               </div>
 
               {error && (
-                <div className="mb-5 p-4 rounded-2xl bg-rose-950/30 border border-rose-500/20 text-rose-400 text-xs font-bold flex items-center space-x-2">
+                <div className="mb-5 p-4 rounded-2xl bg-rose-50 border border-rose-500/20 text-rose-605 text-xs font-bold flex items-center space-x-2">
                   <AlertCircle size={16} className="shrink-0" />
                   <span>{error}</span>
                 </div>
               )}
 
               {validationError && (
-                <div className="mb-5 p-4 rounded-2xl bg-amber-950/30 border border-amber-500/20 text-amber-400 text-xs font-bold flex items-center space-x-2">
+                <div className="mb-5 p-4 rounded-2xl bg-amber-50 border border-amber-500/20 text-amber-605 text-xs font-bold flex items-center space-x-2">
                   <AlertCircle size={16} className="shrink-0" />
                   <span>{validationError}</span>
                 </div>
@@ -149,7 +149,7 @@ export default function Register() {
               <form onSubmit={handleRegister} className="space-y-4">
                 <div>
                   <label className="block text-slate-450 text-[10px] font-extrabold uppercase tracking-widest mb-2">Registering As</label>
-                  <div className="grid grid-cols-3 gap-2 p-1 bg-slate-900/60 rounded-xl border border-white/10">
+                  <div className="grid grid-cols-3 gap-2 p-1 bg-slate-50/60 rounded-xl border border-slate-200">
                     {[
                       { id: 'job_seeker', label: 'Seeker' },
                       { id: 'recruiter', label: 'Recruiter' },
@@ -161,8 +161,8 @@ export default function Register() {
                         onClick={() => setRole(tab.id)}
                         className={`py-2.5 text-[10px] font-extrabold rounded-lg transition-all cursor-pointer uppercase tracking-wider ${
                           role === tab.id
-                            ? 'bg-gradient-to-r from-violet-600 via-fuchsia-600 to-indigo-650 text-white shadow-lg font-black'
-                            : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                            ? 'bg-gradient-to-r from-violet-600 via-fuchsia-600 to-indigo-650 text-slate-800 shadow-lg font-black'
+                            : 'text-slate-600 hover:text-slate-850 hover:bg-slate-50'
                         }`}
                       >
                         {tab.label}
@@ -174,14 +174,14 @@ export default function Register() {
                 <div>
                   <label className="block text-slate-450 text-[10px] font-extrabold uppercase tracking-widest mb-2">Email Address</label>
                   <div className="relative group">
-                    <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-500 pointer-events-none group-focus-within:text-violet-400 transition-colors">
+                    <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-500 pointer-events-none group-focus-within:text-violet-600 transition-colors">
                       <Mail size={16} />
                     </span>
                     <input
                       type="email"
                       value={email}
                       onChange={(e) => { setEmail(e.target.value); if (validationError) setValidationError(''); }}
-                      className="w-full bg-slate-900/60 border border-white/10 focus:border-violet-500 focus:bg-slate-900/95 focus:ring-4 focus:ring-violet-500/10 rounded-2xl py-3.5 pl-11 pr-4 text-white text-xs outline-none transition-all placeholder-slate-500 font-semibold"
+                      className="w-full bg-slate-50 border border-slate-200 focus:border-violet-500 focus:bg-white focus:ring-4 focus:ring-violet-500/5 rounded-2xl py-3.5 pl-11 pr-4 text-slate-900 text-xs outline-none transition-all placeholder-slate-400 font-semibold"
                       placeholder="jane@company.com"
                     />
                   </div>
@@ -190,14 +190,14 @@ export default function Register() {
                 <div>
                   <label className="block text-slate-450 text-[10px] font-extrabold uppercase tracking-widest mb-2">Password</label>
                   <div className="relative group">
-                    <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-500 pointer-events-none group-focus-within:text-violet-400 transition-colors">
+                    <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-500 pointer-events-none group-focus-within:text-violet-600 transition-colors">
                       <Lock size={16} />
                     </span>
                     <input
                       type={showPassword ? 'text' : 'password'}
                       value={password}
                       onChange={(e) => { setPassword(e.target.value); if (validationError) setValidationError(''); }}
-                      className="w-full bg-slate-900/60 border border-white/10 focus:border-violet-500 focus:bg-slate-900/95 focus:ring-4 focus:ring-violet-500/10 rounded-2xl py-3.5 pl-11 pr-12 text-white text-xs outline-none transition-all placeholder-slate-500 font-semibold"
+                      className="w-full bg-slate-50 border border-slate-200 focus:border-violet-500 focus:bg-white focus:ring-4 focus:ring-violet-500/5 rounded-2xl py-3.5 pl-11 pr-12 text-slate-900 text-xs outline-none transition-all placeholder-slate-400 font-semibold"
                       placeholder="Min. 8 characters"
                     />
                     <button
@@ -213,14 +213,14 @@ export default function Register() {
                 <div>
                   <label className="block text-slate-455 text-[10px] font-extrabold uppercase tracking-widest mb-2">Confirm Password</label>
                   <div className="relative group">
-                    <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-500 pointer-events-none group-focus-within:text-violet-400 transition-colors">
+                    <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-500 pointer-events-none group-focus-within:text-violet-600 transition-colors">
                       <Lock size={16} />
                     </span>
                     <input
                       type={showConfirmPassword ? 'text' : 'password'}
                       value={confirmPassword}
                       onChange={(e) => { setConfirmPassword(e.target.value); if (validationError) setValidationError(''); }}
-                      className="w-full bg-slate-900/60 border border-white/10 focus:border-violet-500 focus:bg-slate-900/95 focus:ring-4 focus:ring-violet-500/10 rounded-2xl py-3.5 pl-11 pr-12 text-white text-xs outline-none transition-all placeholder-slate-500 font-semibold"
+                      className="w-full bg-slate-50 border border-slate-200 focus:border-violet-500 focus:bg-white focus:ring-4 focus:ring-violet-500/5 rounded-2xl py-3.5 pl-11 pr-12 text-slate-900 text-xs outline-none transition-all placeholder-slate-400 font-semibold"
                       placeholder="Confirm password"
                     />
                     <button
@@ -236,7 +236,7 @@ export default function Register() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-4 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-cyan-600 hover:from-violet-500 hover:via-fuchsia-500 hover:to-cyan-500 text-white font-extrabold text-xs rounded-2xl transition-all shadow-lg shadow-violet-650/20 active:scale-[0.98] uppercase tracking-widest cursor-pointer mt-4"
+                  className="w-full py-4 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-cyan-600 hover:from-violet-500 hover:via-fuchsia-500 hover:to-cyan-500 text-slate-800 font-extrabold text-xs rounded-2xl transition-all shadow-lg shadow-violet-650/20 active:scale-[0.98] uppercase tracking-widest cursor-pointer mt-4"
                 >
                   {loading ? (
                     <span className="flex items-center justify-center space-x-2">
@@ -248,9 +248,9 @@ export default function Register() {
               </form>
             </div>
 
-            <p className="mt-8 text-center text-xs text-slate-400 font-medium">
+            <p className="mt-8 text-center text-xs text-slate-600 font-medium">
               Already have an account?{' '}
-              <Link to="/login" className="text-violet-400 hover:text-violet-300 font-extrabold hover:underline transition-colors">
+              <Link to="/login" className="text-violet-600 hover:text-violet-300 font-extrabold hover:underline transition-colors">
                 Sign In
               </Link>
             </p>

@@ -88,56 +88,56 @@ export default function Navbar() {
 
   return (
     <div className="w-full sticky top-4 z-50 px-4 sm:px-6">
-      <nav className="max-w-6xl mx-auto rounded-full border border-white/10 bg-slate-950/70 backdrop-blur-2xl px-6 py-3.5 shadow-2xl shadow-violet-950/15 flex items-center justify-between transition-all duration-300">
+      <nav className="max-w-6xl mx-auto rounded-full border border-slate-200/80 bg-white/75 backdrop-blur-2xl px-6 py-3.5 shadow-xl shadow-slate-900/5 flex items-center justify-between transition-all duration-300">
         {/* Logo */}
         <Link to="/" className="flex items-center space-x-2.5 group">
-          <div className="relative flex items-center justify-center w-8.5 h-8.5 rounded-xl bg-gradient-to-tr from-violet-600 via-fuchsia-600 to-cyan-500 shadow-md shadow-violet-500/20 group-hover:scale-105 transition-transform duration-300">
+          <div className="relative flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-tr from-violet-600 via-blue-600 to-cyan-500 shadow-sm shadow-violet-500/10 group-hover:scale-105 transition-transform duration-300">
             <Sparkles size={16} className="text-white animate-pulse" />
           </div>
-          <span className="text-lg font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-fuchsia-400 to-cyan-400">
+          <span className="text-xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-violet-600 via-blue-600 to-cyan-500">
             SwipeX
           </span>
         </Link>
 
         {/* Menu Links */}
-        <div className="flex items-center space-x-1.5 sm:space-x-2.5">
+        <div className="flex items-center space-x-2">
           {isAuthenticated ? (
             <>
               {/* Seeker / Recruiter Tab Views */}
-              <div className="hidden lg:flex items-center space-x-1">
+              <div className="hidden lg:flex items-center space-x-1.5">
                 {user?.role === 'job_seeker' && (
                   <>
                     <Link 
                       to="/swipe" 
-                      className={`flex items-center space-x-1.5 px-3.5 py-2 rounded-full text-xs font-bold transition-all border ${
+                      className={`flex items-center space-x-2 px-4.5 py-2.5 rounded-full text-base font-black transition-all border ${
                         isActive('/swipe') 
-                          ? 'bg-gradient-to-r from-violet-600/15 to-fuchsia-600/15 border-violet-500/30 text-violet-400 shadow-inner' 
-                          : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-white/5'
+                          ? 'bg-gradient-to-r from-violet-600 to-indigo-600 border-violet-550 text-white shadow-md shadow-violet-600/10' 
+                          : 'text-slate-600 border-transparent hover:text-violet-600 hover:bg-slate-100/60'
                       }`}
                     >
-                      <Compass size={14} />
+                      <Compass size={16} />
                       <span>Discover</span>
                     </Link>
                     <Link 
                       to="/search" 
-                      className={`flex items-center space-x-1.5 px-3.5 py-2 rounded-full text-xs font-bold transition-all border ${
+                      className={`flex items-center space-x-2 px-4.5 py-2.5 rounded-full text-base font-black transition-all border ${
                         isActive('/search') 
-                          ? 'bg-gradient-to-r from-violet-600/15 to-fuchsia-600/15 border-violet-500/30 text-violet-400 shadow-inner' 
-                          : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-white/5'
+                          ? 'bg-gradient-to-r from-violet-600 to-indigo-600 border-violet-550 text-white shadow-md shadow-violet-600/10' 
+                          : 'text-slate-600 border-transparent hover:text-violet-600 hover:bg-slate-100/60'
                       }`}
                     >
-                      <Search size={14} />
+                      <Search size={16} />
                       <span>Search</span>
                     </Link>
                     <Link 
                       to="/applications" 
-                      className={`flex items-center space-x-1.5 px-3.5 py-2 rounded-full text-xs font-bold transition-all border ${
+                      className={`flex items-center space-x-2 px-4.5 py-2.5 rounded-full text-base font-black transition-all border ${
                         isActive('/applications') 
-                          ? 'bg-gradient-to-r from-violet-600/15 to-fuchsia-600/15 border-violet-500/30 text-violet-400 shadow-inner' 
-                          : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-white/5'
+                          ? 'bg-gradient-to-r from-violet-600 to-indigo-600 border-violet-550 text-white shadow-md shadow-violet-600/10' 
+                          : 'text-slate-600 border-transparent hover:text-violet-600 hover:bg-slate-100/60'
                       }`}
                     >
-                      <Briefcase size={14} />
+                      <Briefcase size={16} />
                       <span>Applications</span>
                     </Link>
                   </>
@@ -146,13 +146,13 @@ export default function Navbar() {
                 {user?.role === 'recruiter' && (
                   <Link 
                     to="/recruiter" 
-                    className={`flex items-center space-x-1.5 px-4 py-2.5 rounded-full text-xs font-bold transition-all border ${
+                    className={`flex items-center space-x-2 px-5 py-3 rounded-full text-base font-black transition-all border ${
                       isActive('/recruiter') 
-                        ? 'bg-gradient-to-r from-violet-600/15 to-fuchsia-600/15 border-violet-500/30 text-violet-400 shadow-inner' 
-                        : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-white/5'
+                        ? 'bg-gradient-to-r from-violet-600 to-indigo-600 border-violet-550 text-white shadow-md shadow-violet-600/10' 
+                        : 'text-slate-600 border-transparent hover:text-violet-600 hover:bg-slate-100/60'
                     }`}
                   >
-                    <BarChart2 size={14} />
+                    <BarChart2 size={16} />
                     <span>Recruiter Hub</span>
                   </Link>
                 )}
@@ -160,81 +160,81 @@ export default function Navbar() {
                 {user?.role === 'admin' && (
                   <Link 
                     to="/admin" 
-                    className={`flex items-center space-x-1.5 px-4 py-2.5 rounded-full text-xs font-bold transition-all border ${
+                    className={`flex items-center space-x-2 px-5 py-3 rounded-full text-base font-black transition-all border ${
                       isActive('/admin') 
-                        ? 'bg-gradient-to-r from-violet-600/15 to-fuchsia-600/15 border-violet-500/30 text-violet-400 shadow-inner' 
-                        : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-white/5'
+                        ? 'bg-gradient-to-r from-violet-600 to-indigo-600 border-violet-550 text-white shadow-md shadow-violet-600/10' 
+                        : 'text-slate-600 border-transparent hover:text-violet-600 hover:bg-slate-100/60'
                     }`}
                   >
-                    <Shield size={14} />
+                    <Shield size={16} />
                     <span>Admin Panel</span>
                   </Link>
                 )}
 
                 <Link 
                   to="/calendar" 
-                  className={`flex items-center space-x-1.5 px-3.5 py-2 rounded-full text-xs font-bold transition-all border ${
+                  className={`flex items-center space-x-2 px-4.5 py-2.5 rounded-full text-base font-black transition-all border ${
                     isActive('/calendar') 
-                      ? 'bg-gradient-to-r from-violet-600/15 to-fuchsia-600/15 border-violet-500/30 text-violet-400 shadow-inner' 
-                      : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-white/5'
+                      ? 'bg-gradient-to-r from-violet-600 to-indigo-600 border-violet-550 text-white shadow-md shadow-violet-600/10' 
+                      : 'text-slate-600 border-transparent hover:text-violet-600 hover:bg-slate-100/60'
                   }`}
                 >
-                  <Calendar size={14} />
+                  <Calendar size={16} />
                   <span>Calendar</span>
                 </Link>
 
                 <Link 
                   to="/messages" 
-                  className={`flex items-center space-x-1.5 px-3.5 py-2 rounded-full text-xs font-bold transition-all border ${
+                  className={`flex items-center space-x-2 px-4.5 py-2.5 rounded-full text-base font-black transition-all border ${
                     isActive('/messages') 
-                      ? 'bg-gradient-to-r from-violet-600/15 to-fuchsia-600/15 border-violet-500/30 text-violet-400 shadow-inner' 
-                      : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-white/5'
+                      ? 'bg-gradient-to-r from-violet-600 to-indigo-600 border-violet-550 text-white shadow-md shadow-violet-600/10' 
+                      : 'text-slate-600 border-transparent hover:text-violet-600 hover:bg-slate-100/60'
                   }`}
                 >
-                  <MessageSquare size={14} />
+                  <MessageSquare size={16} />
                   <span>Messages</span>
                 </Link>
 
                 <Link 
                   to="/profile" 
-                  className={`flex items-center space-x-1.5 px-3.5 py-2 rounded-full text-xs font-bold transition-all border ${
+                  className={`flex items-center space-x-2 px-4.5 py-2.5 rounded-full text-base font-black transition-all border ${
                     isActive('/profile') 
-                      ? 'bg-gradient-to-r from-violet-600/15 to-fuchsia-600/15 border-violet-500/30 text-violet-400 shadow-inner' 
-                      : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-white/5'
+                      ? 'bg-gradient-to-r from-violet-600 to-indigo-600 border-violet-550 text-white shadow-md shadow-violet-600/10' 
+                      : 'text-slate-600 border-transparent hover:text-violet-600 hover:bg-slate-100/60'
                   }`}
                 >
-                  <User size={14} />
+                  <User size={16} />
                   <span>Profile</span>
                 </Link>
               </div>
 
               {/* Mobile Navigation Icons */}
-              <div className="flex lg:hidden items-center space-x-0.5">
+              <div className="flex lg:hidden items-center space-x-1">
                 {user?.role === 'job_seeker' && (
                   <>
-                    <Link to="/swipe" className={`p-2 rounded-full text-slate-400 hover:text-violet-400 hover:bg-white/5 ${isActive('/swipe') && 'text-violet-400 bg-violet-500/5'}`} title="Discover"><Compass size={16} /></Link>
-                    <Link to="/search" className={`p-2 rounded-full text-slate-400 hover:text-violet-400 hover:bg-white/5 ${isActive('/search') && 'text-violet-400 bg-violet-500/5'}`} title="Search"><Search size={16} /></Link>
-                    <Link to="/applications" className={`p-2 rounded-full text-slate-400 hover:text-violet-400 hover:bg-white/5 ${isActive('/applications') && 'text-violet-400 bg-violet-500/5'}`} title="Applications"><Briefcase size={16} /></Link>
+                    <Link to="/swipe" className={`p-2.5 rounded-full text-slate-500 hover:text-violet-600 hover:bg-slate-100/50 ${isActive('/swipe') && 'text-violet-600 bg-violet-50'}`} title="Discover"><Compass size={18} /></Link>
+                    <Link to="/search" className={`p-2.5 rounded-full text-slate-500 hover:text-violet-600 hover:bg-slate-100/50 ${isActive('/search') && 'text-violet-600 bg-violet-50'}`} title="Search"><Search size={18} /></Link>
+                    <Link to="/applications" className={`p-2.5 rounded-full text-slate-500 hover:text-violet-600 hover:bg-slate-100/50 ${isActive('/applications') && 'text-violet-600 bg-violet-50'}`} title="Applications"><Briefcase size={18} /></Link>
                   </>
                 )}
                 {user?.role === 'recruiter' && (
-                  <Link to="/recruiter" className={`p-2 rounded-full text-slate-400 hover:text-violet-400 hover:bg-white/5 ${isActive('/recruiter') && 'text-violet-400 bg-violet-500/5'}`} title="Recruiter Hub"><BarChart2 size={16} /></Link>
+                  <Link to="/recruiter" className={`p-2.5 rounded-full text-slate-500 hover:text-violet-600 hover:bg-slate-100/50 ${isActive('/recruiter') && 'text-violet-600 bg-violet-50'}`} title="Recruiter Hub"><BarChart2 size={18} /></Link>
                 )}
-                <Link to="/calendar" className={`p-2 rounded-full text-slate-400 hover:text-violet-400 hover:bg-white/5 ${isActive('/calendar') && 'text-violet-400 bg-violet-500/5'}`} title="Calendar"><Calendar size={16} /></Link>
-                <Link to="/messages" className={`p-2 rounded-full text-slate-400 hover:text-violet-400 hover:bg-white/5 ${isActive('/messages') && 'text-violet-400 bg-violet-500/5'}`} title="Messages"><MessageSquare size={16} /></Link>
-                <Link to="/profile" className={`p-2 rounded-full text-slate-400 hover:text-violet-400 hover:bg-white/5 ${isActive('/profile') && 'text-violet-400 bg-violet-500/5'}`} title="Profile"><User size={16} /></Link>
+                <Link to="/calendar" className={`p-2.5 rounded-full text-slate-500 hover:text-violet-600 hover:bg-slate-100/50 ${isActive('/calendar') && 'text-violet-600 bg-violet-50'}`} title="Calendar"><Calendar size={18} /></Link>
+                <Link to="/messages" className={`p-2.5 rounded-full text-slate-500 hover:text-violet-600 hover:bg-slate-100/50 ${isActive('/messages') && 'text-violet-600 bg-violet-50'}`} title="Messages"><MessageSquare size={18} /></Link>
+                <Link to="/profile" className={`p-2.5 rounded-full text-slate-500 hover:text-violet-600 hover:bg-slate-100/50 ${isActive('/profile') && 'text-violet-600 bg-violet-50'}`} title="Profile"><User size={18} /></Link>
               </div>
 
               {/* Notifications Toggle */}
               <div className="relative">
                 <button 
                   onClick={() => setShowNotifDropdown(!showNotifDropdown)}
-                  className="relative p-2 rounded-full text-slate-400 hover:text-violet-400 hover:bg-white/5 transition-all cursor-pointer"
+                  className="relative p-2.5 rounded-full text-slate-500 hover:text-violet-600 hover:bg-slate-100/50 transition-all cursor-pointer"
                   title="Notifications"
                 >
-                  <Bell size={16} />
+                  <Bell size={18} />
                   {unreadCount > 0 && (
-                    <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-violet-500 rounded-full border border-slate-950 animate-pulse" />
+                    <span className="absolute top-2 right-2 w-2 h-2 bg-violet-600 rounded-full border-2 border-white animate-pulse" />
                   )}
                 </button>
 
@@ -247,32 +247,32 @@ export default function Navbar() {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 10, scale: 0.95 }}
                         transition={{ duration: 0.15 }}
-                        className="absolute right-0 mt-3.5 w-76 bg-slate-950/95 border border-white/10 rounded-2xl shadow-2xl p-4 z-50 space-y-3 backdrop-blur-3xl"
+                        className="absolute right-0 mt-3.5 w-76 bg-white/95 border border-slate-200 rounded-2xl shadow-xl p-4 z-50 space-y-3 backdrop-blur-2xl"
                       >
-                        <div className="flex items-center justify-between border-b border-white/5 pb-2">
-                          <span className="text-[10px] font-black text-white uppercase tracking-wider">Notifications</span>
+                        <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                          <span className="text-[10px] font-black text-slate-800 uppercase tracking-wider">Notifications</span>
                           {unreadCount > 0 && (
                             <button 
                               onClick={markAllAsRead}
-                              className="text-violet-400 hover:text-violet-300 text-[9px] font-extrabold transition-colors cursor-pointer"
+                              className="text-violet-600 hover:text-violet-500 text-[9px] font-extrabold transition-colors cursor-pointer"
                             >
                               Mark read
                             </button>
                           )}
                         </div>
 
-                        <div className="max-h-60 overflow-y-auto divide-y divide-white/5 space-y-2">
+                        <div className="max-h-60 overflow-y-auto divide-y divide-slate-100 space-y-2 text-left">
                           {notifications.length === 0 ? (
-                            <p className="text-slate-500 text-xxs text-center py-4">No notifications yet.</p>
+                            <p className="text-slate-400 text-xxs text-center py-4">No notifications yet.</p>
                           ) : (
                             notifications.map((notif) => (
                               <div 
                                 key={notif.id} 
                                 onClick={() => markSingleAsRead(notif.id)}
-                                className={`pt-2 pb-2 text-[11px] leading-relaxed cursor-pointer transition-colors ${notif.is_read ? 'text-slate-500' : 'text-white hover:text-violet-300'}`}
+                                className={`pt-2 pb-2 text-[11px] leading-relaxed cursor-pointer transition-colors ${notif.is_read ? 'text-slate-450' : 'text-slate-800 hover:text-violet-600'}`}
                               >
                                 <p className="font-semibold">{notif.message}</p>
-                                <span className="text-[9px] text-slate-550 block mt-1">{formatRelativeTime(notif.created_at)}</span>
+                                <span className="text-[9px] text-slate-400 block mt-1">{formatRelativeTime(notif.created_at)}</span>
                               </div>
                             ))
                           )}
@@ -286,23 +286,23 @@ export default function Navbar() {
               {/* Logout */}
               <button 
                 onClick={handleLogout}
-                className="p-2 rounded-full text-slate-400 hover:text-rose-400 hover:bg-white/5 transition-all cursor-pointer"
+                className="p-2.5 rounded-full text-slate-500 hover:text-rose-500 hover:bg-slate-100/50 transition-all cursor-pointer"
                 title="Log Out"
               >
-                <LogOut size={16} />
+                <LogOut size={18} />
               </button>
             </>
           ) : (
             <div className="flex items-center space-x-2">
               <Link
                 to="/login"
-                className="px-4 py-2 border border-white/10 hover:border-white/20 bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white font-bold text-xs rounded-full transition-all text-center"
+                className="px-5 py-2.5 border border-slate-200 hover:bg-slate-50 text-slate-600 hover:text-slate-800 font-extrabold text-xs rounded-full transition-all text-center uppercase tracking-wider"
               >
                 Login
               </Link>
               <Link
                 to="/register"
-                className="px-4 py-2 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white font-bold text-xs rounded-full transition-all text-center shadow-lg shadow-violet-600/10"
+                className="px-5 py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-extrabold text-xs rounded-full transition-all text-center shadow-md shadow-violet-600/10 uppercase tracking-wider"
               >
                 Register
               </Link>
