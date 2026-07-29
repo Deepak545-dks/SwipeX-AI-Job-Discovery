@@ -28,6 +28,7 @@ urlpatterns = [
     path('recruiter-analytics/', RecruiterAnalyticsView.as_view(), name='recruiter_analytics'),
     path('companies/<uuid:pk>/', CompanyDetailView.as_view(), name='company_detail'),
     path('deck/', JobDeckView.as_view(), name='job_deck'),
+    path('recommendations/', JobDeckView.as_view(), name='job_recommendations'),
     path('swipe/', SwipeActionView.as_view(), name='job_swipe'),
     path('swipe/undo/', SwipeUndoView.as_view(), name='job_swipe_undo'),
     path('swipe/reset/', ResetSwipesView.as_view(), name='job_swipe_reset'),

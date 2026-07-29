@@ -27,9 +27,10 @@ class JobSerializer(serializers.ModelSerializer):
             'requirements', 'salary_min', 'salary_max', 'location',
             'job_type', 'employment_type', 'experience_level',
             'skills_required', 'is_active', 'status', 'recruiter_email',
+            'provider', 'original_url', 'expires_at',
             'created_at', 'updated_at'
         )
-        read_only_fields = ('id', 'company', 'recruiter_email', 'created_at', 'updated_at')
+        read_only_fields = ('id', 'company', 'recruiter_email', 'provider', 'original_url', 'expires_at', 'created_at', 'updated_at')
 
     def create(self, validated_data):
         company_name = validated_data.pop('company_name')

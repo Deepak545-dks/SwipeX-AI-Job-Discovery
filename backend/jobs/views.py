@@ -149,6 +149,17 @@ class JobDeckView(generics.ListAPIView):
         # Filter active jobs not swiped
         jobs = Job.objects.select_related('company', 'recruiter').prefetch_related('skills_required').filter(is_active=True, status='published').exclude(id__in=swiped_ids)
         
+        # If available jobs deck count runs low, automatically pull new vacancy listings
+        if jobs.count() < 10:
+            from jobs.providers import sync_all_providers
+            try:
+                sync_all_providers(limit_per_provider=5)
+                # Re-query deck after ingestion
+                jobs = Job.objects.select_related('company', 'recruiter').prefetch_related('skills_required').filter(is_active=True, status='published').exclude(id__in=swiped_ids)
+            except Exception as e:
+                import logging
+                logging.getLogger("jobs.views").warning(f"Failed to auto-sync job providers: {e}")
+        
         # Attempt AI Ranking recommendation if user seeker has a profile
         if hasattr(user, 'profile') and jobs.exists():
             candidate_text = get_recommendation_text_for_candidate(user)
