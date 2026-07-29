@@ -11,6 +11,45 @@ import { useToast } from '../context/ToastContext';
 import PageTransition from '../components/PageTransition';
 import { motion, AnimatePresence } from 'framer-motion';
 
+const AnimatedScore = ({ score }) => {
+  const [displayScore, setDisplayScore] = useState(0);
+
+  useEffect(() => {
+    let start = 0;
+    const end = parseInt(score) || 0;
+    if (start === end) {
+      setDisplayScore(end);
+      return;
+    }
+
+    const duration = 1200; // ms
+    const increment = end / (duration / 16); // ~60fps
+    let current = 0;
+
+    const timer = setInterval(() => {
+      current += increment;
+      if (current >= end) {
+        setDisplayScore(end);
+        clearInterval(timer);
+      } else {
+        setDisplayScore(Math.floor(current));
+      }
+    }, 16);
+
+    return () => clearInterval(timer);
+  }, [score]);
+
+  return <span className="text-3xl font-black text-white">{displayScore}%</span>;
+};
+
+const getScoreData = (score) => {
+  const val = parseInt(score) || 0;
+  if (val >= 90) return { color: '#10b981', label: 'Excellent', bg: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' };
+  if (val >= 75) return { color: '#3b82f6', label: 'Good', bg: 'text-blue-400 bg-blue-500/10 border-blue-500/20' };
+  if (val >= 60) return { color: '#f59e0b', label: 'Needs Improvement', bg: 'text-amber-400 bg-amber-500/10 border-amber-500/20' };
+  return { color: '#ef4444', label: 'Poor', bg: 'text-rose-400 bg-rose-500/10 border-rose-500/20' };
+};
+
 export default function ProfileDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const [profile, setProfile] = useState(null);
@@ -666,7 +705,7 @@ export default function ProfileDashboard() {
                                 strokeWidth="5.5"
                                 fill="transparent"
                                 strokeDasharray={163}
-                                strokeDashoffset={163 - (163 * (aiAnalysis.score || 85)) / 100}
+                                strokeDashoffset={163 - (163 * (aiAnalysis.ats_score || aiAnalysis.score || aiAnalysis.overall_score || 85)) / 100}
                                 strokeLinecap="round"
                               />
                               <defs>
@@ -676,7 +715,7 @@ export default function ProfileDashboard() {
                                 </linearGradient>
                               </defs>
                             </svg>
-                            <span className="absolute text-xs font-black text-white">{aiAnalysis.score || 85}%</span>
+                            <span className="absolute text-xs font-black text-white">{aiAnalysis.ats_score || aiAnalysis.score || aiAnalysis.overall_score || 85}%</span>
                           </div>
                           <div>
                             <span className="text-xs font-black text-white block">ATS Target Checklist</span>
@@ -1233,20 +1272,51 @@ export default function ProfileDashboard() {
 
                         {/* AI resume Analysis report cache */}
                         {aiAnalysis && (
-                          <div className="p-4 rounded-xl glass-card-indigo-violet shadow-sm space-y-4 text-left animate-fade-in font-semibold">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-violet-650 to-fuchsia-650 flex items-center justify-center font-black text-white text-xs shadow-md">
-                                {aiAnalysis.score}%
+                          <div className="p-5 rounded-2xl border border-white/10 glass-card-indigo-violet shadow-sm space-y-6 text-center animate-fade-in font-semibold">
+                            <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest text-left">AI Optimization Index</h4>
+                            
+                            {/* Radial Gauge Container */}
+                            <div className="flex flex-col items-center justify-center space-y-4">
+                              <div className="relative w-32 h-32 flex items-center justify-center shrink-0">
+                                <svg className="w-full h-full transform -rotate-90">
+                                  <circle
+                                    cx="64"
+                                    cy="64"
+                                    r="50"
+                                    stroke="rgba(255,255,255,0.05)"
+                                    strokeWidth="8"
+                                    fill="transparent"
+                                  />
+                                  <motion.circle
+                                    cx="64"
+                                    cy="64"
+                                    r="50"
+                                    stroke={getScoreData(aiAnalysis.ats_score || aiAnalysis.score || aiAnalysis.overall_score).color}
+                                    strokeWidth="8"
+                                    fill="transparent"
+                                    strokeDasharray={314.16}
+                                    initial={{ strokeDashoffset: 314.16 }}
+                                    animate={{ strokeDashoffset: 314.16 - (314.16 * (parseInt(aiAnalysis.ats_score || aiAnalysis.score || aiAnalysis.overall_score) || 0)) / 100 }}
+                                    transition={{ duration: 1.2, ease: "easeOut" }}
+                                    strokeLinecap="round"
+                                  />
+                                </svg>
+                                <div className="absolute flex flex-col items-center justify-center">
+                                  <AnimatedScore score={aiAnalysis.ats_score || aiAnalysis.score || aiAnalysis.overall_score} />
+                                </div>
                               </div>
-                              <div>
-                                <span className="text-xs font-bold text-white">AI Optimization Index</span>
-                                <span className="text-[10px] text-slate-500 font-semibold block mt-0.5">ATS score evaluation</span>
+
+                              <div className="space-y-1">
+                                <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${getScoreData(aiAnalysis.ats_score || aiAnalysis.score || aiAnalysis.overall_score).bg}`}>
+                                  {getScoreData(aiAnalysis.ats_score || aiAnalysis.score || aiAnalysis.overall_score).label}
+                                </span>
+                                <span className="text-[10px] text-slate-500 font-semibold block pt-2">ATS Score Evaluation</span>
                               </div>
                             </div>
 
                             {/* Improvements */}
                             {aiAnalysis.improvements && aiAnalysis.improvements.length > 0 && (
-                              <div className="space-y-2 pt-2 border-t border-white/5">
+                              <div className="space-y-2 pt-4 border-t border-white/5 text-left">
                                 <h5 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">ATS Checklist suggestions</h5>
                                 <ul className="space-y-1.5 text-xxs text-slate-350 list-disc list-inside leading-relaxed">
                                   {aiAnalysis.improvements.map((item, i) => (
