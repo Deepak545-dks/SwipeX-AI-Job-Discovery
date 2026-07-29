@@ -368,7 +368,7 @@ export default function ProfileDashboard() {
 
     setUploadingResume(true);
     try {
-      const response = await api.post('/profiles/resumes/', formData, {
+      const response = await api.post('/profiles/me/resume/', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       setResumeFile(null);
@@ -383,7 +383,7 @@ export default function ProfileDashboard() {
 
   const handleDeleteResume = async (id) => {
     try {
-      await api.delete(`/profiles/resumes/${id}/`);
+      await api.delete(`/profiles/me/resume/${id}/`);
       showToast('Resume deleted successfully.', 'info');
       setAiAnalysis(null);
       await fetchProfile();

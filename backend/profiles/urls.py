@@ -8,6 +8,7 @@ from .views import (
     ProjectCreateView,
     ProjectDetailView,
     ResumeUploadView,
+    ResumeDetailView,
     ProfilePictureUploadView,
     AIResumeAnalyzerView
 )
@@ -21,6 +22,7 @@ urlpatterns = [
     path('me/project/', ProjectCreateView.as_view(), name='profile_project_create'),
     path('me/project/<uuid:pk>/', ProjectDetailView.as_view(), name='profile_project_detail'),
     path('me/resume/', ResumeUploadView.as_view(), name='profile_resume_upload'),
+    path('me/resume/<uuid:pk>/', ResumeDetailView.as_view(), name='profile_resume_detail'),
     path('me/avatar/', ProfilePictureUploadView.as_view(), name='profile_avatar_upload'),
     path('ai/analyze-resume/', AIResumeAnalyzerView.as_view(), name='ai_analyze_resume'),
 ]

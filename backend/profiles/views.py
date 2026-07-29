@@ -121,6 +121,13 @@ class ResumeUploadView(APIView):
         serializer = ResumeSerializer(resume)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+class ResumeDetailView(generics.DestroyAPIView):
+    permission_classes = (permissions.IsAuthenticated,)
+    serializer_class = ResumeSerializer
+
+    def get_queryset(self):
+        return Resume.objects.filter(profile=self.request.user.profile)
+
 class ProfilePictureUploadView(APIView):
     permission_classes = (permissions.IsAuthenticated,)
 
