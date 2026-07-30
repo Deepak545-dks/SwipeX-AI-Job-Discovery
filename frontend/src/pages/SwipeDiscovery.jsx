@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import PageTransition from '../components/PageTransition';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 
 const CompanyLogo = ({ company, className = "w-14 h-14" }) => {
   const [error, setError] = useState(false);
@@ -45,6 +45,11 @@ export default function SwipeDiscovery() {
   const [swipeDirection, setSwipeDirection] = useState('right');
   const [totalCount, setTotalCount] = useState(0);
   const [hasLoadedInitially, setHasLoadedInitially] = useState(false);
+
+  // Motion values for smooth 60fps drag tilt & elastic return animations
+  const cardX = useMotionValue(0);
+  const cardY = useMotionValue(0);
+  const cardRotate = useTransform(cardX, [-300, 300], [-15, 15]);
 
   // Swipe Stats
   const [likesCount, setLikesCount] = useState(16);
@@ -264,6 +269,8 @@ export default function SwipeDiscovery() {
     } else {
       setDragX(0);
       setDragY(0);
+      cardX.set(0);
+      cardY.set(0);
     }
   };
 
@@ -311,9 +318,18 @@ export default function SwipeDiscovery() {
   return (
     <PageTransition className="max-w-7xl mx-auto px-6 py-10 grid lg:grid-cols-12 gap-8 relative z-10 text-white">
       
-      {/* Aurora Spotlights */}
-      <div className="absolute top-[10%] left-[5%] w-[550px] h-[550px] bg-gradient-to-tr from-violet-600/15 via-blue-500/10 to-transparent rounded-full blur-[140px] -z-10 pointer-events-none" />
-      <div className="absolute bottom-[10%] right-[5%] w-[500px] h-[500px] bg-gradient-to-tr from-blue-600/15 via-fuchsia-500/10 to-transparent rounded-full blur-[140px] -z-10 pointer-events-none" />
+      {/* Aurora Spotlights & Floating Particles */}
+      <div className="absolute top-[-10%] left-[10%] w-[600px] h-[600px] bg-gradient-to-tr from-violet-600/20 via-cyan-500/10 to-transparent rounded-full blur-[150px] -z-10 pointer-events-none animate-pulse duration-[8s]" />
+      <div className="absolute bottom-[0%] right-[10%] w-[550px] h-[550px] bg-gradient-to-br from-fuchsia-600/20 via-blue-500/10 to-transparent rounded-full blur-[150px] -z-10 pointer-events-none animate-pulse duration-[10s]" />
+      
+      {/* Soft radial glow directly behind the swipe card */}
+      <div className="absolute top-1/2 left-[35%] -translate-y-1/2 w-[350px] h-[450px] bg-gradient-to-tr from-violet-500/10 to-cyan-500/5 rounded-[40px] blur-[80px] -z-10 pointer-events-none animate-pulse duration-[6s]" />
+
+      {/* Floating particles */}
+      <div className="absolute top-[15%] left-[25%] w-1.5 h-1.5 rounded-full bg-violet-400/30 blur-[1px] animate-bounce duration-[6s] -z-10" />
+      <div className="absolute top-[65%] left-[15%] w-2 h-2 rounded-full bg-cyan-400/20 blur-[1px] animate-bounce duration-[8s] -z-10" />
+      <div className="absolute top-[40%] left-[50%] w-1 h-1 rounded-full bg-fuchsia-400/40 blur-[1px] animate-bounce duration-[5s] -z-10" />
+      <div className="absolute top-[80%] left-[45%] w-2.5 h-2.5 rounded-full bg-blue-400/25 blur-[1px] animate-bounce duration-[7s] -z-10" />
 
       {/* LEFT COLUMN: Premium Swipe experience */}
       <div className="lg:col-span-8 flex flex-col items-center justify-center select-none">
@@ -471,14 +487,19 @@ export default function SwipeDiscovery() {
             {/* Cards Stack Container (Increased size by 20%) */}
             <div className="relative w-full h-[580px] max-w-sm">
               <AnimatePresence custom={swipeDirection}>
-                {deck.slice(0, 5).reverse().map((job, idx, arr) => {
-                  const relativeIndex = arr.length - 1 - idx; // 0 for top, 1 for middle, etc.
+                {deck.slice(0, 3).reverse().map((job, idx, arr) => {
+                  const relativeIndex = arr.length - 1 - idx; // 0 for top, 1 for middle, 2 for bottom
                   const isTop = relativeIndex === 0;
 
                   return (
                     <motion.div
                       key={job.id}
-                      style={{ touchAction: 'none' }}
+                      style={{ 
+                        touchAction: 'none',
+                        x: isTop ? cardX : 0,
+                        y: isTop ? cardY : 0,
+                        rotate: isTop ? cardRotate : 0
+                      }}
                       drag={isTop}
                       dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
                       onDrag={isTop ? handleDrag : undefined}
@@ -495,13 +516,17 @@ export default function SwipeDiscovery() {
                       }}
                       animate={{
                         scale: isTop ? 1 : 1 - relativeIndex * 0.05,
-                        y: isTop ? 0 : relativeIndex * 14,
+                        y: isTop ? 0 : relativeIndex * 18,
                         zIndex: 10 - relativeIndex,
-                        opacity: isTop ? 1 : 0.8 - relativeIndex * 0.2
+                        opacity: isTop ? 1 : 0.9 - relativeIndex * 0.25
                       }}
                       exit="exit"
                       transition={{ type: 'spring', stiffness: 200, damping: 20 }}
-                      className="absolute w-full h-full p-[1.5px] rounded-[32px] overflow-hidden bg-gradient-to-tr from-violet-500/25 via-blue-500/20 to-transparent shadow-2xl"
+                      className={`absolute w-full h-full p-[1.5px] rounded-[32px] overflow-hidden shadow-2xl transition-all duration-300 ${
+                        isTop 
+                          ? 'bg-gradient-to-tr from-violet-500 via-cyan-400 to-fuchsia-500 shadow-violet-500/10' 
+                          : 'bg-gradient-to-tr from-violet-500/20 via-blue-500/15 to-transparent'
+                      }`}
                     >
                       <div className="w-full h-full glass-card-purple-blue rounded-[31px] p-6 flex flex-col justify-between cursor-grab active:cursor-grabbing relative overflow-hidden text-left select-none">
                         
@@ -526,25 +551,25 @@ export default function SwipeDiscovery() {
                             <div className="space-y-4">
                               {/* Header Card Details */}
                               <div className="flex justify-between items-start gap-4">
-                                <div className="flex items-center gap-3">
-                                  <CompanyLogo company={job.company} />
+                                <div className="flex items-center gap-3.5">
+                                  <CompanyLogo company={job.company} className="w-16 h-16" />
                                   <div className="min-w-0">
                                     <div className="flex items-center gap-1.5">
-                                      <h4 className="text-sm font-black text-white truncate">{job.company?.name || job.company_name}</h4>
-                                      <Shield size={14} className="text-blue-400 shrink-0" fill="currentColor" />
+                                      <h4 className="text-base font-black text-white truncate">{job.company?.name || job.company_name}</h4>
+                                      <Shield size={15} className="text-blue-400 shrink-0" fill="currentColor" />
                                     </div>
-                                    <span className="text-[10px] text-slate-400 font-bold block mt-0.5">
+                                    <span className="text-xxs text-slate-400 font-bold block mt-0.5">
                                       Rating: {job.company?.rating || 4.2} ★ • {job.company?.industry || 'Technology'}
                                     </span>
                                   </div>
                                 </div>
 
-                                {/* Radial AI Match progress gauge */}
-                                <div className="relative w-12 h-12 flex items-center justify-center shrink-0">
-                                  <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                                {/* Radial AI Match progress gauge (larger and sharper) */}
+                                <div className="relative w-14 h-14 flex items-center justify-center shrink-0">
+                                  <svg className="w-full h-full transform -rotate-90 filter drop-shadow-[0_0_8px_rgba(139,92,246,0.3)]" viewBox="0 0 36 36">
                                     <circle cx="18" cy="18" r="16" fill="none" stroke="#ffffff10" strokeWidth="2.5" />
-                                    <circle cx="18" cy="18" r="16" fill="none" stroke="url(#card-match-grad)" strokeWidth="2.5"
-                                      strokeDasharray={`${job.ai_match_score || 85}, 100`} />
+                                    <circle cx="18" cy="18" r="16" fill="none" stroke="url(#card-match-grad)" strokeWidth="3"
+                                      strokeDasharray={`${job.ai_match_score || 85}, 100`} strokeLinecap="round" />
                                     <defs>
                                       <linearGradient id="card-match-grad" x1="0%" y1="0%" x2="100%" y2="100%">
                                         <stop offset="0%" stopColor="#8b5cf6" />
@@ -552,23 +577,23 @@ export default function SwipeDiscovery() {
                                       </linearGradient>
                                     </defs>
                                   </svg>
-                                  <span className="absolute text-[9px] font-black text-white">{job.ai_match_score || 85}%</span>
+                                  <span className="absolute text-[10px] font-black text-white">{job.ai_match_score || 85}%</span>
                                 </div>
                               </div>
 
                               {/* Title and location */}
-                              <div className="space-y-1">
+                              <div className="space-y-1.5">
                                 <div className="flex items-center gap-2 flex-wrap">
-                                  <span className="px-2 py-0.5 rounded-full bg-violet-605/10 border border-violet-500/20 text-[8px] font-black text-violet-400 uppercase tracking-wider">
+                                  <span className="px-2.5 py-1 rounded-full bg-violet-605/10 border border-violet-500/20 text-[8.5px] font-black text-violet-400 uppercase tracking-wider">
                                     {job.experience_level}
                                   </span>
-                                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[8px] font-black text-emerald-400 uppercase tracking-wider">
+                                  <span className="px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[8.5px] font-black text-emerald-400 uppercase tracking-wider animate-pulse">
                                     Easy Apply
                                   </span>
                                 </div>
-                                <h2 className="text-base font-black text-white leading-tight tracking-tight line-clamp-1">{job.title}</h2>
-                                <span className="text-[10px] text-slate-450 block font-semibold flex items-center gap-1">
-                                  <MapPin size={11} /> {job.location} ({job.job_type})
+                                <h2 className="text-lg font-black text-white leading-tight tracking-tight line-clamp-1">{job.title}</h2>
+                                <span className="text-xxs text-slate-400 block font-bold flex items-center gap-1">
+                                  <MapPin size={12} className="text-cyan-405" /> {job.location} ({job.job_type})
                                 </span>
                               </div>
 
@@ -626,15 +651,16 @@ export default function SwipeDiscovery() {
                   );
                 })}
               </AnimatePresence>
-            </div>
-
-            {/* Bottom Swiper Control Actions (Premium styling buttons with glow, scales, and ripples) */}
+                        {/* Bottom Swiper Control Actions (Premium styling buttons with glow, scales, and ripples) */}
             <div className="flex items-center gap-4 mt-6">
               <button
                 onClick={handleUndo}
-                className="w-11 h-11 rounded-full bg-slate-900 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:scale-110 active:scale-95 transition-all cursor-pointer shadow-lg hover:shadow-white/5"
+                className="group relative w-12 h-12 rounded-full bg-slate-900 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:scale-110 hover:shadow-[0_0_15px_rgba(255,255,255,0.15)] active:scale-95 transition-all cursor-pointer shadow-lg"
               >
-                <RotateCcw size={15} />
+                <RotateCcw size={18} />
+                <span className="absolute bottom-full mb-3 scale-0 group-hover:scale-100 rounded bg-slate-950 px-2 py-1 text-[8px] font-black uppercase tracking-wider text-slate-200 transition-all z-40 pointer-events-none whitespace-nowrap shadow-xl border border-white/10">
+                  Undo Last Swipe
+                </span>
               </button>
               
               <button
@@ -642,9 +668,12 @@ export default function SwipeDiscovery() {
                   setSwipeDirection('dislike');
                   handleSwipe(activeCard.id, 'dislike');
                 }}
-                className="w-14 h-14 rounded-full bg-rose-500/10 border border-rose-500/25 hover:border-rose-500 flex items-center justify-center text-rose-450 hover:text-rose-300 hover:scale-110 active:scale-95 transition-all cursor-pointer shadow-lg hover:shadow-rose-500/10"
+                className="group relative w-16 h-16 rounded-full bg-rose-500/10 border border-rose-500/30 hover:border-rose-500 flex items-center justify-center text-rose-455 hover:text-rose-300 hover:scale-110 hover:shadow-[0_0_25px_rgba(244,63,94,0.35)] active:scale-90 transition-all cursor-pointer shadow-lg"
               >
-                <X size={20} />
+                <X size={26} />
+                <span className="absolute bottom-full mb-3 scale-0 group-hover:scale-100 rounded bg-slate-955 px-2 py-1 text-[8px] font-black uppercase tracking-wider text-rose-400 transition-all z-40 pointer-events-none whitespace-nowrap shadow-xl border border-rose-500/20">
+                  Pass & Skip (Dislike)
+                </span>
               </button>
               
               <button
@@ -652,9 +681,12 @@ export default function SwipeDiscovery() {
                   setSwipeDirection('superlike');
                   handleSwipe(activeCard.id, 'superlike');
                 }}
-                className="w-11 h-11 rounded-full bg-slate-900 border border-yellow-500/20 hover:border-yellow-500 flex items-center justify-center text-yellow-500 hover:text-yellow-300 hover:scale-110 active:scale-95 transition-all cursor-pointer shadow-lg"
+                className="group relative w-12 h-12 rounded-full bg-slate-900 border border-yellow-500/20 hover:border-yellow-500 flex items-center justify-center text-yellow-500 hover:text-yellow-300 hover:scale-110 hover:shadow-[0_0_15px_rgba(234,179,8,0.35)] active:scale-95 transition-all cursor-pointer shadow-lg"
               >
-                <Star size={15} />
+                <Star size={18} />
+                <span className="absolute bottom-full mb-3 scale-0 group-hover:scale-100 rounded bg-slate-950 px-2 py-1 text-[8px] font-black uppercase tracking-wider text-yellow-405 transition-all z-40 pointer-events-none whitespace-nowrap shadow-xl border border-yellow-500/20">
+                  Super Like (Star)
+                </span>
               </button>
 
               <button
@@ -662,9 +694,12 @@ export default function SwipeDiscovery() {
                   setSwipeDirection('save');
                   handleSwipe(activeCard.id, 'save');
                 }}
-                className="w-11 h-11 rounded-full bg-slate-900 border border-cyan-500/20 hover:border-cyan-500 flex items-center justify-center text-cyan-405 hover:text-cyan-300 hover:scale-110 active:scale-95 transition-all cursor-pointer shadow-lg"
+                className="group relative w-12 h-12 rounded-full bg-slate-900 border border-cyan-500/20 hover:border-cyan-500 flex items-center justify-center text-cyan-405 hover:text-cyan-300 hover:scale-110 hover:shadow-[0_0_15px_rgba(6,182,212,0.35)] active:scale-95 transition-all cursor-pointer shadow-lg"
               >
-                <Bookmark size={15} />
+                <Bookmark size={18} />
+                <span className="absolute bottom-full mb-3 scale-0 group-hover:scale-100 rounded bg-slate-950 px-2 py-1 text-[8px] font-black uppercase tracking-wider text-cyan-405 transition-all z-40 pointer-events-none whitespace-nowrap shadow-xl border border-cyan-500/20">
+                  Save to Bookmark
+                </span>
               </button>
               
               <button
@@ -672,11 +707,14 @@ export default function SwipeDiscovery() {
                   setSwipeDirection('like');
                   handleSwipe(activeCard.id, 'like');
                 }}
-                className="w-14 h-14 rounded-full bg-emerald-500/10 border border-emerald-500/25 hover:border-emerald-500 flex items-center justify-center text-emerald-450 hover:text-emerald-300 hover:scale-110 active:scale-95 transition-all cursor-pointer shadow-lg hover:shadow-emerald-500/10"
+                className="group relative w-16 h-16 rounded-full bg-emerald-500/10 border border-emerald-500/30 hover:border-emerald-500 flex items-center justify-center text-emerald-455 hover:text-emerald-300 hover:scale-110 hover:shadow-[0_0_25px_rgba(16,185,129,0.35)] active:scale-90 transition-all cursor-pointer shadow-lg"
               >
-                <Heart size={20} />
+                <Heart size={26} />
+                <span className="absolute bottom-full mb-3 scale-0 group-hover:scale-100 rounded bg-slate-955 px-2 py-1 text-[8px] font-black uppercase tracking-wider text-emerald-400 transition-all z-40 pointer-events-none whitespace-nowrap shadow-xl border border-emerald-500/20">
+                  Like & Shortlist (Heart)
+                </span>
               </button>
-            </div>
+            </div>  </div>
 
           </div>
         )}
@@ -684,39 +722,104 @@ export default function SwipeDiscovery() {
       </div>
 
       {/* RIGHT PANEL: Live Feed & Seeker Analytics */}
-      <div className="lg:col-span-4 space-y-6 text-left">
+      <div className="lg:col-span-4 space-y-6 text-left relative z-10">
         
-        {/* Swipe stats goal card */}
-        <div className="p-5 rounded-[24px] border border-white/5 bg-slate-900/40 backdrop-blur-md space-y-4">
-          <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block border-b border-white/5 pb-2">Today's Swiping Goal</span>
-          <div className="flex justify-between items-center text-xxs font-extrabold uppercase text-slate-400">
-            <span>Goal Progress</span>
-            <span className="text-violet-405">{swipesGoal} / 15 Jobs Swiped</span>
+        {/* Profile & Resume Health (Purple/Indigo Gradient Card) */}
+        <div className="p-5 rounded-[24px] bg-gradient-to-br from-violet-600/20 via-indigo-650/10 to-slate-950/90 border border-violet-500/25 shadow-xl space-y-4 backdrop-blur-md">
+          <span className="text-[9px] font-black uppercase tracking-widest text-violet-400 block border-b border-violet-500/10 pb-2">Profile & Resume Health</span>
+          <div className="flex items-center gap-4">
+            <div className="relative w-12 h-12 flex items-center justify-center shrink-0">
+              <svg className="w-full h-full transform -rotate-90 animate-pulse" viewBox="0 0 36 36">
+                <circle cx="18" cy="18" r="16" fill="none" stroke="#ffffff10" strokeWidth="2.5" />
+                <circle cx="18" cy="18" r="16" fill="none" stroke="url(#ats-score-grad)" strokeWidth="3"
+                  strokeDasharray="88, 100" strokeLinecap="round" />
+                <defs>
+                  <linearGradient id="ats-score-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#8b5cf6" />
+                    <stop offset="100%" stopColor="#6366f1" />
+                  </linearGradient>
+                </defs>
+              </svg>
+              <span className="absolute text-[10px] font-black text-white">88%</span>
+            </div>
+            <div>
+              <span className="text-[8px] font-black text-slate-400 block uppercase tracking-wider">Resume ATS Score</span>
+              <span className="text-xxs font-black text-violet-300">ATS Optimised & Scanned</span>
+            </div>
           </div>
-          <div className="w-full h-2 rounded-full bg-slate-950 overflow-hidden relative border border-white/5">
-            <div 
-              style={{ width: `${(swipesGoal / 15) * 100}%` }}
-              className="h-full bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-500 transition-all duration-300"
-            />
+          <div className="space-y-1.5 pt-1">
+            <div className="flex justify-between items-center text-[9px] font-black text-slate-400">
+              <span>Profile Strength</span>
+              <span className="text-violet-405">Excellent (92%)</span>
+            </div>
+            <div className="w-full h-1.5 rounded-full bg-slate-950 overflow-hidden relative border border-white/5">
+              <div className="h-full bg-gradient-to-r from-violet-500 to-indigo-500 w-[92%]" />
+            </div>
           </div>
         </div>
 
-        {/* Dynamic Seeker Stats */}
-        <div className="p-5 rounded-[24px] border border-white/5 bg-slate-900/40 backdrop-blur-md space-y-4">
-          <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block border-b border-white/5 pb-2">Swipe Analytics</span>
+        {/* Hiring Pipeline Insights (Cyan/Teal Gradient Card) */}
+        <div className="p-5 rounded-[24px] bg-gradient-to-br from-cyan-600/20 via-teal-650/10 to-slate-950/90 border border-cyan-500/25 shadow-xl space-y-4 backdrop-blur-md">
+          <span className="text-[9px] font-black uppercase tracking-widest text-cyan-400 block border-b border-cyan-500/10 pb-2">Pipeline Insights</span>
           <div className="grid grid-cols-2 gap-4">
-            <div className="p-3 bg-slate-950/60 border border-white/5 rounded-2xl text-left">
-              <span className="text-[8px] font-bold uppercase tracking-wider text-slate-500">Liked Roles</span>
-              <p className="text-lg font-black text-white mt-1">{likesCount}</p>
+            <div className="p-3 bg-slate-950/50 border border-white/5 rounded-2xl text-left relative overflow-hidden group">
+              <span className="text-[8px] font-black uppercase tracking-wider text-slate-500 block">Interview Prob.</span>
+              <div className="flex items-center gap-1.5 mt-1.5">
+                <p className="text-sm font-black text-emerald-400">82%</p>
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              </div>
             </div>
-            <div className="p-3 bg-slate-950/60 border border-white/5 rounded-2xl text-left">
-              <span className="text-[8px] font-bold uppercase tracking-wider text-slate-500">Matches</span>
-              <p className="text-lg font-black text-violet-400 mt-1">{matchesCount}</p>
+            <div className="p-3 bg-slate-950/50 border border-white/5 rounded-2xl text-left relative overflow-hidden group">
+              <span className="text-[8px] font-black uppercase tracking-wider text-slate-500 block">Today's Matches</span>
+              <p className="text-sm font-black text-cyan-405 mt-1.5">12 Roles</p>
             </div>
           </div>
         </div>
 
-        {/* Live recruiter activity feeds */}
+        {/* Swipe Analytics & Weekly Activity (Fuchsia/Pink Gradient Card) */}
+        <div className="p-5 rounded-[24px] bg-gradient-to-br from-fuchsia-605/20 via-pink-700/5 to-slate-950/90 border border-fuchsia-500/20 shadow-xl space-y-4 backdrop-blur-md">
+          <span className="text-[9px] font-black uppercase tracking-widest text-fuchsia-400 block border-b border-fuchsia-550/10 pb-2">Swipe Goals & Activity</span>
+          <div className="space-y-2">
+            <div className="flex justify-between items-center text-xxs font-extrabold uppercase text-slate-400">
+              <span>Today's swipes goal</span>
+              <span className="text-fuchsia-400">{swipesGoal} / 15 Swiped</span>
+            </div>
+            <div className="w-full h-2 rounded-full bg-slate-950 overflow-hidden relative border border-white/5">
+              <div 
+                style={{ width: `${(swipesGoal / 15) * 100}%` }}
+                className="h-full bg-gradient-to-r from-fuchsia-550 via-pink-500 to-violet-500 transition-all duration-300"
+              />
+            </div>
+          </div>
+          
+          {/* Weekly Activity vertical bar chart */}
+          <div className="space-y-3 pt-2">
+            <span className="text-[8px] font-black uppercase tracking-wider text-slate-500 block">Weekly Swipes Velocity</span>
+            <div className="flex justify-between items-end h-16 pt-2 px-1">
+              {[
+                { day: "M", val: 40 },
+                { day: "T", val: 65 },
+                { day: "W", val: 30 },
+                { day: "T", val: 80 },
+                { day: "F", val: 55 },
+                { day: "S", val: 20 },
+                { day: "S", val: 45 }
+              ].map((item, idx) => (
+                <div key={idx} className="flex flex-col items-center gap-1.5 w-6">
+                  <div className="w-2 h-10 bg-slate-950 rounded-full overflow-hidden relative">
+                    <div 
+                      style={{ height: `${item.val}%` }} 
+                      className="absolute bottom-0 w-full bg-gradient-to-t from-fuchsia-500 to-pink-500 rounded-full"
+                    />
+                  </div>
+                  <span className="text-[7.5px] font-black text-slate-500">{item.day}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Live recruiter activity feeds (Sleek Glassmorphic) */}
         <div className="p-5 rounded-[24px] border border-white/5 bg-slate-900/40 backdrop-blur-md space-y-4">
           <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block border-b border-white/5 pb-2">Live Recruiter Feed</span>
           <div className="space-y-3.5">
