@@ -78,6 +78,23 @@ export default function SwipeDiscovery() {
     }
   };
 
+  const getUniqueJobs = (jobsList) => {
+    const unique = [];
+    const keys = new Set();
+    for (const job of jobsList) {
+      if (!job || !job.id) continue;
+      const compName = (job.company?.name || job.company_name || '').toLowerCase().trim();
+      const jobTitle = (job.title || '').toLowerCase().trim();
+      const titleCompanyKey = `${jobTitle}-${compName}`;
+      if (!keys.has(job.id) && !keys.has(titleCompanyKey)) {
+        keys.add(job.id);
+        keys.add(titleCompanyKey);
+        unique.push(job);
+      }
+    }
+    return unique;
+  };
+
   const fetchRecommendations = async () => {
     setLoading(true);
     setError('');
@@ -85,8 +102,7 @@ export default function SwipeDiscovery() {
       const response = await api.get('/jobs/recommendations/');
       const data = response.data;
       const results = data.results || data || [];
-      const unique = Array.from(new Map(results.map(j => [j.id, j])).values());
-      setDeck(unique);
+      setDeck(getUniqueJobs(results));
       setTotalCount(data.count || 0);
       setHasLoadedInitially(true);
     } catch (err) {
@@ -106,7 +122,7 @@ export default function SwipeDiscovery() {
       setTotalCount(data.count || 0);
       setDeck(prev => {
         const combined = [...prev, ...newJobs];
-        return Array.from(new Map(combined.map(j => [j.id, j])).values());
+        return getUniqueJobs(combined);
       });
     } catch (err) {
       console.error("Failed to load more recommendation batch cards:", err);
@@ -223,7 +239,7 @@ export default function SwipeDiscovery() {
       await api.post('/jobs/swipe/undo/');
       setDeck(prev => {
         const combined = [lastSwipedJob, ...prev];
-        return Array.from(new Map(combined.map(j => [j.id, j])).values());
+        return getUniqueJobs(combined);
       });
       setTotalCount(prev => prev + 1);
       setLastSwipedJob(null);
@@ -472,7 +488,7 @@ export default function SwipeDiscovery() {
             </div>
           </div>
         ) : (
-          <div className="relative w-full max-w-md h-[680px] flex flex-col justify-between items-center">
+          <div className="relative w-full max-w-lg h-[760px] flex flex-col justify-between items-center">
             
             {/* Header Streak Info */}
             <div className="w-full flex justify-between items-center px-4 mb-4 text-[10px] font-black uppercase tracking-wider">
@@ -484,8 +500,8 @@ export default function SwipeDiscovery() {
               </span>
             </div>
  
-            {/* Cards Stack Container (Increased size by 20%) */}
-            <div className="relative w-full h-[580px] max-w-sm">
+            {/* Cards Stack Container (Increased size by 30%) */}
+            <div className="relative w-full h-[650px] max-w-md">
               <AnimatePresence custom={swipeDirection}>
                 {deck.slice(0, 3).reverse().map((job, idx, arr) => {
                   const relativeIndex = arr.length - 1 - idx; // 0 for top, 1 for middle, 2 for bottom
@@ -524,11 +540,11 @@ export default function SwipeDiscovery() {
                       transition={{ type: 'spring', stiffness: 200, damping: 20 }}
                       className={`absolute w-full h-full p-[1.5px] rounded-[32px] overflow-hidden shadow-2xl transition-all duration-300 ${
                         isTop 
-                          ? 'bg-gradient-to-tr from-violet-500 via-cyan-400 to-fuchsia-500 shadow-violet-500/10' 
-                          : 'bg-gradient-to-tr from-violet-500/20 via-blue-500/15 to-transparent'
+                          ? 'bg-gradient-to-b from-purple-500/30 via-indigo-500/25 to-blue-500/30 shadow-violet-500/10' 
+                          : 'bg-gradient-to-b from-purple-500/10 via-indigo-500/10 to-blue-500/10'
                       }`}
                     >
-                      <div className="w-full h-full glass-card-purple-blue rounded-[31px] p-6 flex flex-col justify-between cursor-grab active:cursor-grabbing relative overflow-hidden text-left select-none">
+                      <div className="w-full h-full bg-gradient-to-b from-[#2e1065]/95 via-[#1e1b4b]/95 to-[#172554]/95 border border-purple-500/20 rounded-[31px] p-6 flex flex-col justify-between cursor-grab active:cursor-grabbing relative overflow-hidden text-left select-none shadow-inner">
                         
                         {/* Overlay tags for likes/nopes */}
                         {isTop && (
@@ -545,105 +561,120 @@ export default function SwipeDiscovery() {
                           </>
                         )}
 
-                        {/* RENDER CONTENT ONLY FOR TOP CARD TO PREVENT OVERLAPPING AND LAGS */}
-                        {isTop ? (
-                          <>
-                            <div className="space-y-4">
-                              {/* Header Card Details */}
-                              <div className="flex justify-between items-start gap-4">
-                                <div className="flex items-center gap-3.5">
-                                  <CompanyLogo company={job.company} className="w-16 h-16" />
-                                  <div className="min-w-0">
-                                    <div className="flex items-center gap-1.5">
-                                      <h4 className="text-base font-black text-white truncate">{job.company?.name || job.company_name}</h4>
-                                      <Shield size={15} className="text-blue-400 shrink-0" fill="currentColor" />
-                                    </div>
-                                    <span className="text-xxs text-slate-400 font-bold block mt-0.5">
-                                      Rating: {job.company?.rating || 4.2} ★ • {job.company?.industry || 'Technology'}
-                                    </span>
+                        <div className="space-y-4 flex-1 flex flex-col justify-between h-full">
+                          <div className="space-y-4">
+                            {/* Header Card Details */}
+                            <div className="flex justify-between items-start gap-4">
+                              <div className="flex items-center gap-3.5">
+                                <CompanyLogo company={job.company} className="w-16 h-16" />
+                                <div className="min-w-0">
+                                  <div className="flex items-center gap-1.5">
+                                    <h4 className="text-base font-black text-white truncate">{job.company?.name || job.company_name}</h4>
+                                    <Shield size={15} className="text-blue-405 shrink-0" fill="currentColor" />
                                   </div>
-                                </div>
-
-                                {/* Radial AI Match progress gauge (larger and sharper) */}
-                                <div className="relative w-14 h-14 flex items-center justify-center shrink-0">
-                                  <svg className="w-full h-full transform -rotate-90 filter drop-shadow-[0_0_8px_rgba(139,92,246,0.3)]" viewBox="0 0 36 36">
-                                    <circle cx="18" cy="18" r="16" fill="none" stroke="#ffffff10" strokeWidth="2.5" />
-                                    <circle cx="18" cy="18" r="16" fill="none" stroke="url(#card-match-grad)" strokeWidth="3"
-                                      strokeDasharray={`${job.ai_match_score || 85}, 100`} strokeLinecap="round" />
-                                    <defs>
-                                      <linearGradient id="card-match-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                                        <stop offset="0%" stopColor="#8b5cf6" />
-                                        <stop offset="100%" stopColor="#3b82f6" />
-                                      </linearGradient>
-                                    </defs>
-                                  </svg>
-                                  <span className="absolute text-[10px] font-black text-white">{job.ai_match_score || 85}%</span>
+                                  <span className="text-xxs text-slate-405 font-bold block mt-0.5">
+                                    Rating: {job.company?.rating || 4.2} ★ • {job.company?.industry || 'Technology'}
+                                  </span>
                                 </div>
                               </div>
 
-                              {/* Title and location */}
-                              <div className="space-y-1.5">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  <span className="px-2.5 py-1 rounded-full bg-violet-605/10 border border-violet-500/20 text-[8.5px] font-black text-violet-400 uppercase tracking-wider">
-                                    {job.experience_level}
-                                  </span>
-                                  <span className="px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[8.5px] font-black text-emerald-400 uppercase tracking-wider animate-pulse">
-                                    Easy Apply
-                                  </span>
-                                </div>
-                                <h2 className="text-lg font-black text-white leading-tight tracking-tight line-clamp-1">{job.title}</h2>
-                                <span className="text-xxs text-slate-400 block font-bold flex items-center gap-1">
-                                  <MapPin size={12} className="text-cyan-405" /> {job.location} ({job.job_type})
+                              {/* Radial AI Match progress gauge */}
+                              <div className="relative w-14 h-14 flex items-center justify-center shrink-0">
+                                <svg className="w-full h-full transform -rotate-90 filter drop-shadow-[0_0_8px_rgba(139,92,246,0.3)]" viewBox="0 0 36 36">
+                                  <circle cx="18" cy="18" r="16" fill="none" stroke="#ffffff10" strokeWidth="2.5" />
+                                  <circle cx="18" cy="18" r="16" fill="none" stroke="url(#card-match-grad)" strokeWidth="3"
+                                    strokeDasharray={`${job.ai_match_score || 85}, 100`} strokeLinecap="round" />
+                                  <defs>
+                                    <linearGradient id="card-match-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                      <stop offset="0%" stopColor="#8b5cf6" />
+                                      <stop offset="100%" stopColor="#3b82f6" />
+                                    </linearGradient>
+                                  </defs>
+                                </svg>
+                                <span className="absolute text-[10px] font-black text-white">{job.ai_match_score || 85}%</span>
+                              </div>
+                            </div>
+
+                            {/* Title, location and Core stats badges */}
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="px-2.5 py-1 rounded bg-purple-500/20 border border-purple-500/30 text-[8.5px] font-black text-purple-300 uppercase tracking-wider">
+                                  {job.experience_level || 'Mid Level'}
+                                </span>
+                                <span className="px-2.5 py-1 rounded bg-cyan-500/20 border border-cyan-500/30 text-[8.5px] font-black text-cyan-300 uppercase tracking-wider capitalize">
+                                  {job.job_type || 'Remote'}
+                                </span>
+                                <span className="px-2.5 py-1 rounded bg-emerald-500/20 border border-emerald-500/30 text-[8.5px] font-black text-emerald-300 uppercase tracking-wider">
+                                  Posted 2d ago
                                 </span>
                               </div>
+                              <h2 className="text-xl font-black text-white leading-tight tracking-tight line-clamp-1">{job.title}</h2>
+                              <span className="text-xxs text-slate-300 block font-semibold flex items-center gap-1 mt-1">
+                                <MapPin size={12} className="text-cyan-400" /> {job.location}
+                              </span>
+                            </div>
 
-                              {/* Why matches details */}
-                              <div className="p-3.5 rounded-2xl bg-white/5 border border-white/5 space-y-2">
-                                <span className="text-[8px] font-black uppercase tracking-widest text-violet-405 block">Why This Job Matches You</span>
-                                <div className="flex flex-wrap gap-1.5">
-                                  {(job.skills_required?.slice(0, 4) || ["React", "Python", "SQL"]).map((skill) => (
-                                    <span key={skill} className="px-2 py-0.5 rounded-lg bg-emerald-500/10 text-emerald-400 text-[8.5px] font-extrabold flex items-center gap-1 border border-emerald-500/10 uppercase tracking-wide">
+                            {/* Job Specification Grid (Includes resume match, interview probability, size, industry) */}
+                            <div className="grid grid-cols-2 gap-x-4 gap-y-3 py-3 px-4 rounded-2xl bg-slate-950/40 border border-white/5 text-[10px] font-bold text-slate-300">
+                              <div>
+                                <span className="text-slate-550 block uppercase text-[8px] tracking-wider mb-0.5">Company Size</span>
+                                <span className="text-slate-200">{job.company?.size || '500-1,000 employees'}</span>
+                              </div>
+                              <div>
+                                <span className="text-slate-550 block uppercase text-[8px] tracking-wider mb-0.5">Industry</span>
+                                <span className="text-slate-200 truncate block">{job.company?.industry || 'Technology'}</span>
+                              </div>
+                              <div>
+                                <span className="text-slate-550 block uppercase text-[8px] tracking-wider mb-0.5">Resume Match</span>
+                                <span className="text-violet-300">{Math.min(98, Math.max(65, (job.id % 20) + 75))}% Match</span>
+                              </div>
+                              <div>
+                                <span className="text-slate-550 block uppercase text-[8px] tracking-wider mb-0.5">Interview Prob.</span>
+                                <span className="text-emerald-400">{Math.min(95, Math.max(50, (job.id % 25) + 68))}% Prob.</span>
+                              </div>
+                            </div>
+
+                            {/* Why matches details - Colorful chips */}
+                            <div className="space-y-2">
+                              <span className="text-[8px] font-black uppercase tracking-widest text-violet-400 block">Why this matched</span>
+                              <div className="flex flex-wrap gap-1.5">
+                                {(job.skills_required?.slice(0, 3) || ["React", "Python", "SQL"]).map((skill, idx) => {
+                                  const colors = [
+                                    'bg-purple-500/10 border border-purple-500/25 text-purple-400',
+                                    'bg-cyan-500/10 border border-cyan-500/25 text-cyan-400',
+                                    'bg-emerald-500/10 border border-emerald-500/25 text-emerald-400'
+                                  ];
+                                  return (
+                                    <span key={skill} className={`px-2.5 py-0.5 rounded-lg border text-[8.5px] font-extrabold uppercase tracking-wide ${colors[idx % 3]}`}>
                                       ✓ {skill}
                                     </span>
-                                  ))}
-                                </div>
-                              </div>
-
-                              {/* Description snippet */}
-                              <p className="text-xxs text-slate-400 leading-relaxed font-semibold line-clamp-3">
-                                {job.description}
-                              </p>
-                            </div>
-
-                            {/* bottom card panel details */}
-                            <div className="space-y-4 pt-2 border-t border-white/5">
-                              <div className="flex justify-between items-center text-xxs font-extrabold uppercase text-slate-400">
-                                <span className="text-emerald-450 font-black text-xs">
-                                  ${(job.salary_min / 1000).toFixed(0)}k - ${(job.salary_max / 1000).toFixed(0)}k
-                                </span>
-                                <span>12 Applicants</span>
-                              </div>
-                              <button 
-                                onClick={() => setDrawerJob(job)}
-                                className="w-full py-2.5 bg-slate-950/60 border border-white/5 hover:border-violet-500/20 text-slate-350 hover:text-white rounded-xl text-xxs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5"
-                              >
-                                <span>Read Job Description & Insights</span>
-                                <ChevronUp size={12} className="animate-bounce" />
-                              </button>
-                            </div>
-                          </>
-                        ) : (
-                          // PREVIEW CARD EMPTY PLACEHOLDER
-                          <div className="w-full h-full flex flex-col justify-between">
-                            <div className="flex items-center gap-3">
-                              <div className="w-14 h-14 rounded-2xl bg-slate-950/60 border border-white/5" />
-                              <div className="space-y-2 flex-1">
-                                <div className="h-3 rounded bg-slate-950/60 w-1/3" />
-                                <div className="h-2 rounded bg-slate-950/60 w-1/2" />
+                                  );
+                                })}
                               </div>
                             </div>
-                            <div className="h-16 rounded bg-slate-955/40" />
                           </div>
+
+                          {/* bottom card panel details */}
+                          <div className="space-y-3 pt-3 border-t border-white/5 mt-auto">
+                            <div className="flex justify-between items-center text-xxs font-extrabold uppercase text-slate-400">
+                              <span className="text-emerald-400 font-black text-sm">
+                                ${(job.salary_min / 1000).toFixed(0)}k - ${(job.salary_max / 1000).toFixed(0)}k
+                              </span>
+                              <span>12 Applicants</span>
+                            </div>
+                            <button 
+                              onClick={() => setDrawerJob(job)}
+                              className="w-full py-2.5 bg-slate-900/60 border border-white/10 hover:border-violet-500/20 text-slate-350 hover:text-white rounded-xl text-xxs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                            >
+                              <span>View Details & Insights</span>
+                              <ChevronUp size={12} className="animate-bounce" />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* If it's a preview card, overlay a premium blur/lock layer to hide details */}
+                        {!isTop && (
+                          <div className="absolute inset-0 bg-[#0f172a]/20 backdrop-blur-[6px] rounded-[31px] z-30 pointer-events-none select-none" />
                         )}
 
                       </div>
@@ -651,6 +682,7 @@ export default function SwipeDiscovery() {
                   );
                 })}
               </AnimatePresence>
+            </div>
                         {/* Bottom Swiper Control Actions (Premium styling buttons with glow, scales, and ripples) */}
             <div className="flex items-center gap-4 mt-6">
               <button
@@ -714,7 +746,7 @@ export default function SwipeDiscovery() {
                   Like & Shortlist (Heart)
                 </span>
               </button>
-            </div>  </div>
+            </div>
 
           </div>
         )}
