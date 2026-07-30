@@ -136,11 +136,33 @@ class RecruiterAnalyticsView(APIView):
             "hire_rate": round(hire_rate, 2)
         }, status=status.HTTP_200_OK)
 
+def ensure_database_seeded():
+    from django.contrib.auth import get_user_model
+    from jobs.models import Job
+    User = get_user_model()
+    
+    if not User.objects.exists():
+        try:
+            from seed import seed_database
+            seed_database()
+        except Exception as e:
+            import logging
+            logging.getLogger("jobs.views").warning(f"Auto-seeding user database failed: {e}")
+            
+    if Job.objects.filter(is_active=True, status='published').count() < 1000:
+        try:
+            from django.core.management import call_command
+            call_command('seed_large_catalog')
+        except Exception as e:
+            import logging
+            logging.getLogger("jobs.views").warning(f"Auto-seeding large job catalog failed: {e}")
+
 class JobDeckView(generics.ListAPIView):
     serializer_class = JobSerializer
     permission_classes = (permissions.IsAuthenticated,)
 
     def get_queryset(self):
+        ensure_database_seeded()
         user = self.request.user
         
         # Swiped jobs
@@ -281,6 +303,7 @@ class JobSearchView(generics.ListAPIView):
     permission_classes = (permissions.IsAuthenticated,)
 
     def get_queryset(self):
+        ensure_database_seeded()
         queryset = Job.objects.select_related('company', 'recruiter').prefetch_related('skills_required').filter(is_active=True, status='published')
 
         q = self.request.query_params.get('q')

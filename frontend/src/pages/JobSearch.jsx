@@ -100,7 +100,8 @@ export default function JobSearch() {
       const response = await api.get(`/jobs/search/?${searchParams.toString()}`);
       setJobs(response.data.results || response.data);
     } catch (err) {
-      setError('Failed to query job listings.');
+      console.error("Search API Error:", err);
+      setError(err.response?.data?.detail || err.response?.data?.error || err.message || 'Failed to query job listings.');
     } finally {
       setLoading(false);
     }
