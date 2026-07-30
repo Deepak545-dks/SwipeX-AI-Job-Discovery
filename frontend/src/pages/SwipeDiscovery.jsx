@@ -42,6 +42,9 @@ export default function SwipeDiscovery() {
   const [lastSwipedJob, setLastSwipedJob] = useState(null);
   const [dragX, setDragX] = useState(0);
   const [dragY, setDragY] = useState(0);
+  const [swipeDirection, setSwipeDirection] = useState('right');
+  const [totalCount, setTotalCount] = useState(0);
+  const [hasLoadedInitially, setHasLoadedInitially] = useState(false);
 
   // Swipe Stats
   const [likesCount, setLikesCount] = useState(16);
@@ -75,7 +78,12 @@ export default function SwipeDiscovery() {
     setError('');
     try {
       const response = await api.get('/jobs/recommendations/');
-      setDeck(response.data.results || response.data);
+      const data = response.data;
+      const results = data.results || data || [];
+      const unique = Array.from(new Map(results.map(j => [j.id, j])).values());
+      setDeck(unique);
+      setTotalCount(data.count || 0);
+      setHasLoadedInitially(true);
     } catch (err) {
       setError('Failed to fetch job recommendations deck.');
     } finally {
@@ -88,11 +96,12 @@ export default function SwipeDiscovery() {
     setLoadingMore(true);
     try {
       const response = await api.get('/jobs/recommendations/');
-      const newJobs = response.data.results || response.data || [];
+      const data = response.data;
+      const newJobs = data.results || data || [];
+      setTotalCount(data.count || 0);
       setDeck(prev => {
-        const existingIds = new Set(prev.map(j => j.id));
-        const filtered = newJobs.filter(j => !existingIds.has(j.id));
-        return [...prev, ...filtered];
+        const combined = [...prev, ...newJobs];
+        return Array.from(new Map(combined.map(j => [j.id, j])).values());
       });
     } catch (err) {
       console.error("Failed to load more recommendation batch cards:", err);
@@ -102,7 +111,7 @@ export default function SwipeDiscovery() {
   };
 
   useEffect(() => {
-    if (deck.length === 0 && !loading) {
+    if (deck.length === 0 && !loading && showEmptyState) {
       api.get('/jobs/search/?limit=4')
         .then(res => {
           setAlternativeJobs(res.data.results || res.data || []);
@@ -110,6 +119,12 @@ export default function SwipeDiscovery() {
         .catch(err => console.error("Failed to load alternative matching list:", err));
     }
   }, [deck, loading]);
+
+  useEffect(() => {
+    if (deck.length === 0 && totalCount > 0 && !loading && !loadingMore && hasLoadedInitially) {
+      fetchMoreRecommendations();
+    }
+  }, [deck, totalCount, loading, loadingMore, hasLoadedInitially]);
 
   useEffect(() => {
     checkUserResume();
@@ -122,11 +137,17 @@ export default function SwipeDiscovery() {
       if (deck.length === 0 || drawerJob) return;
       const targetId = deck[0].id;
       if (e.key === 'ArrowRight') {
+        setSwipeDirection('like');
         handleSwipe(targetId, 'like');
       } else if (e.key === 'ArrowLeft') {
+        setSwipeDirection('dislike');
         handleSwipe(targetId, 'dislike');
       } else if (e.key === 'ArrowUp') {
+        setSwipeDirection('save');
         handleSwipe(targetId, 'save');
+      } else if (e.key === 's' || e.key === 'S') {
+        setSwipeDirection('superlike');
+        handleSwipe(targetId, 'superlike');
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -134,7 +155,7 @@ export default function SwipeDiscovery() {
   }, [deck, drawerJob]);
 
   const handleSwipe = async (jobId, action) => {
-    if (action === 'like' && !hasResume) {
+    if ((action === 'like' || action === 'superlike') && !hasResume) {
       showToast('You must upload a resume in your profile before you can swipe right/apply.', 'warning');
       return;
     }
@@ -142,13 +163,15 @@ export default function SwipeDiscovery() {
     const swipedJob = deck.find(j => j.id === jobId);
     if (!swipedJob) return;
     
+    setSwipeDirection(action);
     setLastSwipedJob(swipedJob);
     
     // Auto batch load threshold checks
     const remainingDeck = deck.filter(j => j.id !== jobId);
-    setDeck(remainingDeck);
+    setDeck(Array.from(new Map(remainingDeck.map(j => [j.id, j])).values()));
+    setTotalCount(prev => Math.max(0, prev - 1));
     
-    if (remainingDeck.length < 20) {
+    if (remainingDeck.length < 10) {
       fetchMoreRecommendations();
     }
     
@@ -160,7 +183,8 @@ export default function SwipeDiscovery() {
 
     try {
       // POST swiping details to Django backend
-      await api.post('/jobs/swipe/', { job_id: jobId, action });
+      const backendAction = action === 'superlike' ? 'like' : action;
+      await api.post('/jobs/swipe/', { job_id: jobId, action: backendAction });
       
       if (action === 'like') {
         setLikesCount(prev => prev + 1);
@@ -170,6 +194,10 @@ export default function SwipeDiscovery() {
         } else {
           showToast(`Applied to ${swipedJob.title}!`, 'success');
         }
+      } else if (action === 'superlike') {
+        setLikesCount(prev => prev + 1);
+        setMatchesCount(prev => prev + 1);
+        showToast(`Super Liked! Priority application submitted to ${swipedJob.company?.name || swipedJob.company_name}.`, 'success');
       } else if (action === 'save') {
         showToast('Job saved to your bookmarks.', 'info');
       } else {
@@ -188,7 +216,11 @@ export default function SwipeDiscovery() {
     }
     try {
       await api.post('/jobs/swipe/undo/');
-      setDeck(prev => [lastSwipedJob, ...prev]);
+      setDeck(prev => {
+        const combined = [lastSwipedJob, ...prev];
+        return Array.from(new Map(combined.map(j => [j.id, j])).values());
+      });
+      setTotalCount(prev => prev + 1);
       setLastSwipedJob(null);
       setSwipesGoal(prev => Math.max(0, prev - 1));
       showToast(`Restored deck card: ${lastSwipedJob.title}`, 'success');
@@ -196,6 +228,9 @@ export default function SwipeDiscovery() {
       showToast('Failed to undo last swipe.', 'error');
     }
   };
+
+  const showEmptyState = deck.length === 0 && totalCount === 0 && hasLoadedInitially;
+
 
   const handleResetSwipes = async () => {
     setResetting(true);
@@ -218,10 +253,13 @@ export default function SwipeDiscovery() {
   const handleDragEnd = (event, info, jobId) => {
     const threshold = 140;
     if (info.offset.x > threshold) {
+      setSwipeDirection('like');
       handleSwipe(jobId, 'like');
     } else if (info.offset.x < -threshold) {
+      setSwipeDirection('dislike');
       handleSwipe(jobId, 'dislike');
     } else if (info.offset.y < -threshold) {
+      setSwipeDirection('save');
       handleSwipe(jobId, 'save');
     } else {
       setDragX(0);
@@ -280,7 +318,17 @@ export default function SwipeDiscovery() {
       {/* LEFT COLUMN: Premium Swipe experience */}
       <div className="lg:col-span-8 flex flex-col items-center justify-center select-none">
         
-        {deck.length === 0 ? (
+        {deck.length === 0 && !showEmptyState ? (
+          <div className="w-full max-w-md h-[580px] bg-slate-900/60 border border-white/10 rounded-[32px] p-6 flex flex-col justify-center items-center shadow-2xl relative overflow-hidden">
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-40 h-40 rounded-full border border-violet-500/10 animate-ping absolute duration-[3s]" />
+              <div className="w-28 h-28 rounded-full border border-blue-500/20 animate-ping absolute duration-[2s]" />
+            </div>
+            <Loader2 className="animate-spin text-cyan-400 w-8 h-8 mb-4 relative z-10" />
+            <h3 className="text-base font-black text-white relative z-10">AI Recommendations Syncing...</h3>
+            <p className="text-[10px] text-slate-400 mt-2 max-w-xs text-center font-semibold relative z-10">Matching remaining jobs against target profile parameters.</p>
+          </div>
+        ) : showEmptyState ? (
           <div className="w-full max-w-2xl p-8 bg-slate-900/80 border border-violet-500/20 rounded-[32px] shadow-2xl space-y-8 backdrop-blur-2xl relative overflow-hidden animate-fade-in text-left">
             <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-tr from-violet-605/10 via-fuchsia-605/5 to-transparent rounded-full blur-3xl pointer-events-none" />
             
@@ -295,7 +343,7 @@ export default function SwipeDiscovery() {
                     <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mt-0.5">AI Discovery recommendation feed</span>
                   </div>
                 </div>
-
+ 
                 <div className="h-32 rounded-2xl bg-slate-950/60 border border-white/5 flex items-center justify-center relative overflow-hidden group">
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="w-24 h-24 rounded-full border border-violet-500/20 animate-ping absolute duration-[3s]" />
@@ -306,7 +354,7 @@ export default function SwipeDiscovery() {
                   </div>
                   <span className="absolute bottom-2 text-[9px] font-black uppercase tracking-widest text-slate-500">AI Feed auditing active</span>
                 </div>
-
+ 
                 {/* AI Alternative matches list */}
                 {alternativeJobs.length > 0 && (
                   <div className="space-y-3">
@@ -329,7 +377,7 @@ export default function SwipeDiscovery() {
                     </div>
                   </div>
                 )}
-
+ 
                 {/* Notification Toggle & CV Improve */}
                 <div className="flex flex-col sm:flex-row gap-4 justify-between items-center p-4 rounded-2xl bg-slate-950/40 border border-white/5">
                   <div className="flex items-center gap-3">
@@ -356,7 +404,7 @@ export default function SwipeDiscovery() {
                   </Link>
                 </div>
               </div>
-
+ 
               {/* Right panel inside empty state */}
               <div className="w-full md:w-56 space-y-6">
                 <div className="space-y-2">
@@ -386,7 +434,7 @@ export default function SwipeDiscovery() {
                     ))}
                   </div>
                 </div>
-
+ 
                 <div className="flex flex-col gap-2 pt-2 border-t border-white/5">
                   <button
                     onClick={handleResetSwipes}
@@ -419,12 +467,12 @@ export default function SwipeDiscovery() {
                 <Award size={14} /> Daily Top Match
               </span>
             </div>
-
+ 
             {/* Cards Stack Container (Increased size by 20%) */}
             <div className="relative w-full h-[580px] max-w-sm">
-              <AnimatePresence>
-                {deck.slice(0, 3).reverse().map((job, idx, arr) => {
-                  const relativeIndex = arr.length - 1 - idx; // 0 for top, 1 for middle, 2 for bottom
+              <AnimatePresence custom={swipeDirection}>
+                {deck.slice(0, 5).reverse().map((job, idx, arr) => {
+                  const relativeIndex = arr.length - 1 - idx; // 0 for top, 1 for middle, etc.
                   const isTop = relativeIndex === 0;
 
                   return (
@@ -435,13 +483,23 @@ export default function SwipeDiscovery() {
                       dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
                       onDrag={isTop ? handleDrag : undefined}
                       onDragEnd={(e, info) => handleDragEnd(e, info, job.id)}
+                      custom={swipeDirection}
+                      variants={{
+                        exit: (direction) => {
+                          if (direction === 'like') return { x: 550, opacity: 0, rotate: 15 };
+                          if (direction === 'dislike') return { x: -550, opacity: 0, rotate: -15 };
+                          if (direction === 'save') return { y: -550, opacity: 0 };
+                          if (direction === 'superlike') return { y: -550, opacity: 0, scale: 1.1 };
+                          return { x: -550, opacity: 0 };
+                        }
+                      }}
                       animate={{
                         scale: isTop ? 1 : 1 - relativeIndex * 0.05,
                         y: isTop ? 0 : relativeIndex * 14,
                         zIndex: 10 - relativeIndex,
                         opacity: isTop ? 1 : 0.8 - relativeIndex * 0.2
                       }}
-                      exit={{ x: dragX > 0 ? 550 : -550, opacity: 0 }}
+                      exit="exit"
                       transition={{ type: 'spring', stiffness: 200, damping: 20 }}
                       className="absolute w-full h-full p-[1.5px] rounded-[32px] overflow-hidden bg-gradient-to-tr from-violet-500/25 via-blue-500/20 to-transparent shadow-2xl"
                     >
@@ -580,21 +638,40 @@ export default function SwipeDiscovery() {
               </button>
               
               <button
-                onClick={() => handleSwipe(activeCard.id, 'dislike')}
+                onClick={() => {
+                  setSwipeDirection('dislike');
+                  handleSwipe(activeCard.id, 'dislike');
+                }}
                 className="w-14 h-14 rounded-full bg-rose-500/10 border border-rose-500/25 hover:border-rose-500 flex items-center justify-center text-rose-450 hover:text-rose-300 hover:scale-110 active:scale-95 transition-all cursor-pointer shadow-lg hover:shadow-rose-500/10"
               >
                 <X size={20} />
               </button>
               
               <button
-                onClick={() => handleSwipe(activeCard.id, 'save')}
+                onClick={() => {
+                  setSwipeDirection('superlike');
+                  handleSwipe(activeCard.id, 'superlike');
+                }}
+                className="w-11 h-11 rounded-full bg-slate-900 border border-yellow-500/20 hover:border-yellow-500 flex items-center justify-center text-yellow-500 hover:text-yellow-300 hover:scale-110 active:scale-95 transition-all cursor-pointer shadow-lg"
+              >
+                <Star size={15} />
+              </button>
+
+              <button
+                onClick={() => {
+                  setSwipeDirection('save');
+                  handleSwipe(activeCard.id, 'save');
+                }}
                 className="w-11 h-11 rounded-full bg-slate-900 border border-cyan-500/20 hover:border-cyan-500 flex items-center justify-center text-cyan-405 hover:text-cyan-300 hover:scale-110 active:scale-95 transition-all cursor-pointer shadow-lg"
               >
                 <Bookmark size={15} />
               </button>
               
               <button
-                onClick={() => handleSwipe(activeCard.id, 'like')}
+                onClick={() => {
+                  setSwipeDirection('like');
+                  handleSwipe(activeCard.id, 'like');
+                }}
                 className="w-14 h-14 rounded-full bg-emerald-500/10 border border-emerald-500/25 hover:border-emerald-500 flex items-center justify-center text-emerald-450 hover:text-emerald-300 hover:scale-110 active:scale-95 transition-all cursor-pointer shadow-lg hover:shadow-emerald-500/10"
               >
                 <Heart size={20} />
