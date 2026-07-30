@@ -60,10 +60,31 @@ export default function SwipeDiscovery() {
   const [drawerJob, setDrawerJob] = useState(null);
   const [generatingCoverLetter, setGeneratingCoverLetter] = useState(false);
   const [coverLetter, setCoverLetter] = useState('');
+  const [atsResult, setAtsResult] = useState(null);
+  const [loadingAts, setLoadingAts] = useState(false);
 
   const [loadingMore, setLoadingMore] = useState(false);
   const [alternativeJobs, setAlternativeJobs] = useState([]);
   const { showToast } = useToast();
+
+  useEffect(() => {
+    if (drawerJob) {
+      const fetchAtsAnalysis = async () => {
+        setLoadingAts(true);
+        try {
+          const res = await api.get(`/profiles/ai/analyze-resume/?job_id=${drawerJob.id}`);
+          setAtsResult(res.data);
+        } catch (e) {
+          console.error("Failed to load ATS analysis:", e);
+        } finally {
+          setLoadingAts(false);
+        }
+      };
+      fetchAtsAnalysis();
+    } else {
+      setAtsResult(null);
+    }
+  }, [drawerJob]);
 
   const checkUserResume = async () => {
     try {
@@ -900,21 +921,172 @@ export default function SwipeDiscovery() {
             {/* Scrollable details contents */}
             <div className="flex-1 overflow-y-auto p-6 space-y-6 text-left">
               
-              {/* ATS and match progress grid */}
-              <div className="grid grid-cols-3 gap-3">
-                <div className="p-3 bg-slate-950/50 border border-white/5 rounded-2xl text-center">
-                  <span className="text-[8px] font-black uppercase text-slate-500 block">AI Match Score</span>
-                  <span className="text-lg font-black text-violet-405 block mt-1">{drawerJob.ai_match_score || 85}%</span>
+              {/* ATS scoring engine section */}
+              {loadingAts ? (
+                <div className="flex flex-col items-center justify-center py-8 space-y-3">
+                  <div className="w-8 h-8 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
+                  <span className="text-xxs font-black uppercase text-slate-500 tracking-wider">Analyzing Resume ATS Fit...</span>
                 </div>
-                <div className="p-3 bg-slate-950/50 border border-white/5 rounded-2xl text-center">
-                  <span className="text-[8px] font-black uppercase text-slate-500 block">Interview Probability</span>
-                  <span className="text-lg font-black text-emerald-400 block mt-1">78%</span>
+              ) : atsResult ? (
+                <div className="space-y-6">
+                  
+                  {/* ATS Scoring Panel */}
+                  <div className="p-5 rounded-[24px] bg-gradient-to-br from-violet-900/30 via-indigo-950/20 to-slate-950/90 border border-violet-500/30 space-y-4">
+                    <div className="flex items-center justify-between border-b border-violet-500/10 pb-3">
+                      <div>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-violet-405 block">ATS Scoring Engine</span>
+                        <span className="text-[8px] font-bold text-slate-400 block mt-0.5">Real Parsing & Match Verification</span>
+                      </div>
+                      <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider ${
+                        atsResult.overall_score >= 90 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
+                        atsResult.overall_score >= 80 ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' :
+                        atsResult.overall_score >= 70 ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20' :
+                        'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                      }`}>
+                        {atsResult.score_grade}
+                      </span>
+                    </div>
+
+                    <div className="flex flex-col md:flex-row gap-5 items-center justify-between">
+                      {/* Animated Circular Progress */}
+                      <div className="relative w-24 h-24 flex items-center justify-center shrink-0 mx-auto md:mx-0">
+                        <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                          <circle cx="18" cy="18" r="16" fill="none" stroke="#ffffff05" strokeWidth="2.5" />
+                          <circle cx="18" cy="18" r="16" fill="none" stroke="url(#ats-drawer-grad)" strokeWidth="3"
+                            strokeDasharray={`${atsResult.overall_score}, 100`} strokeLinecap="round" className="transition-all duration-1000 ease-out" />
+                          <defs>
+                            <linearGradient id="ats-drawer-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                              <stop offset="0%" stopColor="#c084fc" />
+                              <stop offset="100%" stopColor="#6366f1" />
+                            </linearGradient>
+                          </defs>
+                        </svg>
+                        <div className="absolute flex flex-col items-center justify-center">
+                          <span className="text-lg font-black text-white">{atsResult.overall_score}%</span>
+                          <span className="text-[6px] font-black text-slate-450 uppercase tracking-widest">ATS Score</span>
+                        </div>
+                      </div>
+
+                      {/* Boost Estimate */}
+                      <div className="flex-1 w-full bg-slate-950/40 p-4 rounded-2xl border border-white/5 space-y-3">
+                        <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest block">ATS Boost Estimate</span>
+                        <div className="flex justify-between items-center text-xxs font-extrabold">
+                          <span className="text-slate-400">Current Score:</span>
+                          <span className="text-rose-450">{atsResult.ats_boost_estimate?.current_score || atsResult.overall_score}%</span>
+                        </div>
+                        <div className="flex justify-between items-center text-xxs font-extrabold">
+                          <span className="text-slate-400">Expected (After Boost):</span>
+                          <span className="text-emerald-400">{atsResult.ats_boost_estimate?.expected_score || 91}%</span>
+                        </div>
+                        <div className="w-full h-1.5 rounded-full bg-slate-950 overflow-hidden relative">
+                          <div className="absolute left-0 h-full bg-rose-500" style={{ width: `${atsResult.overall_score}%` }} />
+                          <div className="absolute h-full bg-emerald-500 opacity-60" style={{ left: `${atsResult.overall_score}%`, width: `${(atsResult.ats_boost_estimate?.expected_score || 91) - atsResult.overall_score}%` }} />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Recruiter View Telemetry */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 pt-2">
+                      <div className="p-2.5 bg-slate-950/60 border border-white/5 rounded-xl">
+                        <span className="text-[7px] font-black text-slate-500 uppercase block tracking-wider">Interview Prob.</span>
+                        <span className="text-xs font-black text-emerald-400 block mt-1">{atsResult.recruiter_view?.interview_probability || 78}%</span>
+                      </div>
+                      <div className="p-2.5 bg-slate-950/60 border border-white/5 rounded-xl">
+                        <span className="text-[7px] font-black text-slate-500 uppercase block tracking-wider">Recruiter Interest</span>
+                        <span className="text-xs font-black text-violet-400 block mt-1">{atsResult.recruiter_view?.recruiter_interest || 'Medium'}</span>
+                      </div>
+                      <div className="p-2.5 bg-slate-950/60 border border-white/5 rounded-xl">
+                        <span className="text-[7px] font-black text-slate-500 uppercase block tracking-wider">Resume Strength</span>
+                        <span className="text-xs font-black text-cyan-400 block mt-1">{atsResult.recruiter_view?.resume_strength || 'Good'}</span>
+                      </div>
+                      <div className="p-2.5 bg-slate-950/60 border border-white/5 rounded-xl">
+                        <span className="text-[7px] font-black text-slate-500 uppercase block tracking-wider">Completeness</span>
+                        <span className="text-xs font-black text-yellow-500 block mt-1">{atsResult.recruiter_view?.profile_completeness || 85}%</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Detailed breakdown progress bars */}
+                  <div className="space-y-3">
+                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-450 block border-b border-white/5 pb-2">ATS Parameter Breakdown</span>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3">
+                      {[
+                        { label: "Formatting (15%)", score: atsResult.formatting_score },
+                        { label: "Keyword Match (25%)", score: atsResult.keyword_score },
+                        { label: "Skills Match (20%)", score: atsResult.skills_score },
+                        { label: "Experience Quality (15%)", score: atsResult.experience_score },
+                        { label: "Projects Match (10%)", score: atsResult.projects_score },
+                        { label: "Education & Certifications (5%)", score: atsResult.education_score },
+                        { label: "Grammar & Readability (5%)", score: atsResult.grammar_score },
+                        { label: "Contact & Links (5%)", score: atsResult.contact_score },
+                      ].map((param, index) => (
+                        <div key={index} className="space-y-1">
+                          <div className="flex justify-between items-center text-[9px] font-bold text-slate-400">
+                            <span>{param.label}</span>
+                            <span className="text-white font-black">{param.score}%</span>
+                          </div>
+                          <div className="w-full h-1.5 rounded-full bg-slate-950 overflow-hidden relative">
+                            <div className="h-full bg-gradient-to-r from-violet-500 to-indigo-500" style={{ width: `${param.score}%` }} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Keywords Comparison */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="p-4 rounded-2xl bg-slate-950/40 border border-white/5 space-y-2.5">
+                      <span className="text-[8px] font-black text-slate-450 uppercase tracking-widest block flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" /> Matched Keywords ({atsResult.matched_keywords?.length || 0})
+                      </span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {atsResult.matched_keywords?.length > 0 ? (
+                          atsResult.matched_keywords.map((kw, i) => (
+                            <span key={i} className="px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[8px] font-black text-emerald-400">
+                              ✓ {kw}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-[9px] text-slate-500 font-bold italic">No matching keywords found</span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="p-4 rounded-2xl bg-slate-950/40 border border-white/5 space-y-2.5">
+                      <span className="text-[8px] font-black text-slate-450 uppercase tracking-widest block flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-rose-400" /> Missing Keywords ({atsResult.missing_keywords?.length || 0})
+                      </span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {atsResult.missing_keywords?.length > 0 ? (
+                          atsResult.missing_keywords.map((kw, i) => (
+                            <span key={i} className="px-2 py-0.5 rounded-full bg-rose-500/10 border border-rose-500/20 text-[8px] font-black text-rose-400">
+                              ✗ {kw}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-[9px] text-slate-500 font-bold italic">No missing keywords detected</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* AI Recommendations */}
+                  <div className="p-4 rounded-2xl bg-gradient-to-br from-indigo-950/10 to-slate-950/90 border border-indigo-500/20 space-y-3">
+                    <span className="text-[9px] font-black uppercase tracking-widest text-indigo-405 block flex items-center gap-1">
+                      💡 Practical ATS Recommendations
+                    </span>
+                    <div className="space-y-2 text-xxs font-semibold text-slate-300">
+                      {atsResult.improvements?.map((rec, i) => (
+                        <div key={i} className="flex gap-2 items-start">
+                          <span className="text-violet-400 select-none">•</span>
+                          <p>{rec}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
                 </div>
-                <div className="p-3 bg-slate-950/50 border border-white/5 rounded-2xl text-center">
-                  <span className="text-[8px] font-black uppercase text-slate-500 block">Salary Prediction</span>
-                  <span className="text-lg font-black text-cyan-400 block mt-1">High</span>
-                </div>
-              </div>
+              ) : null}
 
               {/* Recruiter Shortlist Insights */}
               <div className="p-4 rounded-2xl bg-violet-605/5 border border-violet-500/25 space-y-3">

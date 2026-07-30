@@ -167,6 +167,7 @@ class ProfilePictureUploadView(APIView):
 
 from .ai_service import AIService
 from .utils import extract_text_from_pdf
+from jobs.models import Job
 
 class AIResumeAnalyzerView(APIView):
     permission_classes = (permissions.IsAuthenticated,)
@@ -178,6 +179,14 @@ class AIResumeAnalyzerView(APIView):
         if not profile:
             return Response({"error": "Profile not found"}, status=status.HTTP_404_NOT_FOUND)
 
+        job_id = request.query_params.get('job_id')
+        job = None
+        if job_id:
+            try:
+                job = Job.objects.get(id=job_id)
+            except Exception:
+                pass
+
         resume_text = ""
         latest_resume = profile.resumes.first()
         if latest_resume and latest_resume.file:
@@ -188,7 +197,7 @@ class AIResumeAnalyzerView(APIView):
                 import logging
                 logging.getLogger("profiles.views").warning(f"Failed to read resume file text: {e}")
 
-        analysis = AIService.analyze_resume(profile, resume_text)
+        analysis = AIService.analyze_resume(profile, resume_text, job=job)
         return Response(analysis, status=status.HTTP_200_OK)
 
     @extend_schema(responses={200: dict})
@@ -199,6 +208,15 @@ class AIResumeAnalyzerView(APIView):
             return Response({"error": "Profile not found"}, status=status.HTTP_404_NOT_FOUND)
 
         resume_id = request.data.get('resume_id')
+        job_id = request.data.get('job_id') or request.query_params.get('job_id')
+        
+        job = None
+        if job_id:
+            try:
+                job = Job.objects.get(id=job_id)
+            except Exception:
+                pass
+
         latest_resume = None
         if resume_id:
             try:
@@ -217,6 +235,5 @@ class AIResumeAnalyzerView(APIView):
                 import logging
                 logging.getLogger("profiles.views").warning(f"Failed to read resume file text: {e}")
 
-        analysis = AIService.analyze_resume(profile, resume_text)
+        analysis = AIService.analyze_resume(profile, resume_text, job=job)
         return Response(analysis, status=status.HTTP_200_OK)
-
