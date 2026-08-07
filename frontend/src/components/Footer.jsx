@@ -5,7 +5,7 @@ import { Sparkles } from 'lucide-react';
 export default function Footer() {
   const location = useLocation();
 
-  if (location.pathname === '/swipe') {
+  if (location.pathname === '/swipe' || location.pathname === '/discover') {
     return null;
   }
 

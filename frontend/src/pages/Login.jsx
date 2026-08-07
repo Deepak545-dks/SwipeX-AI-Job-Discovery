@@ -48,7 +48,7 @@ export default function Login() {
       } else if (role === 'admin') {
         navigate('/admin');
       } else {
-        navigate('/swipe');
+        navigate('/discover');
       }
     } catch (err) {
       dispatch(setError(err.response?.data?.detail || 'Invalid email or password'));
@@ -67,7 +67,7 @@ export default function Login() {
         role: 'job_seeker'
       });
       dispatch(setCredentials(response.data));
-      navigate('/swipe');
+      navigate('/discover');
     } catch (err) {
       dispatch(setError('Social authentication failed.'));
     } finally {

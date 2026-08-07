@@ -86,7 +86,7 @@ export default function Navbar() {
 
   const isActive = (path) => location.pathname === path;
 
-  if (location.pathname === '/swipe') {
+  if (location.pathname === '/swipe' || location.pathname === '/discover') {
     return null;
   }
 
@@ -112,9 +112,9 @@ export default function Navbar() {
                 {user?.role === 'job_seeker' && (
                   <>
                     <Link 
-                      to="/swipe" 
+                      to="/discover" 
                       className={`flex items-center space-x-2 px-4.5 py-2.5 rounded-full text-base font-black transition-all border ${
-                        isActive('/swipe') 
+                        isActive('/discover') 
                           ? 'bg-gradient-to-r from-violet-650 via-fuchsia-600 to-indigo-650 border-violet-500/30 text-white shadow-lg shadow-violet-500/10' 
                           : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-white/5'
                       }`}
@@ -228,7 +228,7 @@ export default function Navbar() {
               <div className="flex lg:hidden items-center space-x-1">
                 {user?.role === 'job_seeker' && (
                   <>
-                    <Link to="/swipe" className={`p-2.5 rounded-full text-slate-400 hover:text-violet-400 hover:bg-white/5 ${isActive('/swipe') && 'text-violet-400 bg-violet-500/5'}`} title="Discover"><Compass size={18} /></Link>
+                    <Link to="/discover" className={`p-2.5 rounded-full text-slate-400 hover:text-violet-400 hover:bg-white/5 ${isActive('/discover') && 'text-violet-400 bg-violet-500/5'}`} title="Discover"><Compass size={18} /></Link>
                     <Link to="/search" className={`p-2.5 rounded-full text-slate-400 hover:text-violet-400 hover:bg-white/5 ${isActive('/search') && 'text-violet-400 bg-violet-500/5'}`} title="Search"><Search size={18} /></Link>
                     <Link to="/applications" className={`p-2.5 rounded-full text-slate-400 hover:text-violet-400 hover:bg-white/5 ${isActive('/applications') && 'text-violet-400 bg-violet-500/5'}`} title="Applications"><Briefcase size={18} /></Link>
                   </>

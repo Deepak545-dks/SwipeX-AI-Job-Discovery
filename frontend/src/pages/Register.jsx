@@ -55,7 +55,7 @@ export default function Register() {
       } else if (role === 'admin') {
         navigate('/admin');
       } else {
-        navigate('/swipe');
+        navigate('/discover');
       }
     } catch (err) {
       const fieldErrors = err.response?.data;
