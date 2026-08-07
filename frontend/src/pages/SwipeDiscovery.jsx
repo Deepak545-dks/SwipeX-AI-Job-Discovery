@@ -40,8 +40,6 @@ export default function SwipeDiscovery() {
   const [resetting, setResetting] = useState(false);
   
   const [lastSwipedJob, setLastSwipedJob] = useState(null);
-  const [dragX, setDragX] = useState(0);
-  const [dragY, setDragY] = useState(0);
   const [swipeDirection, setSwipeDirection] = useState('right');
   const [totalCount, setTotalCount] = useState(0);
   const [hasLoadedInitially, setHasLoadedInitially] = useState(false);
@@ -66,6 +64,7 @@ export default function SwipeDiscovery() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [alternativeJobs, setAlternativeJobs] = useState([]);
   const { showToast } = useToast();
+  const swipingInProgress = React.useRef(false);
 
   useEffect(() => {
     if (drawerJob) {
@@ -85,6 +84,124 @@ export default function SwipeDiscovery() {
       setAtsResult(null);
     }
   }, [drawerJob]);
+
+  const profileHealthWidget = React.useMemo(() => (
+    <div className="p-5 rounded-[24px] bg-slate-900 border border-violet-500/30 shadow-xl space-y-4">
+      <span className="text-[9px] font-black uppercase tracking-widest text-violet-400 block border-b border-violet-500/10 pb-2">Profile & Resume Health</span>
+      <div className="flex items-center gap-4">
+        <div className="relative w-12 h-12 flex items-center justify-center shrink-0">
+          <svg className="w-full h-full transform -rotate-90 animate-pulse" viewBox="0 0 36 36">
+            <circle cx="18" cy="18" r="16" fill="none" stroke="#ffffff10" strokeWidth="2.5" />
+            <circle cx="18" cy="18" r="16" fill="none" stroke="url(#ats-score-grad)" strokeWidth="3"
+              strokeDasharray="88, 100" strokeLinecap="round" />
+            <defs>
+              <linearGradient id="ats-score-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#8b5cf6" />
+                <stop offset="100%" stopColor="#6366f1" />
+              </linearGradient>
+            </defs>
+          </svg>
+          <span className="absolute text-[10px] font-black text-white">88%</span>
+        </div>
+        <div>
+          <span className="text-[8px] font-black text-slate-400 block uppercase tracking-wider">Resume ATS Score</span>
+          <span className="text-xxs font-black text-violet-300">ATS Optimised & Scanned</span>
+        </div>
+      </div>
+      <div className="space-y-1.5 pt-1">
+        <div className="flex justify-between items-center text-[9px] font-black text-slate-400">
+          <span>Profile Strength</span>
+          <span className="text-violet-405">Excellent (92%)</span>
+        </div>
+        <div className="w-full h-1.5 rounded-full bg-slate-950 overflow-hidden relative border border-white/5">
+          <div className="h-full bg-gradient-to-r from-violet-500 to-indigo-500 w-[92%]" />
+        </div>
+      </div>
+    </div>
+  ), []);
+
+  const pipelineInsightsWidget = React.useMemo(() => (
+    <div className="p-5 rounded-[24px] bg-slate-900 border border-cyan-500/30 shadow-xl space-y-4">
+      <span className="text-[9px] font-black uppercase tracking-widest text-cyan-400 block border-b border-cyan-500/10 pb-2">Pipeline Insights</span>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="p-3 bg-slate-950/50 border border-white/5 rounded-2xl text-left relative overflow-hidden group">
+          <span className="text-[8px] font-black uppercase tracking-wider text-slate-500 block">Interview Prob.</span>
+          <div className="flex items-center gap-1.5 mt-1.5">
+            <p className="text-sm font-black text-emerald-400">82%</p>
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          </div>
+        </div>
+        <div className="p-3 bg-slate-950/50 border border-white/5 rounded-2xl text-left relative overflow-hidden group">
+          <span className="text-[8px] font-black uppercase tracking-wider text-slate-500 block">Today's Matches</span>
+          <p className="text-sm font-black text-cyan-405 mt-1.5">12 Roles</p>
+        </div>
+      </div>
+    </div>
+  ), []);
+
+  const liveFeedWidget = React.useMemo(() => (
+    <div className="p-5 rounded-[24px] border border-white/10 bg-slate-900 shadow-xl space-y-4">
+      <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block border-b border-white/5 pb-2">Live Recruiter Feed</span>
+      <div className="space-y-3.5">
+        {[
+          { text: "Recruiter at Stripe checked your CV", time: "3m ago", highlight: true },
+          { text: "Wellfound is reviewing QA Automation leads", time: "12m ago", highlight: false },
+          { text: "Retool is interviewing for React Lead roles", time: "1h ago", highlight: false }
+        ].map((feed, idx) => (
+          <div key={idx} className="flex items-start gap-2.5 text-xxs font-semibold">
+            <div className={`w-2 h-2 rounded-full mt-1 shrink-0 ${feed.highlight ? 'bg-violet-500 animate-ping' : 'bg-slate-750'}`} />
+            <div className="flex-1">
+              <p className="text-slate-300 leading-tight">{feed.text}</p>
+              <span className="text-[8px] text-slate-550 block mt-0.5">{feed.time}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  ), []);
+
+  const swipeGoalsWidget = React.useMemo(() => (
+    <div className="p-5 rounded-[24px] bg-slate-900 border border-fuchsia-500/25 shadow-xl space-y-4">
+      <span className="text-[9px] font-black uppercase tracking-widest text-fuchsia-400 block border-b border-fuchsia-550/10 pb-2">Swipe Goals & Activity</span>
+      <div className="space-y-2">
+        <div className="flex justify-between items-center text-xxs font-extrabold uppercase text-slate-400">
+          <span>Today's swipes goal</span>
+          <span className="text-fuchsia-400">{swipesGoal} / 15 Swiped</span>
+        </div>
+        <div className="w-full h-2 rounded-full bg-slate-950 overflow-hidden relative border border-white/5">
+          <div 
+            style={{ width: `${(swipesGoal / 15) * 100}%` }}
+            className="h-full bg-gradient-to-r from-fuchsia-550 via-pink-500 to-violet-500 transition-all duration-300"
+          />
+        </div>
+      </div>
+      
+      <div className="space-y-3 pt-2">
+        <span className="text-[8px] font-black uppercase tracking-wider text-slate-500 block">Weekly Swipes Velocity</span>
+        <div className="flex justify-between items-end h-16 pt-2 px-1">
+          {[
+            { day: "M", val: 40 },
+            { day: "T", val: 65 },
+            { day: "W", val: 30 },
+            { day: "T", val: 80 },
+            { day: "F", val: 55 },
+            { day: "S", val: 20 },
+            { day: "S", val: 45 }
+          ].map((item, idx) => (
+            <div key={idx} className="flex flex-col items-center gap-1.5 w-6">
+              <div className="w-2 h-10 bg-slate-950 rounded-full overflow-hidden relative">
+                <div 
+                  style={{ height: `${item.val}%` }} 
+                  className="absolute bottom-0 w-full bg-gradient-to-t from-fuchsia-500 to-pink-500 rounded-full"
+                />
+              </div>
+              <span className="text-[7.5px] font-black text-slate-500">{item.day}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  ), [swipesGoal]);
 
   const checkUserResume = async () => {
     try {
@@ -196,7 +313,8 @@ export default function SwipeDiscovery() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [deck, drawerJob]);
 
-  const handleSwipe = async (jobId, action) => {
+  const handleSwipe = useCallback(async (jobId, action) => {
+    if (swipingInProgress.current) return;
     if ((action === 'like' || action === 'superlike') && !hasResume) {
       showToast('You must upload a resume in your profile before you can swipe right/apply.', 'warning');
       return;
@@ -204,6 +322,11 @@ export default function SwipeDiscovery() {
 
     const swipedJob = deck.find(j => j.id === jobId);
     if (!swipedJob) return;
+    
+    swipingInProgress.current = true;
+    setTimeout(() => {
+      swipingInProgress.current = false;
+    }, 350); // Matches transition duration
     
     setSwipeDirection(action);
     setLastSwipedJob(swipedJob);
@@ -213,12 +336,10 @@ export default function SwipeDiscovery() {
     setDeck(Array.from(new Map(remainingDeck.map(j => [j.id, j])).values()));
     setTotalCount(prev => Math.max(0, prev - 1));
     
-    if (remainingDeck.length < 10) {
+    if (remainingDeck.length < 5) {
       fetchMoreRecommendations();
     }
     
-    setDragX(0);
-    setDragY(0);
     cardX.set(0);
     cardY.set(0);
 
@@ -251,7 +372,7 @@ export default function SwipeDiscovery() {
       console.error(err);
       showToast('Action registered locally.', 'info');
     }
-  };
+  }, [deck, hasResume, lastSwipedJob, loadingMore]);
 
   const handleUndo = async () => {
     if (!lastSwipedJob) {
@@ -289,11 +410,6 @@ export default function SwipeDiscovery() {
     }
   };
 
-  const handleDrag = (event, info) => {
-    setDragX(info.offset.x);
-    setDragY(info.offset.y);
-  };
-
   const handleDragEnd = (event, info, jobId) => {
     const threshold = 140;
     if (info.offset.x > threshold) {
@@ -306,8 +422,6 @@ export default function SwipeDiscovery() {
       setSwipeDirection('save');
       handleSwipe(jobId, 'save');
     } else {
-      setDragX(0);
-      setDragY(0);
       cardX.set(0);
       cardY.set(0);
     }
@@ -333,10 +447,10 @@ export default function SwipeDiscovery() {
     showToast('Cover letter copied to clipboard!', 'success');
   };
 
-  // Drag overlay triggers
-  const likeOpacity = Math.max(0, Math.min(1, dragX / 140));
-  const nopeOpacity = Math.max(0, Math.min(1, -dragX / 140));
-  const saveOpacity = Math.max(0, Math.min(1, -dragY / 140));
+  // Drag overlay triggers bound directly to GPU via useTransform (0 state updates)
+  const likeOpacity = useTransform(cardX, [0, 100], [0, 1]);
+  const nopeOpacity = useTransform(cardX, [0, -100], [0, 1]);
+  const saveOpacity = useTransform(cardY, [0, -100], [0, 1]);
 
   if (loading) {
     return (
@@ -541,7 +655,6 @@ export default function SwipeDiscovery() {
                       }}
                       drag={isTop}
                       dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
-                      onDrag={isTop ? handleDrag : undefined}
                       onDragEnd={(e, info) => handleDragEnd(e, info, job.id)}
                       custom={swipeDirection}
                       variants={{
@@ -580,15 +693,15 @@ export default function SwipeDiscovery() {
                         {/* Overlay tags for likes/nopes */}
                         {isTop && (
                           <>
-                            <div style={{ opacity: likeOpacity }} className="absolute top-6 left-6 border-4 border-emerald-500 text-emerald-500 text-lg font-black uppercase rounded-xl px-4 py-1.5 rotate-[-12deg] tracking-wider bg-slate-950/95 shadow-xl z-30">
+                            <motion.div style={{ opacity: likeOpacity }} className="absolute top-6 left-6 border-4 border-emerald-500 text-emerald-500 text-lg font-black uppercase rounded-xl px-4 py-1.5 rotate-[-12deg] tracking-wider bg-slate-950/95 shadow-xl z-30">
                               LIKE
-                            </div>
-                            <div style={{ opacity: nopeOpacity }} className="absolute top-6 right-6 border-4 border-rose-500 text-rose-500 text-lg font-black uppercase rounded-xl px-4 py-1.5 rotate-[12deg] tracking-wider bg-slate-950/95 shadow-xl z-30">
+                            </motion.div>
+                            <motion.div style={{ opacity: nopeOpacity }} className="absolute top-6 right-6 border-4 border-rose-500 text-rose-500 text-lg font-black uppercase rounded-xl px-4 py-1.5 rotate-[12deg] tracking-wider bg-slate-950/95 shadow-xl z-30">
                               NOPE
-                            </div>
-                            <div style={{ opacity: saveOpacity }} className="absolute bottom-24 left-1/2 -translate-x-1/2 border-4 border-cyan-500 text-cyan-500 text-lg font-black uppercase rounded-xl px-4 py-1.5 tracking-wider bg-slate-950/95 shadow-xl z-30">
+                            </motion.div>
+                            <motion.div style={{ opacity: saveOpacity }} className="absolute bottom-24 left-1/2 -translate-x-1/2 border-4 border-cyan-500 text-cyan-500 text-lg font-black uppercase rounded-xl px-4 py-1.5 tracking-wider bg-slate-950/95 shadow-xl z-30">
                               SAVE
-                            </div>
+                            </motion.div>
                           </>
                         )}
 
@@ -785,122 +898,10 @@ export default function SwipeDiscovery() {
 
       {/* RIGHT PANEL: Live Feed & Seeker Analytics */}
       <div className="lg:col-span-4 flex flex-col gap-6 text-left relative z-10">
-        
-        {/* Profile & Resume Health (Purple Accent Solid Card) */}
-        <div className="p-5 rounded-[24px] bg-slate-900 border border-violet-500/30 shadow-xl space-y-4">
-          <span className="text-[9px] font-black uppercase tracking-widest text-violet-400 block border-b border-violet-500/10 pb-2">Profile & Resume Health</span>
-          <div className="flex items-center gap-4">
-            <div className="relative w-12 h-12 flex items-center justify-center shrink-0">
-              <svg className="w-full h-full transform -rotate-90 animate-pulse" viewBox="0 0 36 36">
-                <circle cx="18" cy="18" r="16" fill="none" stroke="#ffffff10" strokeWidth="2.5" />
-                <circle cx="18" cy="18" r="16" fill="none" stroke="url(#ats-score-grad)" strokeWidth="3"
-                  strokeDasharray="88, 100" strokeLinecap="round" />
-                <defs>
-                  <linearGradient id="ats-score-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#8b5cf6" />
-                    <stop offset="100%" stopColor="#6366f1" />
-                  </linearGradient>
-                </defs>
-              </svg>
-              <span className="absolute text-[10px] font-black text-white">88%</span>
-            </div>
-            <div>
-              <span className="text-[8px] font-black text-slate-400 block uppercase tracking-wider">Resume ATS Score</span>
-              <span className="text-xxs font-black text-violet-300">ATS Optimised & Scanned</span>
-            </div>
-          </div>
-          <div className="space-y-1.5 pt-1">
-            <div className="flex justify-between items-center text-[9px] font-black text-slate-400">
-              <span>Profile Strength</span>
-              <span className="text-violet-405">Excellent (92%)</span>
-            </div>
-            <div className="w-full h-1.5 rounded-full bg-slate-950 overflow-hidden relative border border-white/5">
-              <div className="h-full bg-gradient-to-r from-violet-500 to-indigo-500 w-[92%]" />
-            </div>
-          </div>
-        </div>
-
-        {/* Hiring Pipeline Insights (Cyan Accent Solid Card) */}
-        <div className="p-5 rounded-[24px] bg-slate-900 border border-cyan-500/30 shadow-xl space-y-4">
-          <span className="text-[9px] font-black uppercase tracking-widest text-cyan-400 block border-b border-cyan-500/10 pb-2">Pipeline Insights</span>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="p-3 bg-slate-950/50 border border-white/5 rounded-2xl text-left relative overflow-hidden group">
-              <span className="text-[8px] font-black uppercase tracking-wider text-slate-500 block">Interview Prob.</span>
-              <div className="flex items-center gap-1.5 mt-1.5">
-                <p className="text-sm font-black text-emerald-400">82%</p>
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              </div>
-            </div>
-            <div className="p-3 bg-slate-950/50 border border-white/5 rounded-2xl text-left relative overflow-hidden group">
-              <span className="text-[8px] font-black uppercase tracking-wider text-slate-500 block">Today's Matches</span>
-              <p className="text-sm font-black text-cyan-405 mt-1.5">12 Roles</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Swipe Analytics & Weekly Activity (Fuchsia Accent Solid Card) */}
-        <div className="p-5 rounded-[24px] bg-slate-900 border border-fuchsia-500/25 shadow-xl space-y-4">
-          <span className="text-[9px] font-black uppercase tracking-widest text-fuchsia-400 block border-b border-fuchsia-550/10 pb-2">Swipe Goals & Activity</span>
-          <div className="space-y-2">
-            <div className="flex justify-between items-center text-xxs font-extrabold uppercase text-slate-400">
-              <span>Today's swipes goal</span>
-              <span className="text-fuchsia-400">{swipesGoal} / 15 Swiped</span>
-            </div>
-            <div className="w-full h-2 rounded-full bg-slate-950 overflow-hidden relative border border-white/5">
-              <div 
-                style={{ width: `${(swipesGoal / 15) * 100}%` }}
-                className="h-full bg-gradient-to-r from-fuchsia-550 via-pink-500 to-violet-500 transition-all duration-300"
-              />
-            </div>
-          </div>
-          
-          {/* Weekly Activity vertical bar chart */}
-          <div className="space-y-3 pt-2">
-            <span className="text-[8px] font-black uppercase tracking-wider text-slate-500 block">Weekly Swipes Velocity</span>
-            <div className="flex justify-between items-end h-16 pt-2 px-1">
-              {[
-                { day: "M", val: 40 },
-                { day: "T", val: 65 },
-                { day: "W", val: 30 },
-                { day: "T", val: 80 },
-                { day: "F", val: 55 },
-                { day: "S", val: 20 },
-                { day: "S", val: 45 }
-              ].map((item, idx) => (
-                <div key={idx} className="flex flex-col items-center gap-1.5 w-6">
-                  <div className="w-2 h-10 bg-slate-950 rounded-full overflow-hidden relative">
-                    <div 
-                      style={{ height: `${item.val}%` }} 
-                      className="absolute bottom-0 w-full bg-gradient-to-t from-fuchsia-500 to-pink-500 rounded-full"
-                    />
-                  </div>
-                  <span className="text-[7.5px] font-black text-slate-500">{item.day}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Live recruiter activity feeds (Solid Dark Card) */}
-        <div className="p-5 rounded-[24px] border border-white/10 bg-slate-900 shadow-xl space-y-4">
-          <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block border-b border-white/5 pb-2">Live Recruiter Feed</span>
-          <div className="space-y-3.5">
-            {[
-              { text: "Recruiter at Stripe checked your CV", time: "3m ago", highlight: true },
-              { text: "Wellfound is reviewing QA Automation leads", time: "12m ago", highlight: false },
-              { text: "Retool is interviewing for React Lead roles", time: "1h ago", highlight: false }
-            ].map((feed, idx) => (
-              <div key={idx} className="flex items-start gap-2.5 text-xxs font-semibold">
-                <div className={`w-2 h-2 rounded-full mt-1 shrink-0 ${feed.highlight ? 'bg-violet-500 animate-ping' : 'bg-slate-750'}`} />
-                <div className="flex-1">
-                  <p className="text-slate-300 leading-tight">{feed.text}</p>
-                  <span className="text-[8px] text-slate-500 block mt-0.5">{feed.time}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
+        {profileHealthWidget}
+        {pipelineInsightsWidget}
+        {swipeGoalsWidget}
+        {liveFeedWidget}
       </div>
 
       {/* DETAILED OVERLAY DRAWER DIALOG MODAL */}

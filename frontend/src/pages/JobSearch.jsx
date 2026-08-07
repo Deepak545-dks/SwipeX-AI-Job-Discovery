@@ -98,7 +98,16 @@ export default function JobSearch() {
     setError('');
     try {
       const response = await api.get(`/jobs/search/?${searchParams.toString()}`);
-      setJobs(response.data.results || response.data);
+      const fetched = response.data.results || response.data || [];
+      const unique = [];
+      const keys = new Set();
+      for (const j of fetched) {
+        if (j && j.id && !keys.has(j.id)) {
+          keys.add(j.id);
+          unique.push(j);
+        }
+      }
+      setJobs(unique);
     } catch (err) {
       console.error("Search API Error:", err);
       setError(err.response?.data?.detail || err.response?.data?.error || err.message || 'Failed to query job listings.');
