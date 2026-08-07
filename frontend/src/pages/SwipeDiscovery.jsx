@@ -524,7 +524,8 @@ export default function SwipeDiscovery() {
             </div>
  
             {/* Cards Stack Container (Increased size by 30%) */}
-            <div className="relative w-full h-[650px] max-w-md">
+            {/* Cards Stack Container */}
+            <div className="relative w-full h-[580px] max-w-[480px]">
               <AnimatePresence custom={swipeDirection}>
                 {deck.slice(0, 3).reverse().map((job, idx, arr) => {
                   const relativeIndex = arr.length - 1 - idx; // 0 for active, 1 for middle (preview 1), 2 for bottom (preview 2)
@@ -546,30 +547,36 @@ export default function SwipeDiscovery() {
                       custom={swipeDirection}
                       variants={{
                         exit: (direction) => {
-                          if (direction === 'like') return { x: 550, opacity: 0, rotate: 15 };
-                          if (direction === 'dislike') return { x: -550, opacity: 0, rotate: -15 };
-                          if (direction === 'save') return { y: -550, opacity: 0 };
-                          if (direction === 'superlike') return { y: -550, opacity: 0, scale: 1.1 };
-                          return { x: -550, opacity: 0 };
+                          if (direction === 'like') return { x: 550, opacity: 0, rotate: 15, transition: { duration: 0.35, ease: 'easeOut' } };
+                          if (direction === 'dislike') return { x: -550, opacity: 0, rotate: -15, transition: { duration: 0.35, ease: 'easeOut' } };
+                          if (direction === 'save') return { y: -550, opacity: 0, transition: { duration: 0.35, ease: 'easeOut' } };
+                          if (direction === 'superlike') return { y: -550, opacity: 0, scale: 1.1, transition: { duration: 0.35, ease: 'easeOut' } };
+                          return { x: -550, opacity: 0, transition: { duration: 0.35, ease: 'easeOut' } };
                         }
                       }}
                       animate={{
                         scale: isTop ? 1 : (relativeIndex === 1 ? 0.96 : 0.92),
-                        y: isTop ? 0 : (relativeIndex === 1 ? 20 : 40),
-                        rotate: isTop ? 0 : (relativeIndex === 1 ? -10 : 10),
+                        y: isTop ? 0 : (relativeIndex === 1 ? 18 : 36),
+                        rotate: isTop ? 0 : (relativeIndex === 1 ? -3 : 3),
                         zIndex: isTop ? 100 : (relativeIndex === 1 ? 90 : 80),
-                        opacity: isTop ? 1 : (relativeIndex === 1 ? 0.55 : 0.35),
-                        filter: isTop ? 'blur(0px)' : (relativeIndex === 1 ? 'blur(1px)' : 'blur(2px)')
+                        opacity: isTop ? 1 : (relativeIndex === 1 ? 0.45 : 0.25),
+                        filter: isTop ? 'blur(0px)' : (relativeIndex === 1 ? 'blur(2px)' : 'blur(3px)')
                       }}
                       exit="exit"
-                      transition={{ type: 'spring', stiffness: 200, damping: 20 }}
-                      className={`absolute w-full h-full p-[1.5px] rounded-[32px] overflow-hidden shadow-2xl ${
+                      transition={{ 
+                        type: 'spring', 
+                        stiffness: 300, 
+                        damping: 25, 
+                        mass: 0.8,
+                        duration: 0.35
+                      }}
+                      className={`absolute w-full h-full p-[1px] rounded-[28px] overflow-hidden shadow-2xl ${
                         isTop 
-                          ? 'bg-gradient-to-b from-purple-500/30 via-indigo-500/25 to-blue-500/30 shadow-violet-500/10' 
-                          : 'bg-gradient-to-b from-purple-500/10 via-indigo-500/10 to-blue-500/10'
+                          ? 'bg-gradient-to-b from-purple-500/25 via-indigo-500/20 to-blue-500/25 shadow-violet-500/10' 
+                          : 'bg-gradient-to-b from-white/5 to-transparent'
                       }`}
                     >
-                      <div className="w-full h-full bg-gradient-to-b from-[#2e1065]/95 via-[#1e1b4b]/95 to-[#172554]/95 border border-purple-500/20 rounded-[31px] p-6 flex flex-col justify-between cursor-grab active:cursor-grabbing relative overflow-hidden text-left select-none shadow-inner">
+                      <div className="w-full h-full bg-slate-950/85 backdrop-blur-xl border border-white/10 rounded-[27px] p-5 flex flex-col justify-between cursor-grab active:cursor-grabbing relative overflow-hidden text-left select-none shadow-[0_20px_50px_rgba(139,92,246,0.12)]">
                         
                         {/* Overlay tags for likes/nopes */}
                         {isTop && (
