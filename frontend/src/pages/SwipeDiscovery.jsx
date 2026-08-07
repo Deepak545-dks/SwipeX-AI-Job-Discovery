@@ -527,8 +527,7 @@ export default function SwipeDiscovery() {
             {/* Cards Stack Container */}
             <div className="relative w-full h-[580px] max-w-[480px]">
               <AnimatePresence custom={swipeDirection}>
-                {deck.slice(0, 3).reverse().map((job, idx, arr) => {
-                  const relativeIndex = arr.length - 1 - idx; // 0 for active, 1 for middle (preview 1), 2 for bottom (preview 2)
+                {deck.slice(0, 3).map((job, relativeIndex) => {
                   const isTop = relativeIndex === 0;
 
                   return (
@@ -555,12 +554,12 @@ export default function SwipeDiscovery() {
                         }
                       }}
                       animate={{
-                        scale: isTop ? 1 : (relativeIndex === 1 ? 0.96 : 0.92),
-                        y: isTop ? 0 : (relativeIndex === 1 ? 18 : 36),
-                        rotate: isTop ? 0 : (relativeIndex === 1 ? -3 : 3),
-                        zIndex: isTop ? 100 : (relativeIndex === 1 ? 90 : 80),
-                        opacity: isTop ? 1 : (relativeIndex === 1 ? 0.45 : 0.25),
-                        filter: isTop ? 'blur(0px)' : (relativeIndex === 1 ? 'blur(2px)' : 'blur(3px)')
+                        scale: relativeIndex === 0 ? 1 : (relativeIndex === 1 ? 0.95 : 0.90),
+                        y: relativeIndex === 0 ? 0 : (relativeIndex === 1 ? 18 : 36),
+                        rotate: 0,
+                        zIndex: relativeIndex === 0 ? 100 : (relativeIndex === 1 ? 90 : 80),
+                        opacity: relativeIndex === 0 ? 1 : (relativeIndex === 1 ? 0.35 : 0),
+                        filter: relativeIndex === 0 ? 'blur(0px)' : (relativeIndex === 1 ? 'blur(2px)' : 'blur(4px)')
                       }}
                       exit="exit"
                       transition={{ 
@@ -576,7 +575,7 @@ export default function SwipeDiscovery() {
                           : 'bg-gradient-to-b from-white/5 to-transparent'
                       }`}
                     >
-                      <div className="w-full h-full bg-slate-950/85 backdrop-blur-xl border border-white/10 rounded-[27px] p-5 flex flex-col justify-between cursor-grab active:cursor-grabbing relative overflow-hidden text-left select-none shadow-[0_20px_50px_rgba(139,92,246,0.12)]">
+                      <div className="w-full h-full bg-slate-900/95 border border-white/10 rounded-[27px] p-5 flex flex-col justify-between cursor-grab active:cursor-grabbing relative overflow-hidden text-left select-none shadow-[0_20px_50px_rgba(139,92,246,0.12)]">
                         
                         {/* Overlay tags for likes/nopes */}
                         {isTop && (
@@ -782,8 +781,9 @@ export default function SwipeDiscovery() {
 
           </div>
         )}
+      </div>
 
-            {/* RIGHT PANEL: Live Feed & Seeker Analytics */}
+      {/* RIGHT PANEL: Live Feed & Seeker Analytics */}
       <div className="lg:col-span-4 flex flex-col gap-6 text-left relative z-10">
         
         {/* Profile & Resume Health (Purple Accent Solid Card) */}
@@ -901,7 +901,7 @@ export default function SwipeDiscovery() {
           </div>
         </div>
 
-      </div>  </div>
+      </div>
 
       {/* DETAILED OVERLAY DRAWER DIALOG MODAL */}
       {drawerJob && (
