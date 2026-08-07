@@ -1,4 +1,5 @@
 from rest_framework import status, generics, permissions
+import sys
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
@@ -137,6 +138,9 @@ class RecruiterAnalyticsView(APIView):
         }, status=status.HTTP_200_OK)
 
 def ensure_database_seeded():
+    import sys
+    if 'test' in sys.argv:
+        return
     from django.contrib.auth import get_user_model
     from jobs.models import Job
     User = get_user_model()
@@ -172,7 +176,7 @@ class JobDeckView(generics.ListAPIView):
         jobs = Job.objects.select_related('company', 'recruiter').prefetch_related('skills_required').filter(is_active=True, status='published').exclude(id__in=swiped_ids)
         
         # If available jobs deck count runs low, automatically pull new vacancy listings
-        if jobs.count() < 10:
+        if jobs.count() < 10 and 'test' not in sys.argv:
             from jobs.providers import sync_all_providers
             try:
                 sync_all_providers(limit_per_provider=5)

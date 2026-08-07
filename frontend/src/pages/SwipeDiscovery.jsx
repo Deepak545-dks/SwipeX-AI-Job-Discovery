@@ -219,6 +219,8 @@ export default function SwipeDiscovery() {
     
     setDragX(0);
     setDragY(0);
+    cardX.set(0);
+    cardY.set(0);
 
     // Update goal counter
     setSwipesGoal(prev => Math.min(15, prev + 1));
@@ -525,7 +527,7 @@ export default function SwipeDiscovery() {
             <div className="relative w-full h-[650px] max-w-md">
               <AnimatePresence custom={swipeDirection}>
                 {deck.slice(0, 3).reverse().map((job, idx, arr) => {
-                  const relativeIndex = arr.length - 1 - idx; // 0 for top, 1 for middle, 2 for bottom
+                  const relativeIndex = arr.length - 1 - idx; // 0 for active, 1 for middle (preview 1), 2 for bottom (preview 2)
                   const isTop = relativeIndex === 0;
 
                   return (
@@ -535,7 +537,7 @@ export default function SwipeDiscovery() {
                         touchAction: 'none',
                         x: isTop ? cardX : 0,
                         y: isTop ? cardY : 0,
-                        rotate: isTop ? cardRotate : 0
+                        rotate: isTop ? cardRotate : undefined
                       }}
                       drag={isTop}
                       dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
@@ -552,14 +554,16 @@ export default function SwipeDiscovery() {
                         }
                       }}
                       animate={{
-                        scale: isTop ? 1 : 1 - relativeIndex * 0.05,
-                        y: isTop ? 0 : relativeIndex * 18,
-                        zIndex: 10 - relativeIndex,
-                        opacity: isTop ? 1 : 0.9 - relativeIndex * 0.25
+                        scale: isTop ? 1 : (relativeIndex === 1 ? 0.96 : 0.92),
+                        y: isTop ? 0 : (relativeIndex === 1 ? 20 : 40),
+                        rotate: isTop ? 0 : (relativeIndex === 1 ? -10 : 10),
+                        zIndex: isTop ? 100 : (relativeIndex === 1 ? 90 : 80),
+                        opacity: isTop ? 1 : (relativeIndex === 1 ? 0.55 : 0.35),
+                        filter: isTop ? 'blur(0px)' : (relativeIndex === 1 ? 'blur(1px)' : 'blur(2px)')
                       }}
                       exit="exit"
                       transition={{ type: 'spring', stiffness: 200, damping: 20 }}
-                      className={`absolute w-full h-full p-[1.5px] rounded-[32px] overflow-hidden shadow-2xl transition-all duration-300 ${
+                      className={`absolute w-full h-full p-[1.5px] rounded-[32px] overflow-hidden shadow-2xl ${
                         isTop 
                           ? 'bg-gradient-to-b from-purple-500/30 via-indigo-500/25 to-blue-500/30 shadow-violet-500/10' 
                           : 'bg-gradient-to-b from-purple-500/10 via-indigo-500/10 to-blue-500/10'
@@ -695,7 +699,7 @@ export default function SwipeDiscovery() {
 
                         {/* If it's a preview card, overlay a premium blur/lock layer to hide details */}
                         {!isTop && (
-                          <div className="absolute inset-0 bg-[#0f172a]/20 backdrop-blur-[6px] rounded-[31px] z-30 pointer-events-none select-none" />
+                          <div className="absolute inset-0 bg-[#0f172a]/55 rounded-[31px] z-30 pointer-events-none select-none" />
                         )}
 
                       </div>
@@ -772,13 +776,11 @@ export default function SwipeDiscovery() {
           </div>
         )}
 
-      </div>
-
-      {/* RIGHT PANEL: Live Feed & Seeker Analytics */}
-      <div className="lg:col-span-4 space-y-6 text-left relative z-10">
+            {/* RIGHT PANEL: Live Feed & Seeker Analytics */}
+      <div className="lg:col-span-4 flex flex-col gap-6 text-left relative z-10">
         
-        {/* Profile & Resume Health (Purple/Indigo Gradient Card) */}
-        <div className="p-5 rounded-[24px] bg-gradient-to-br from-violet-600/20 via-indigo-650/10 to-slate-950/90 border border-violet-500/25 shadow-xl space-y-4 backdrop-blur-md">
+        {/* Profile & Resume Health (Purple Accent Solid Card) */}
+        <div className="p-5 rounded-[24px] bg-slate-900 border border-violet-500/30 shadow-xl space-y-4">
           <span className="text-[9px] font-black uppercase tracking-widest text-violet-400 block border-b border-violet-500/10 pb-2">Profile & Resume Health</span>
           <div className="flex items-center gap-4">
             <div className="relative w-12 h-12 flex items-center justify-center shrink-0">
@@ -811,8 +813,8 @@ export default function SwipeDiscovery() {
           </div>
         </div>
 
-        {/* Hiring Pipeline Insights (Cyan/Teal Gradient Card) */}
-        <div className="p-5 rounded-[24px] bg-gradient-to-br from-cyan-600/20 via-teal-650/10 to-slate-950/90 border border-cyan-500/25 shadow-xl space-y-4 backdrop-blur-md">
+        {/* Hiring Pipeline Insights (Cyan Accent Solid Card) */}
+        <div className="p-5 rounded-[24px] bg-slate-900 border border-cyan-500/30 shadow-xl space-y-4">
           <span className="text-[9px] font-black uppercase tracking-widest text-cyan-400 block border-b border-cyan-500/10 pb-2">Pipeline Insights</span>
           <div className="grid grid-cols-2 gap-4">
             <div className="p-3 bg-slate-950/50 border border-white/5 rounded-2xl text-left relative overflow-hidden group">
@@ -829,8 +831,8 @@ export default function SwipeDiscovery() {
           </div>
         </div>
 
-        {/* Swipe Analytics & Weekly Activity (Fuchsia/Pink Gradient Card) */}
-        <div className="p-5 rounded-[24px] bg-gradient-to-br from-fuchsia-605/20 via-pink-700/5 to-slate-950/90 border border-fuchsia-500/20 shadow-xl space-y-4 backdrop-blur-md">
+        {/* Swipe Analytics & Weekly Activity (Fuchsia Accent Solid Card) */}
+        <div className="p-5 rounded-[24px] bg-slate-900 border border-fuchsia-500/25 shadow-xl space-y-4">
           <span className="text-[9px] font-black uppercase tracking-widest text-fuchsia-400 block border-b border-fuchsia-550/10 pb-2">Swipe Goals & Activity</span>
           <div className="space-y-2">
             <div className="flex justify-between items-center text-xxs font-extrabold uppercase text-slate-400">
@@ -872,8 +874,8 @@ export default function SwipeDiscovery() {
           </div>
         </div>
 
-        {/* Live recruiter activity feeds (Sleek Glassmorphic) */}
-        <div className="p-5 rounded-[24px] border border-white/5 bg-slate-900/40 backdrop-blur-md space-y-4">
+        {/* Live recruiter activity feeds (Solid Dark Card) */}
+        <div className="p-5 rounded-[24px] border border-white/10 bg-slate-900 shadow-xl space-y-4">
           <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block border-b border-white/5 pb-2">Live Recruiter Feed</span>
           <div className="space-y-3.5">
             {[
@@ -892,7 +894,7 @@ export default function SwipeDiscovery() {
           </div>
         </div>
 
-      </div>
+      </div>  </div>
 
       {/* DETAILED OVERLAY DRAWER DIALOG MODAL */}
       {drawerJob && (
