@@ -5,7 +5,7 @@ import {
   Heart, X, Star, RotateCcw, MapPin, DollarSign, Briefcase, 
   ChevronUp, Loader2, Sparkles, AlertCircle, FileText, GraduationCap, Copy, Keyboard, Activity, Flame, Award,
   CheckCircle, Shield, Bookmark, RefreshCw, BarChart2, Info, Building, HelpCircle, Users, ExternalLink, Zap,
-  TrendingUp, LogOut, Menu, Send, Terminal, BookOpen, Award as BadgeIcon
+  TrendingUp, LogOut, Menu, Send, Terminal, BookOpen, Award as BadgeIcon, Compass, Search, MessageSquare
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import PageTransition from '../components/PageTransition';
