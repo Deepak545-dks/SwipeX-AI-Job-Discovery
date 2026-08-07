@@ -1,8 +1,14 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Sparkles } from 'lucide-react';
 
 export default function Footer() {
+  const location = useLocation();
+
+  if (location.pathname === '/swipe') {
+    return null;
+  }
+
   return (
     <footer className="border-t border-white/10 bg-slate-950/80 py-16 text-slate-400 relative z-10">
       <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
