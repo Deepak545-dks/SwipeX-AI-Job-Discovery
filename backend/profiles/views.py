@@ -118,6 +118,18 @@ class ResumeUploadView(APIView):
             version=next_version
         )
         resume.save()
+
+        # Calculate ATS analysis immediately upon upload
+        try:
+            resume_text = ""
+            with resume.file.open('rb') as f:
+                resume_text = extract_text(f, resume.file.name)
+            analysis = AIService.analyze_resume(profile, resume_text, job=None)
+            resume.ats_analysis = analysis
+            resume.save(update_fields=['ats_analysis'])
+        except Exception as e:
+            import logging
+            logging.getLogger("profiles.views").warning(f"Failed to calculate initial ATS analysis: {e}")
         
         serializer = ResumeSerializer(resume)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -189,6 +201,13 @@ class AIResumeAnalyzerView(APIView):
 
         resume_text = ""
         latest_resume = profile.resumes.first()
+
+        # If it's a general scan (no job selected) and cached results exist, return it immediately!
+        if latest_resume and not job:
+            if latest_resume.ats_analysis and isinstance(latest_resume.ats_analysis, dict):
+                if 'overall_score' in latest_resume.ats_analysis:
+                    return Response(latest_resume.ats_analysis, status=status.HTTP_200_OK)
+
         if latest_resume and latest_resume.file:
             try:
                 with latest_resume.file.open('rb') as f:
@@ -198,6 +217,12 @@ class AIResumeAnalyzerView(APIView):
                 logging.getLogger("profiles.views").warning(f"Failed to read resume file text: {e}")
 
         analysis = AIService.analyze_resume(profile, resume_text, job=job)
+
+        # Persist standard general scan in the DB
+        if latest_resume and not job:
+            latest_resume.ats_analysis = analysis
+            latest_resume.save(update_fields=['ats_analysis'])
+
         return Response(analysis, status=status.HTTP_200_OK)
 
     @extend_schema(responses={200: dict})
@@ -236,4 +261,10 @@ class AIResumeAnalyzerView(APIView):
                 logging.getLogger("profiles.views").warning(f"Failed to read resume file text: {e}")
 
         analysis = AIService.analyze_resume(profile, resume_text, job=job)
+
+        # Overwrite/save the new result in DB for general scan
+        if latest_resume and not job:
+            latest_resume.ats_analysis = analysis
+            latest_resume.save(update_fields=['ats_analysis'])
+
         return Response(analysis, status=status.HTTP_200_OK)

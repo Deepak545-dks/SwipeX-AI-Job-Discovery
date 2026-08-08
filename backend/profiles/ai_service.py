@@ -30,19 +30,51 @@ class AIService:
         
         logger = logging.getLogger("profiles.ai_service")
         
-        # 1. Normalize helper
-        def normalize_str(t):
-            t = (t or "").lower()
-            t = re.sub(r'[\.\-\(\)\/]', ' ', t)
-            t = " ".join(t.split())
-            # Map equivalent forms
-            t = t.replace("react js", "react").replace("reactjs", "react")
-            t = t.replace("node js", "node").replace("nodejs", "node")
-            t = t.replace("javascript", "js")
-            t = t.replace("typescript", "ts")
-            t = t.replace("tailwind css", "tailwind").replace("tailwindcss", "tailwind")
-            t = t.replace("ci cd", "cicd").replace("cicd", "cicd")
-            t = t.replace("next js", "next").replace("nextjs", "next")
+        # 1. Skill Normalizer Helper
+        def normalize_skill(s):
+            s = (s or "").strip().lower()
+            # Remove symbols/punctuation
+            s = re.sub(r'[\.\-\(\)\/]', ' ', s)
+            s = " ".join(s.split())
+            
+            mappings = {
+                "react js": "react",
+                "reactjs": "react",
+                "react": "react",
+                "node js": "node.js",
+                "nodejs": "node.js",
+                "node": "node.js",
+                "js": "javascript",
+                "javascript": "javascript",
+                "tailwind css": "tailwind css",
+                "tailwindcss": "tailwind css",
+                "tailwind": "tailwind css",
+                "mongodb": "mongodb",
+                "postgres": "postgresql",
+                "postgresql": "postgresql",
+                "postgressql": "postgresql",
+                "rest api": "rest apis",
+                "rest apis": "rest apis",
+                "rest": "rest apis",
+                "github": "git/github",
+                "git": "git/github",
+                "git/github": "git/github"
+            }
+            return mappings.get(s, s)
+
+        # 2. Text Normalizer Helper for matching
+        def normalize_text_body(text):
+            t = (text or "").lower()
+            # Equivalent replacements directly in text body to make matching robust
+            t = t.replace("react.js", "react").replace("reactjs", "react").replace("react js", "react")
+            t = t.replace("node.js", "node.js").replace("nodejs", "node.js").replace("node js", "node.js")
+            t = t.replace("javascript", "javascript").replace(" js ", " javascript ").replace(" js,", " javascript,")
+            t = t.replace("typescript", "typescript").replace(" ts ", " typescript ").replace(" ts,", " typescript,")
+            t = t.replace("tailwind css", "tailwind css").replace("tailwindcss", "tailwind css").replace("tailwind", "tailwind css")
+            t = t.replace("mongodb", "mongodb")
+            t = t.replace("postgresql", "postgresql").replace("postgres", "postgresql")
+            t = t.replace("rest api", "rest apis").replace("rest apis", "rest apis").replace("restful api", "rest apis")
+            t = t.replace("github", "git/github").replace("git", "git/github")
             return t
 
         user_skills_raw = [s.name.lower() for s in profile.skills.all()]
@@ -55,20 +87,40 @@ class AIService:
             for p in parts:
                 if p and p not in user_skills:
                     user_skills.append(p)
+                    
         bio_text = (profile.bio or "").lower()
         resume_text_lower = (resume_text or "").lower()
         
         # Combine text for matching
         combined_text = f"{resume_text_lower} {bio_text} {' '.join(user_skills)}".strip()
-        normalized_combined = normalize_str(combined_text)
-        
-        # Log extracted text details
-        logger.info(f"[ATS Parser] Extracted resume text length: {len(resume_text)} characters.")
-        
+        normalized_combined = normalize_text_body(combined_text)
+
         # Identify sections present in resume text
         headings = ["experience", "work", "education", "project", "skill", "contact", "summary", "achievements", "links", "certification"]
         found_sections = [h for h in headings if h in resume_text_lower]
-        logger.info(f"[ATS Parser] Parsed sections detected: {found_sections}")
+
+        # Log detailed parsing telemetry for development
+        logger.info("================ ATS DEVELOPMENT LOGS ================")
+        logger.info(f"EXTRACTED TEXT LENGTH: {len(resume_text)} characters")
+        logger.info(f"DETECTED SECTIONS: {found_sections}")
+        logger.info(f"DETECTED SKILLS: {user_skills}")
+        
+        # Experience metrics
+        exp_list = profile.experiences.all()
+        logger.info(f"DETECTED EXPERIENCE: {list(exp_list.values('title', 'company'))}")
+        
+        # Projects metrics
+        proj_list = profile.projects.all()
+        logger.info(f"DETECTED PROJECTS: {list(proj_list.values('name'))}")
+        
+        # Education metrics
+        edu_list = profile.education.all()
+        logger.info(f"DETECTED EDUCATION: {list(edu_list.values('degree', 'institution'))}")
+        
+        # Certifications metrics
+        certs_match = re.findall(r'certif|certified|certification|aws certified|scrum master|pmp|csm|udemy|coursera|cert', resume_text_lower + " " + bio_text)
+        logger.info(f"DETECTED CERTIFICATIONS: {certs_match}")
+        logger.info("======================================================")
 
         # --- SCORE 1: Formatting & Parsing (15%) ---
         if resume_text:
@@ -87,9 +139,9 @@ class AIService:
             profile_items = 0
             if profile.full_name: profile_items += 1
             if profile.bio: profile_items += 1
-            if profile.experiences.exists(): profile_items += 2
-            if profile.education.exists(): profile_items += 1
-            if profile.projects.exists(): profile_items += 1
+            if exp_list.exists(): profile_items += 2
+            if edu_list.exists(): profile_items += 1
+            if proj_list.exists(): profile_items += 1
             formatting_score = 30 + (profile_items * 10)
             
         formatting_score = min(100, max(0, formatting_score))
@@ -104,7 +156,7 @@ class AIService:
             job_title = job.title
             # Add skills from job
             for skill in job.skills_required.all():
-                expected_keywords.add(normalize_str(skill.name))
+                expected_keywords.add(normalize_skill(skill.name))
             # Extract words from description
             desc_words = re.findall(r'[a-zA-Z\+\#\-]+', (job.title + " " + job.description + " " + job.requirements).lower())
             common_tech = {
@@ -113,19 +165,19 @@ class AIService:
                 "communication", "collaboration", "teamwork", "leadership", "agile", "scrum", "analytics", "testing", "linux"
             }
             for w in desc_words:
-                norm_w = normalize_str(w)
+                norm_w = normalize_skill(w)
                 if norm_w in common_tech or w in common_tech:
                     expected_keywords.add(norm_w)
         else:
             # General ATS Mode: Choose appropriate general keyword domain
-            # Define domain keywords
+            # Define domain keywords (fully normalized)
             domain_map = {
-                "Frontend & UI Engineering": ["react", "js", "ts", "html", "css", "vite", "tailwind", "next", "redux", "graphql", "figma"],
-                "Backend & Systems Engineering": ["python", "django", "fastapi", "flask", "java", "spring", "node", "express", "sql", "postgresql", "mongodb", "rest", "api"],
-                "DevOps & Infrastructure": ["aws", "docker", "kubernetes", "cicd", "git", "terraform", "jenkins", "cloud", "linux", "bash"],
+                "Frontend & UI Engineering": ["react", "javascript", "typescript", "html", "css", "vite", "tailwind css", "next.js", "redux", "graphql", "figma"],
+                "Backend & Systems Engineering": ["python", "django", "fastapi", "flask", "java", "spring", "node.js", "express", "sql", "postgresql", "mongodb", "rest apis"],
+                "DevOps & Infrastructure": ["aws", "docker", "kubernetes", "ci/cd", "git/github", "terraform", "jenkins", "cloud", "linux", "bash"],
                 "Management & Strategy": ["agile", "scrum", "jira", "management", "roadmap", "product", "strategy", "analytics", "kpi"],
                 "Quality Assurance & Test Automation": ["testing", "selenium", "cypress", "jest", "automation", "qa", "test", "mocha"],
-                "Data Science & AI Studio": ["pytorch", "tensorflow", "numpy", "pandas", "scikit", "ml", "machine learning", "data", "ai", "deep learning"]
+                "Data Science & AI Studio": ["pytorch", "tensorflow", "numpy", "pandas", "scikit", "ml", "machine learning", "data science", "ai", "deep learning"]
             }
             
             # Count domain hits in candidate's text
@@ -140,13 +192,13 @@ class AIService:
             
             # Expected keywords: best domain keywords + user profile skills
             for kw in domain_map[best_domain]:
-                expected_keywords.add(normalize_str(kw))
+                expected_keywords.add(normalize_skill(kw))
             for s in user_skills:
-                expected_keywords.add(normalize_str(s))
+                expected_keywords.add(normalize_skill(s))
                 
             # Fallback expected keywords if profile + resume is completely blank
             if not expected_keywords:
-                expected_keywords = {"git", "sql", "api", "agile", "communication", "teamwork", "aws", "docker", "cicd"}
+                expected_keywords = {"git/github", "sql", "rest apis", "agile", "communication", "teamwork", "aws", "docker", "ci/cd"}
 
         # Calculate keyword score
         matched_kws = []
@@ -173,13 +225,12 @@ class AIService:
         skills_score += len(user_skills) * 6
         
         # Check how many profile skills are explicitly mentioned in the resume text
-        skills_found_in_text = sum(1 for s in user_skills if normalize_str(s) in normalized_combined)
+        skills_found_in_text = sum(1 for s in user_skills if normalize_skill(s) in normalized_combined)
         skills_score += skills_found_in_text * 8
         skills_score = min(100, max(0, skills_score))
 
         # --- SCORE 4: Experience/Relevance (15%) ---
         experience_score = 45
-        exp_list = profile.experiences.all()
         if exp_list.exists():
             experience_score += 15 * exp_list.count()
             # check for quantified metrics
@@ -204,7 +255,6 @@ class AIService:
 
         # --- SCORE 5: Education (5%) ---
         education_score = 50
-        edu_list = profile.education.all()
         if edu_list.exists():
             education_score += 35
             # degree check
@@ -221,7 +271,6 @@ class AIService:
 
         # --- SCORE 6: Projects (10%) ---
         projects_score = 45
-        proj_list = profile.projects.all()
         if proj_list.exists():
             projects_score += 25 * proj_list.count()
             has_proj_links = any(p.project_url for p in proj_list)
@@ -238,7 +287,6 @@ class AIService:
         # --- SCORE 7: Certifications (5%) ---
         certification_score = 55
         # Search resume text + profiles for certifications keyword
-        certs_match = re.findall(r'certif|certified|certification|aws certified|scrum master|pmp|csm|udemy|coursera|cert', resume_text_lower + " " + bio_text)
         if certs_match:
             certification_score += 25
             if len(certs_match) > 1:
@@ -262,7 +310,7 @@ class AIService:
             
         grammar_score = min(100, max(0, grammar_score))
 
-        # Calculate final weighted score
+        # Calculate final weighted score (deterministic weighted scoring engine)
         final_ats_score = int(
             (formatting_score * 0.15) +
             (keyword_score * 0.25) +
@@ -291,28 +339,48 @@ class AIService:
         logger.info(f"  Final Weighted ATS Score: {final_ats_score}")
         logger.info("=============================================")
 
+        # Differentiate Compatibility strict scale mapping
         if final_ats_score >= 90:
+            compatibility = "Excellent"
             score_grade = "Excellent"
         elif final_ats_score >= 80:
-            score_grade = "Good"
+            compatibility = "Very Good"
+            score_grade = "Very Good"
         elif final_ats_score >= 70:
-            score_grade = "Average"
+            compatibility = "Good"
+            score_grade = "Good"
         elif final_ats_score >= 60:
-            score_grade = "Needs Improvement"
+            compatibility = "Fair"
+            score_grade = "Fair"
         else:
-            score_grade = "Poor"
+            compatibility = "Needs Improvement"
+            score_grade = "Needs Improvement"
 
-        # Telemetry calculations
+        # Dynamically determine best match based on the detected domain
         if job:
             best_match = job.title
             highest_compatibility_domain = job.title
             career_path = "Staff Dev Track" if "senior" in job.title.lower() or "lead" in job.title.lower() else "Senior Dev Track"
-            compatibility = "Excellent" if final_ats_score >= 80 else ("Good" if final_ats_score >= 65 else "Needs Review")
         else:
-            best_match = best_domain if not user_skills else f"Senior {user_skills[0].capitalize()} Engineer"
+            # Map best domain to professional career role name
+            domain_role_map = {
+                "Frontend & UI Engineering": "Frontend Engineer",
+                "Backend & Systems Engineering": "Backend Engineer",
+                "DevOps & Infrastructure": "DevOps Engineer",
+                "Management & Strategy": "Product Manager",
+                "Quality Assurance & Test Automation": "QA Automation Engineer",
+                "Data Science & AI Studio": "Data Scientist"
+            }
+            best_match = domain_role_map.get(best_domain, "Senior Software Developer")
             highest_compatibility_domain = best_domain
             career_path = "Staff Dev Track" if experience_score >= 85 else "Senior Dev Track"
-            compatibility = "Excellent" if final_ats_score >= 80 else ("Good" if final_ats_score >= 65 else "Needs Review")
+
+        # Calculate dynamic parser confidence score (explainable, not fake)
+        # Completeness factors: Text length (max 30), sections count (max 40), skills tag count (max 30)
+        confidence_text_points = 30 if len(resume_text) > 2000 else (20 if len(resume_text) > 1000 else 10)
+        confidence_sections_points = int((len(found_sections) / len(headings)) * 40)
+        confidence_skills_points = min(30, len(user_skills) * 3)
+        confidence_score = confidence_text_points + confidence_sections_points + confidence_skills_points
 
         # Actionable recommendations list
         improvements = []
@@ -365,13 +433,30 @@ class AIService:
         recruiter_interest = "High" if final_ats_score >= 80 else ("Medium" if final_ats_score >= 70 else "Low")
         resume_strength = "Strong" if final_ats_score >= 85 else ("Good" if final_ats_score >= 75 else ("Fair" if final_ats_score >= 60 else "Needs Work"))
 
-        # Format matched & missing lists nicely for display
-        matched_display = [kw.capitalize() if kw not in ["aws", "sql", "cicd", "html", "css", "js", "ts"] else kw.upper() for kw in matched_kws]
-        missing_display = [kw.capitalize() if kw not in ["aws", "sql", "cicd", "html", "css", "js", "ts"] else kw.upper() for kw in missing_kws]
+        # Normalize display strings to map exact titles beautifully
+        display_map = {
+            "react": "React",
+            "node.js": "Node.js",
+            "javascript": "JavaScript",
+            "typescript": "TypeScript",
+            "tailwind css": "Tailwind CSS",
+            "mongodb": "MongoDB",
+            "postgresql": "PostgreSQL",
+            "rest apis": "REST APIs",
+            "git/github": "Git/GitHub",
+            "django": "Django",
+            "spring": "Spring Boot",
+            "python": "Python",
+            "html": "HTML",
+            "css": "CSS",
+            "sql": "SQL",
+            "aws": "AWS",
+            "docker": "Docker",
+            "ci/cd": "CI/CD"
+        }
         
-        # Adjust custom forms to display standard format
-        matched_display = [("CI/CD" if w == "CICD" else ("JavaScript" if w == "JS" else ("TypeScript" if w == "TS" else w))) for w in matched_display]
-        missing_display = [("CI/CD" if w == "CICD" else ("JavaScript" if w == "JS" else ("TypeScript" if w == "TS" else w))) for w in missing_display]
+        matched_display = [display_map.get(kw, kw.capitalize()) for kw in matched_kws]
+        missing_display = [display_map.get(kw, kw.capitalize()) for kw in missing_kws]
 
         return {
             "overall_score": final_ats_score,
@@ -387,16 +472,16 @@ class AIService:
             "certification_score": certification_score,
             "certifications_score": certification_score,
             "grammar_score": grammar_score,
-            "matched_keywords": matched_display[:10],
-            "missing_keywords": missing_display[:10],
-            "missing_skills": missing_display[:10],
+            "matched_keywords": matched_display[:12],
+            "missing_keywords": missing_display[:12],
+            "missing_skills": missing_display[:12],
             "improvements": improvements[:5],
             "strengths": strengths,
             "weaknesses": weaknesses,
             "is_job_match": is_job_match,
             "job_title": job_title,
             "best_match": best_match,
-            "confidence_score": int(final_ats_score * 0.95 + 4),
+            "confidence_score": confidence_score,
             "compatibility": compatibility,
             "career_path": career_path,
             "highest_compatibility_domain": highest_compatibility_domain,

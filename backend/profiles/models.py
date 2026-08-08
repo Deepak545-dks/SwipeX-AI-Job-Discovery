@@ -73,6 +73,7 @@ class Resume(models.Model):
     file = models.FileField(upload_to=resume_upload_path)
     version = models.IntegerField(default=1)
     uploaded_at = models.DateTimeField(auto_now_add=True)
+    ats_analysis = models.JSONField(null=True, blank=True)
 
     class Meta:
         ordering = ['-version']
