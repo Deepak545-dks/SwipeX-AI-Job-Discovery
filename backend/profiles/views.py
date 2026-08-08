@@ -166,7 +166,7 @@ class ProfilePictureUploadView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 from .ai_service import AIService
-from .utils import extract_text_from_pdf
+from .utils import extract_text
 from jobs.models import Job
 
 class AIResumeAnalyzerView(APIView):
@@ -192,7 +192,7 @@ class AIResumeAnalyzerView(APIView):
         if latest_resume and latest_resume.file:
             try:
                 with latest_resume.file.open('rb') as f:
-                    resume_text = extract_text_from_pdf(f)
+                    resume_text = extract_text(f, latest_resume.file.name)
             except Exception as e:
                 import logging
                 logging.getLogger("profiles.views").warning(f"Failed to read resume file text: {e}")
@@ -230,7 +230,7 @@ class AIResumeAnalyzerView(APIView):
         if latest_resume and latest_resume.file:
             try:
                 with latest_resume.file.open('rb') as f:
-                    resume_text = extract_text_from_pdf(f)
+                    resume_text = extract_text(f, latest_resume.file.name)
             except Exception as e:
                 import logging
                 logging.getLogger("profiles.views").warning(f"Failed to read resume file text: {e}")

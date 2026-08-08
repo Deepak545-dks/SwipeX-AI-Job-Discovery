@@ -1510,9 +1510,25 @@ export default function SwipeDiscovery() {
                   <Sparkles size={16} className="text-violet-404 animate-pulse" />
                   <span className="text-xs font-black uppercase tracking-wider text-white">AI Match Audit Insights</span>
                 </div>
-                <p className="text-xxs text-slate-350 leading-relaxed">
-                  Your resume has an **88% suitability index** for this role. Key technical match indicators: **React 19**, **Vite compilation**, and **Framer Motion spring transitions** match the requirements perfectly. 
-                </p>
+                <div className="text-xxs text-slate-350 leading-relaxed">
+                  {loadingAts ? (
+                    <div className="flex items-center gap-2 py-1">
+                      <Loader2 className="animate-spin text-violet-400 w-3.5 h-3.5" />
+                      <span className="text-xxs text-slate-400">Syncing AI match insights...</span>
+                    </div>
+                  ) : atsResult ? (
+                    <p>
+                      Your resume has a <strong>{atsResult.overall_score}% suitability index</strong> for this role. 
+                      {atsResult.matched_keywords.length > 0 ? (
+                        <span> Key technical match indicators: <strong>{atsResult.matched_keywords.slice(0, 4).join(', ')}</strong> match the requirements.</span>
+                      ) : (
+                        " Review the required skills below to optimize your match status."
+                      )}
+                    </p>
+                  ) : (
+                    <p>Upload a resume to unlock instant AI suitability scores for this role.</p>
+                  )}
+                </div>
               </div>
 
               {/* Job description detail cards */}

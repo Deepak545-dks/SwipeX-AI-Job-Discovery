@@ -16,88 +16,177 @@ class AIService:
         """
         Calculates a final ATS Score out of 100 using weighted scoring based on the
         uploaded resume text, profile details, and an optional selected Job object.
-        - Formatting (15%)
+        - Formatting & Parsing (15%)
         - Keyword Match (25%)
         - Skills Match (20%)
-        - Experience (15%)
+        - Experience/Relevance (15%)
+        - Education (5%)
         - Projects (10%)
-        - Education & Certs (5%)
+        - Certifications (5%)
         - Grammar & Readability (5%)
-        - Contact & Links (5%)
         """
         import re
-        user_skills = [s.name.lower() for s in profile.skills.all()]
+        import logging
+        
+        logger = logging.getLogger("profiles.ai_service")
+        
+        # 1. Normalize helper
+        def normalize_str(t):
+            t = (t or "").lower()
+            t = re.sub(r'[\.\-\(\)\/]', ' ', t)
+            t = " ".join(t.split())
+            # Map equivalent forms
+            t = t.replace("react js", "react").replace("reactjs", "react")
+            t = t.replace("node js", "node").replace("nodejs", "node")
+            t = t.replace("javascript", "js")
+            t = t.replace("typescript", "ts")
+            t = t.replace("tailwind css", "tailwind").replace("tailwindcss", "tailwind")
+            t = t.replace("ci cd", "cicd").replace("cicd", "cicd")
+            t = t.replace("next js", "next").replace("nextjs", "next")
+            return t
+
+        user_skills_raw = [s.name.lower() for s in profile.skills.all()]
+        user_skills = []
+        for s in user_skills_raw:
+            if ',' in s:
+                parts = [p.strip() for p in s.split(',')]
+            else:
+                parts = [p.strip() for p in s.split()]
+            for p in parts:
+                if p and p not in user_skills:
+                    user_skills.append(p)
         bio_text = (profile.bio or "").lower()
         resume_text_lower = (resume_text or "").lower()
+        
+        # Combine text for matching
         combined_text = f"{resume_text_lower} {bio_text} {' '.join(user_skills)}".strip()
+        normalized_combined = normalize_str(combined_text)
+        
+        # Log extracted text details
+        logger.info(f"[ATS Parser] Extracted resume text length: {len(resume_text)} characters.")
+        
+        # Identify sections present in resume text
+        headings = ["experience", "work", "education", "project", "skill", "contact", "summary", "achievements", "links", "certification"]
+        found_sections = [h for h in headings if h in resume_text_lower]
+        logger.info(f"[ATS Parser] Parsed sections detected: {found_sections}")
 
-        # 1. Formatting Score (15%)
-        formatting_score = 50 if resume_text else 30
+        # --- SCORE 1: Formatting & Parsing (15%) ---
         if resume_text:
-            headings = ["experience", "work", "education", "project", "skill", "contact", "summary", "achievements", "links"]
-            found_headings = sum(1 for h in headings if h in resume_text_lower)
-            formatting_score += int((found_headings / len(headings)) * 35)
-            # Add points for readable layout (lack of double spacing issues)
-            if "\n\n\n" not in resume_text:
-                formatting_score += 15
+            formatting_score = 70
+            # Add points based on section headings found (each adds 4.5 points, cap at 30)
+            heading_points = min(30, len(found_sections) * 4.5)
+            formatting_score += int(heading_points)
+            
+            # Deduct points if layout issues (e.g. extremely short or missing standard margins indicator like spacing)
+            if "\n\n\n" in resume_text:
+                formatting_score -= 10
+            if len(resume_text.split()) < 80:
+                formatting_score -= 15
+        else:
+            # Fallback if no resume uploaded but profile is filled
+            profile_items = 0
+            if profile.full_name: profile_items += 1
+            if profile.bio: profile_items += 1
+            if profile.experiences.exists(): profile_items += 2
+            if profile.education.exists(): profile_items += 1
+            if profile.projects.exists(): profile_items += 1
+            formatting_score = 30 + (profile_items * 10)
+            
         formatting_score = min(100, max(0, formatting_score))
 
-        # 2. Keyword Match (25%)
-        # Extracted required keywords from job details
-        job_keywords = set()
+        # --- SCORE 2: Keyword Match (25%) ---
+        expected_keywords = set()
+        is_job_match = False
+        job_title = ""
+        
         if job:
-            # skills required M2M
+            is_job_match = True
+            job_title = job.title
+            # Add skills from job
             for skill in job.skills_required.all():
-                job_keywords.add(skill.name.lower())
-            
-            # description + requirements keyword harvesting
+                expected_keywords.add(normalize_str(skill.name))
+            # Extract words from description
             desc_words = re.findall(r'[a-zA-Z\+\#\-]+', (job.title + " " + job.description + " " + job.requirements).lower())
             common_tech = {
-                "python", "javascript", "java", "sql", "react", "django", "docker", "aws", "git", "ci/cd", 
-                "typescript", "node.js", "kubernetes", "postgresql", "rest apis", "graphql", "redux",
-                "mongodb", "html", "css", "c++", "c#", "ruby", "rails", "php", "laravel", "go", "rust",
-                "communication", "collaboration", "teamwork", "leadership", "agile", "scrum", "analytical",
-                "problem-solving", "mentoring", "devops", "cloud", "testing", "jira", "linux"
+                "python", "javascript", "js", "typescript", "ts", "java", "sql", "react", "django", "docker", "aws", "git", 
+                "cicd", "ci/cd", "kubernetes", "postgresql", "graphql", "redux", "mongodb", "html", "css", "c#", "go", "rust",
+                "communication", "collaboration", "teamwork", "leadership", "agile", "scrum", "analytics", "testing", "linux"
             }
             for w in desc_words:
-                if w in common_tech:
-                    job_keywords.add(w)
+                norm_w = normalize_str(w)
+                if norm_w in common_tech or w in common_tech:
+                    expected_keywords.add(norm_w)
         else:
-            # Fallback when no job is selected
-            job_keywords = {"python", "sql", "react", "django", "docker", "git", "ci/cd", "aws", "communication", "teamwork"}
+            # General ATS Mode: Choose appropriate general keyword domain
+            # Define domain keywords
+            domain_map = {
+                "Frontend & UI Engineering": ["react", "js", "ts", "html", "css", "vite", "tailwind", "next", "redux", "graphql", "figma"],
+                "Backend & Systems Engineering": ["python", "django", "fastapi", "flask", "java", "spring", "node", "express", "sql", "postgresql", "mongodb", "rest", "api"],
+                "DevOps & Infrastructure": ["aws", "docker", "kubernetes", "cicd", "git", "terraform", "jenkins", "cloud", "linux", "bash"],
+                "Management & Strategy": ["agile", "scrum", "jira", "management", "roadmap", "product", "strategy", "analytics", "kpi"],
+                "Quality Assurance & Test Automation": ["testing", "selenium", "cypress", "jest", "automation", "qa", "test", "mocha"],
+                "Data Science & AI Studio": ["pytorch", "tensorflow", "numpy", "pandas", "scikit", "ml", "machine learning", "data", "ai", "deep learning"]
+            }
+            
+            # Count domain hits in candidate's text
+            domain_scores = {}
+            for dom, kw_list in domain_map.items():
+                hits = sum(1 for kw in kw_list if kw in normalized_combined)
+                domain_scores[dom] = hits
+                
+            # Select domain with highest overlap
+            best_domain = max(domain_scores, key=domain_scores.get)
+            domain_hits = domain_scores[best_domain]
+            
+            # Expected keywords: best domain keywords + user profile skills
+            for kw in domain_map[best_domain]:
+                expected_keywords.add(normalize_str(kw))
+            for s in user_skills:
+                expected_keywords.add(normalize_str(s))
+                
+            # Fallback expected keywords if profile + resume is completely blank
+            if not expected_keywords:
+                expected_keywords = {"git", "sql", "api", "agile", "communication", "teamwork", "aws", "docker", "cicd"}
 
-        matched_keywords = []
-        missing_keywords = []
-        for kw in job_keywords:
-            if kw in combined_text:
-                matched_keywords.append(kw.capitalize() if kw not in ["ci/cd", "aws", "sql"] else kw.upper())
+        # Calculate keyword score
+        matched_kws = []
+        missing_kws = []
+        
+        for kw in expected_keywords:
+            if kw in normalized_combined:
+                matched_kws.append(kw)
             else:
-                missing_keywords.append(kw.capitalize() if kw not in ["ci/cd", "aws", "sql"] else kw.upper())
-
-        total_kws = len(job_keywords)
-        if total_kws > 0:
-            keyword_score = int((len(matched_keywords) / total_kws) * 100)
+                missing_kws.append(kw)
+                
+        if expected_keywords:
+            keyword_score = int((len(matched_kws) / len(expected_keywords)) * 100)
+            # Add reasonable minimum threshold if they have some general overlap
+            if len(matched_kws) >= 3:
+                keyword_score = max(keyword_score, 45)
         else:
             keyword_score = 75
+            
         keyword_score = min(100, max(0, keyword_score))
 
-        # 3. Skills Match (20%)
-        skills_score = 40 if user_skills else 20
-        skills_score += len(user_skills) * 10
-        skills_found_in_text = sum(1 for s in user_skills if s in resume_text_lower)
-        skills_score += skills_found_in_text * 5
+        # --- SCORE 3: Skills Match (20%) ---
+        skills_score = 50 if user_skills else 30
+        skills_score += len(user_skills) * 6
+        
+        # Check how many profile skills are explicitly mentioned in the resume text
+        skills_found_in_text = sum(1 for s in user_skills if normalize_str(s) in normalized_combined)
+        skills_score += skills_found_in_text * 8
         skills_score = min(100, max(0, skills_score))
 
-        # 4. Experience Quality (15%)
-        experience_score = 50
+        # --- SCORE 4: Experience/Relevance (15%) ---
+        experience_score = 45
         exp_list = profile.experiences.all()
         if exp_list.exists():
             experience_score += 15 * exp_list.count()
-            # quantified achievements search
+            # check for quantified metrics
             quantified = False
             for exp in exp_list:
                 desc = (exp.description or "").lower()
-                if re.search(r'\b\d+%\b|\$\d+|\b\d+\s*k\b|\b\d+\s*m\b|reduced|optimized|saved|managed|led|increased', desc):
+                if re.search(r'\b\d+%\b|\$\d+|\b\d+\s*k\b|\b\d+\s*m\b|reduced|optimized|saved|managed|led|increased|improved', desc):
                     quantified = True
                     break
             if quantified:
@@ -105,70 +194,102 @@ class AIService:
             else:
                 experience_score += 5
         else:
-            if re.search(r'experience|worked|developer|engineer', resume_text_lower):
-                experience_score = 70
+            # Try to find experience indicators in resume text
+            if re.search(r'experience|worked|developer|engineer|manager|lead|architect', resume_text_lower):
+                experience_score = 75
+                if re.search(r'\b\d+%\b|\$\d+|\b\d+\s*k\b|improved|optimized|reduced', resume_text_lower):
+                    experience_score += 15
+                    
         experience_score = min(100, max(0, experience_score))
 
-        # 5. Projects (10%)
-        projects_score = 40
-        proj_list = profile.projects.all()
-        if proj_list.exists():
-            projects_score += 30 * proj_list.count()
-            has_proj_links = any(p.project_url for p in proj_list)
-            if has_proj_links or profile.github_url or profile.portfolio_url:
-                projects_score += 20
-        else:
-            if re.search(r'project|portfolio|github', resume_text_lower):
-                projects_score = 70
-        projects_score = min(100, max(0, projects_score))
-
-        # 6. Education & Certifications (5%)
+        # --- SCORE 5: Education (5%) ---
         education_score = 50
         edu_list = profile.education.all()
         if edu_list.exists():
-            education_score += 30
-            # Certs check
-            if re.search(r'certif|certified|scrum|aws|azure|course', (resume_text_lower + " " + " ".join([e.description for e in edu_list])).lower()):
-                education_score += 20
+            education_score += 35
+            # degree check
+            degrees_str = " ".join([e.degree for e in edu_list]).lower()
+            if re.search(r'bachelor|master|phd|bsc|msc|b\.s|m\.s|engineering|computer|science|mba', degrees_str):
+                education_score += 15
         else:
-            if re.search(r'education|degree|university|college|bsc|msc|b\.s|m\.s', resume_text_lower):
+            if re.search(r'education|degree|university|college|bsc|msc|b\.s|m\.s|bachelor|master', resume_text_lower):
                 education_score = 80
+                if re.search(r'computer science|engineering|information technology', resume_text_lower):
+                    education_score += 15
+                    
         education_score = min(100, max(0, education_score))
 
-        # 7. Grammar & Readability (5%)
+        # --- SCORE 6: Projects (10%) ---
+        projects_score = 45
+        proj_list = profile.projects.all()
+        if proj_list.exists():
+            projects_score += 25 * proj_list.count()
+            has_proj_links = any(p.project_url for p in proj_list)
+            if has_proj_links or profile.github_url or profile.portfolio_url:
+                projects_score += 15
+        else:
+            if re.search(r'project|portfolio|github|github\.com|hackathon', resume_text_lower):
+                projects_score = 75
+                if "github.com" in resume_text_lower:
+                    projects_score += 15
+                    
+        projects_score = min(100, max(0, projects_score))
+
+        # --- SCORE 7: Certifications (5%) ---
+        certification_score = 55
+        # Search resume text + profiles for certifications keyword
+        certs_match = re.findall(r'certif|certified|certification|aws certified|scrum master|pmp|csm|udemy|coursera|cert', resume_text_lower + " " + bio_text)
+        if certs_match:
+            certification_score += 25
+            if len(certs_match) > 1:
+                certification_score += 20
+        else:
+            # Base score if they have good keywords/skills indicating solid qualifications
+            if skills_score >= 80 or experience_score >= 80:
+                certification_score = 70
+                
+        certification_score = min(100, max(0, certification_score))
+
+        # --- SCORE 8: Grammar/Readability (5%) ---
         grammar_score = 95
         if resume_text:
             if "  " in resume_text:
                 grammar_score -= 10
-            if len(resume_text.split()) < 120:
+            if len(resume_text.split()) < 100:
                 grammar_score -= 15
         else:
-            grammar_score = 50
+            grammar_score = 75
+            
         grammar_score = min(100, max(0, grammar_score))
 
-        # 8. Contact & Links (5%)
-        contact_score = 40
-        if profile.user.email:
-            contact_score += 15
-        if profile.phone or re.search(r'\b\d{3}[-.]?\d{3}[-.]?\d{4}\b', resume_text_lower):
-            contact_score += 15
-        if profile.linkedin_url:
-            contact_score += 15
-        if profile.github_url or profile.portfolio_url:
-            contact_score += 15
-        contact_score = min(100, max(0, contact_score))
-
-        # Calculate final weighted total
+        # Calculate final weighted score
         final_ats_score = int(
             (formatting_score * 0.15) +
             (keyword_score * 0.25) +
             (skills_score * 0.20) +
             (experience_score * 0.15) +
-            (projects_score * 0.10) +
             (education_score * 0.05) +
-            (grammar_score * 0.05) +
-            (contact_score * 0.05)
+            (projects_score * 0.10) +
+            (certification_score * 0.05) +
+            (grammar_score * 0.05)
         )
+        
+        # Guarantee reasonable values for complete profiles
+        if len(resume_text) > 200 and final_ats_score < 60:
+            final_ats_score = 65
+
+        # Print / Log individual components for debugging
+        logger.info(f"=== ATS Score Diagnostics for {profile.user.email} ===")
+        logger.info(f"  Formatting & Parsing: {formatting_score}")
+        logger.info(f"  Keyword Match: {keyword_score}")
+        logger.info(f"  Skills Match: {skills_score}")
+        logger.info(f"  Experience: {experience_score}")
+        logger.info(f"  Education: {education_score}")
+        logger.info(f"  Projects: {projects_score}")
+        logger.info(f"  Certifications: {certification_score}")
+        logger.info(f"  Grammar/Readability: {grammar_score}")
+        logger.info(f"  Final Weighted ATS Score: {final_ats_score}")
+        logger.info("=============================================")
 
         if final_ats_score >= 90:
             score_grade = "Excellent"
@@ -181,51 +302,58 @@ class AIService:
         else:
             score_grade = "Poor"
 
-        # Generate custom actionable recommendations
+        # Telemetry calculations
+        if job:
+            best_match = job.title
+            highest_compatibility_domain = job.title
+            career_path = "Staff Dev Track" if "senior" in job.title.lower() or "lead" in job.title.lower() else "Senior Dev Track"
+            compatibility = "Excellent" if final_ats_score >= 80 else ("Good" if final_ats_score >= 65 else "Needs Review")
+        else:
+            best_match = best_domain if not user_skills else f"Senior {user_skills[0].capitalize()} Engineer"
+            highest_compatibility_domain = best_domain
+            career_path = "Staff Dev Track" if experience_score >= 85 else "Senior Dev Track"
+            compatibility = "Excellent" if final_ats_score >= 80 else ("Good" if final_ats_score >= 65 else "Needs Review")
+
+        # Actionable recommendations list
         improvements = []
         if formatting_score < 80:
             improvements.append("Structure your resume with standard headings like 'Experience' and 'Education'.")
         if keyword_score < 75:
-            improvements.append("Incorporate more technical keywords and soft skills from the job description.")
+            improvements.append("Incorporate more domain-relevant technical keywords and tools in your profile.")
         if experience_score < 85:
-            improvements.append("Quantify your achievements in experience descriptions (e.g. 'Improved performance by 25%').")
+            improvements.append("Quantify your accomplishments (e.g. 'boosted performance by 25%') under Work Experience.")
         if projects_score < 80:
-            improvements.append("Add a technical project detail section including links to your GitHub code repositories.")
-        if education_score < 80:
-            improvements.append("Add relevant course work or professional certifications (e.g. AWS, Scrum Master).")
-        if contact_score < 85:
-            improvements.append("Ensure your phone number, LinkedIn, and GitHub profile URLs are fully complete.")
-            
+            improvements.append("List 2+ projects detailing technical stacks and links to your GitHub code repositories.")
+        if certification_score < 80:
+            improvements.append("Add relevant professional certificates (e.g., AWS Developer, Certified Scrum Master) to highlight credentials.")
+        
         if len(improvements) < 3:
-            improvements.append("Ensure professional spelling and readability fonts are consistent.")
-            improvements.append("Keep your profile bio concise and rich in keywords.")
+            improvements.append("Optimize font formatting and remove double spaces for better readability scans.")
+            improvements.append("Keep your profile summary/bio brief and enriched with industry technical tags.")
 
         # Boost estimate
-        expected_boost = min(98, final_ats_score + int((100 - final_ats_score) * 0.7))
-
+        expected_boost = min(98, final_ats_score + int((100 - final_ats_score) * 0.6))
+        
         # Strengths
         strengths = []
         if len(user_skills) > 0:
-            strengths.append(f"Strong technical foundations in {', '.join([s.capitalize() for s in user_skills[:3]])}.")
-        if profile.experiences.exists():
-            strengths.append(f"Demonstrated practical industry experience with {profile.experiences.count()} logged experience entry/entries.")
-        if profile.education.exists():
-            strengths.append("Structured academic background in relevant fields of study.")
+            strengths.append(f"Strong foundation in {', '.join([s.capitalize() for s in user_skills[:3]])}.")
+        if exp_list.exists():
+            strengths.append(f"Practical industry experience with {exp_list.count()} professional roles.")
+        if edu_list.exists():
+            strengths.append("Structured academic background in engineering or related fields.")
         if not strengths:
-            strengths.append("Clean profile structure ready for employer discovery.")
+            strengths.append("Clean resume parsing structure ready for employer scans.")
 
-        # Weaknesses / Area for improvement
+        # Weaknesses
         weaknesses = []
         if len(user_skills) < 4:
-            weaknesses.append("Skills section contains fewer than 4 technical tags. Adding relevant skills improves ATS match rates.")
+            weaknesses.append("Profile has fewer than 4 technical skills tags.")
         if not resume_text:
-            weaknesses.append("PDF resume document text could not be extracted or parsed. Uploading a searchable PDF enhances parsing accuracy.")
-        if profile.experiences.filter(description="").exists():
-            weaknesses.append("Some work experience entries lack detailed responsibility descriptions.")
-        if not weaknesses:
-            weaknesses.append("Quantifiable metrics (e.g. '% efficiency gains' or 'user scale numbers') could be highlighted further.")
+            weaknesses.append("Resume file text could not be extracted. Make sure a searchable text PDF/DOCX is uploaded.")
+        if exp_list.filter(description="").exists():
+            weaknesses.append("One or more work experience logs lack details of responsibilities.")
 
-        # Recruiter telemetry
         profile_completeness = 0
         if profile.full_name: profile_completeness += 20
         if profile.bio: profile_completeness += 20
@@ -236,6 +364,14 @@ class AIService:
 
         recruiter_interest = "High" if final_ats_score >= 80 else ("Medium" if final_ats_score >= 70 else "Low")
         resume_strength = "Strong" if final_ats_score >= 85 else ("Good" if final_ats_score >= 75 else ("Fair" if final_ats_score >= 60 else "Needs Work"))
+
+        # Format matched & missing lists nicely for display
+        matched_display = [kw.capitalize() if kw not in ["aws", "sql", "cicd", "html", "css", "js", "ts"] else kw.upper() for kw in matched_kws]
+        missing_display = [kw.capitalize() if kw not in ["aws", "sql", "cicd", "html", "css", "js", "ts"] else kw.upper() for kw in missing_kws]
+        
+        # Adjust custom forms to display standard format
+        matched_display = [("CI/CD" if w == "CICD" else ("JavaScript" if w == "JS" else ("TypeScript" if w == "TS" else w))) for w in matched_display]
+        missing_display = [("CI/CD" if w == "CICD" else ("JavaScript" if w == "JS" else ("TypeScript" if w == "TS" else w))) for w in missing_display]
 
         return {
             "overall_score": final_ats_score,
@@ -248,14 +384,22 @@ class AIService:
             "experience_score": experience_score,
             "projects_score": projects_score,
             "education_score": education_score,
+            "certification_score": certification_score,
+            "certifications_score": certification_score,
             "grammar_score": grammar_score,
-            "contact_score": contact_score,
-            "matched_keywords": matched_keywords[:8],
-            "missing_keywords": missing_keywords[:8],
-            "missing_skills": missing_keywords[:8],
+            "matched_keywords": matched_display[:10],
+            "missing_keywords": missing_display[:10],
+            "missing_skills": missing_display[:10],
             "improvements": improvements[:5],
             "strengths": strengths,
             "weaknesses": weaknesses,
+            "is_job_match": is_job_match,
+            "job_title": job_title,
+            "best_match": best_match,
+            "confidence_score": int(final_ats_score * 0.95 + 4),
+            "compatibility": compatibility,
+            "career_path": career_path,
+            "highest_compatibility_domain": highest_compatibility_domain,
             "ats_boost_estimate": {
                 "current_score": final_ats_score,
                 "expected_score": expected_boost
