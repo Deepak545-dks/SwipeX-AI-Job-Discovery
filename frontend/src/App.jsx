@@ -82,6 +82,11 @@ export default function App() {
                 <Route element={<DashboardLayout />}>
                   <Route path="/swipe" element={<SwipeDiscovery />} />
                   <Route path="/discover" element={<SwipeDiscovery />} />
+                  <Route path="/ats-analyzer" element={<SwipeDiscovery />} />
+                  <Route path="/ai-studio" element={<SwipeDiscovery />} />
+                  <Route path="/smart-search" element={<SwipeDiscovery />} />
+                  <Route path="/analytics" element={<SwipeDiscovery />} />
+                  <Route path="/saved-jobs" element={<SwipeDiscovery />} />
                   <Route path="/search" element={<JobSearch />} />
                   <Route path="/applications" element={<ApplicationsDashboard />} />
                   <Route path="/profile" element={<ProfileDashboard />} />

@@ -7,7 +7,8 @@ import {
   CheckCircle, Shield, Bookmark, RefreshCw, BarChart2, Info, Building, HelpCircle, Users, ExternalLink, Zap,
   TrendingUp, LogOut, Menu, Send, Terminal, BookOpen, Award as BadgeIcon, Compass, Search, MessageSquare
 } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import AtsAnalyzer from '../components/AtsAnalyzer';
 import PageTransition from '../components/PageTransition';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import { useDispatch } from 'react-redux';
@@ -230,7 +231,22 @@ const SwipeCard = ({ job, isTop, relativeIndex, swipeDirection, handleDragEnd, s
 export default function SwipeDiscovery() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const [activeTab, setActiveTab] = useState('swipe-feed');
+  const location = useLocation();
+  const getTabFromPath = (path) => {
+    if (path.includes('ats-analyzer')) return 'ats-analyzer';
+    if (path.includes('ai-studio')) return 'ai-studio';
+    if (path.includes('smart-search')) return 'smart-search';
+    if (path.includes('analytics')) return 'analytics';
+    if (path.includes('saved-jobs')) return 'saved-jobs';
+    return 'swipe-feed';
+  };
+  const [activeTab, setActiveTab] = useState(() => getTabFromPath(location.pathname));
+  const [generalAtsAnalysis, setGeneralAtsAnalysis] = useState(null);
+
+  useEffect(() => {
+    setActiveTab(getTabFromPath(location.pathname));
+  }, [location.pathname]);
+
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [profileData, setProfileData] = useState(null);
   
@@ -303,40 +319,43 @@ export default function SwipeDiscovery() {
     }
   }, [drawerJob]);
 
-  const profileHealthWidget = useMemo(() => (
-    <div className="p-5 rounded-[24px] bg-slate-900 border border-violet-500/30 shadow-xl space-y-4">
-      <span className="text-[9px] font-black uppercase tracking-widest text-violet-400 block border-b border-violet-500/10 pb-2">Profile & Resume Health</span>
-      <div className="flex items-center gap-4">
-        <div className="relative w-12 h-12 flex items-center justify-center shrink-0">
-          <svg className="w-full h-full transform -rotate-90 animate-pulse" viewBox="0 0 36 36">
-            <circle cx="18" cy="18" r="16" fill="none" stroke="#ffffff10" strokeWidth="2.5" />
-            <circle cx="18" cy="18" r="16" fill="none" stroke="url(#ats-score-grad)" strokeWidth="3"
-              strokeDasharray="88, 100" strokeLinecap="round" />
-            <defs>
-              <linearGradient id="ats-score-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#8b5cf6" />
-                <stop offset="100%" stopColor="#6366f1" />
-              </linearGradient>
-            </defs>
-          </svg>
-          <span className="absolute text-[10px] font-black text-white">88%</span>
+  const profileHealthWidget = useMemo(() => {
+    const score = generalAtsAnalysis?.overall_score || 88;
+    return (
+      <div className="p-5 rounded-[24px] bg-slate-900 border border-violet-500/30 shadow-xl space-y-4">
+        <span className="text-[9px] font-black uppercase tracking-widest text-violet-400 block border-b border-violet-500/10 pb-2">Profile & Resume Health</span>
+        <div className="flex items-center gap-4">
+          <div className="relative w-12 h-12 flex items-center justify-center shrink-0">
+            <svg className="w-full h-full transform -rotate-90 animate-pulse" viewBox="0 0 36 36">
+              <circle cx="18" cy="18" r="16" fill="none" stroke="#ffffff10" strokeWidth="2.5" />
+              <circle cx="18" cy="18" r="16" fill="none" stroke="url(#ats-score-grad)" strokeWidth="3"
+                strokeDasharray={`${score}, 100`} strokeLinecap="round" />
+              <defs>
+                <linearGradient id="ats-score-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#8b5cf6" />
+                  <stop offset="100%" stopColor="#6366f1" />
+                </linearGradient>
+              </defs>
+            </svg>
+            <span className="absolute text-[10px] font-black text-white">{score}%</span>
+          </div>
+          <div>
+            <span className="text-[8px] font-black text-slate-400 block uppercase tracking-wider">Resume ATS Score</span>
+            <span className="text-xxs font-black text-violet-300">ATS Optimised & Scanned</span>
+          </div>
         </div>
-        <div>
-          <span className="text-[8px] font-black text-slate-400 block uppercase tracking-wider">Resume ATS Score</span>
-          <span className="text-xxs font-black text-violet-300">ATS Optimised & Scanned</span>
+        <div className="space-y-1.5 pt-1">
+          <div className="flex justify-between items-center text-[9px] font-black text-slate-400">
+            <span>Profile Strength</span>
+            <span className="text-violet-405">Excellent (92%)</span>
+          </div>
+          <div className="w-full h-1.5 rounded-full bg-slate-955 overflow-hidden relative border border-white/5">
+            <div className="h-full bg-gradient-to-r from-violet-500 to-indigo-500 w-[92%]" />
+          </div>
         </div>
       </div>
-      <div className="space-y-1.5 pt-1">
-        <div className="flex justify-between items-center text-[9px] font-black text-slate-400">
-          <span>Profile Strength</span>
-          <span className="text-violet-405">Excellent (92%)</span>
-        </div>
-        <div className="w-full h-1.5 rounded-full bg-slate-955 overflow-hidden relative border border-white/5">
-          <div className="h-full bg-gradient-to-r from-violet-500 to-indigo-500 w-[92%]" />
-        </div>
-      </div>
-    </div>
-  ), []);
+    );
+  }, [generalAtsAnalysis]);
 
   const pipelineInsightsWidget = useMemo(() => (
     <div className="p-5 rounded-[24px] bg-slate-900 border border-cyan-500/30 shadow-xl space-y-4">
@@ -421,6 +440,21 @@ export default function SwipeDiscovery() {
     </div>
   ), [swipesGoal]);
 
+  const fetchGeneralAts = async () => {
+    try {
+      const res = await api.get('/profiles/ai/analyze-resume/');
+      setGeneralAtsAnalysis(res.data);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleAtsAnalysisUpdate = (newAnalysis) => {
+    setGeneralAtsAnalysis(newAnalysis);
+    // Refresh profileData to sync any newly uploaded resume version
+    checkUserResume();
+  };
+
   const checkUserResume = async () => {
     try {
       const response = await api.get('/profiles/me/');
@@ -429,6 +463,7 @@ export default function SwipeDiscovery() {
         setHasResume(false);
       } else {
         setHasResume(true);
+        fetchGeneralAts();
       }
     } catch (err) {
       console.error(err);
@@ -768,12 +803,12 @@ export default function SwipeDiscovery() {
   };
 
   const navItems = [
-    { id: 'swipe-feed', label: 'Swipe Feed', icon: Compass },
-    { id: 'ats-analyzer', label: 'ATS Analyzer', icon: FileText },
-    { id: 'ai-studio', label: 'AI Studio', icon: Sparkles },
-    { id: 'smart-search', label: 'Smart Search', icon: Search },
-    { id: 'analytics', label: 'Analytics', icon: BarChart2 },
-    { id: 'saved-jobs', label: 'Saved Jobs', icon: Bookmark },
+    { id: 'swipe-feed', label: 'Swipe Feed', icon: Compass, path: '/discover' },
+    { id: 'ats-analyzer', label: 'ATS Analyzer', icon: FileText, path: '/ats-analyzer' },
+    { id: 'ai-studio', label: 'AI Studio', icon: Sparkles, path: '/ai-studio' },
+    { id: 'smart-search', label: 'Smart Search', icon: Search, path: '/smart-search' },
+    { id: 'analytics', label: 'Analytics', icon: BarChart2, path: '/analytics' },
+    { id: 'saved-jobs', label: 'Saved Jobs', icon: Bookmark, path: '/saved-jobs' },
   ];
 
   const activeCard = deck[0];
@@ -823,7 +858,7 @@ export default function SwipeDiscovery() {
           {/* Start Swiping Button */}
           <button 
             onClick={() => {
-              setActiveTab('swipe-feed');
+              navigate('/discover');
               setMobileSidebarOpen(false);
             }}
             className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-violet-600 via-indigo-600 to-cyan-500 text-white font-extrabold text-xs uppercase tracking-wider hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(139,92,246,0.3)] transition-all cursor-pointer shadow-md"
@@ -840,7 +875,7 @@ export default function SwipeDiscovery() {
                 <button
                   key={item.id}
                   onClick={() => {
-                    setActiveTab(item.id);
+                    navigate(item.path);
                     setMobileSidebarOpen(false);
                   }}
                   className={`w-full flex items-center space-x-3 px-4 py-3 rounded-[14px] text-xs font-bold transition-all relative group ${
@@ -997,95 +1032,7 @@ export default function SwipeDiscovery() {
 
             {/* 2. ATS Analyzer */}
             {activeTab === 'ats-analyzer' && (
-              <div className="space-y-6 text-left">
-                <div className="p-6 rounded-[24px] bg-slate-900 border border-white/10 backdrop-blur-md flex flex-col md:flex-row gap-8 items-center shadow-xl">
-                  {/* ATS progress ring */}
-                  <div className="relative w-40 h-40 flex items-center justify-center shrink-0">
-                    <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                      <circle cx="18" cy="18" r="16" fill="none" stroke="#ffffff10" strokeWidth="2.5" />
-                      <circle cx="18" cy="18" r="16" fill="none" stroke="url(#ats-ring-grad)" strokeWidth="3"
-                        strokeDasharray="88, 100" strokeLinecap="round" />
-                      <defs>
-                        <linearGradient id="ats-ring-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                          <stop offset="0%" stopColor="#8b5cf6" />
-                          <stop offset="100%" stopColor="#06b6d4" />
-                        </linearGradient>
-                      </defs>
-                    </svg>
-                    <div className="absolute flex flex-col items-center">
-                      <span className="text-3xl font-black text-white">88%</span>
-                      <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">ATS Score</span>
-                    </div>
-                  </div>
-
-                  <div className="flex-1 space-y-4">
-                    <h3 className="text-2xl font-black text-white tracking-tight">Your Resume is ATS Optimized</h3>
-                    <p className="text-slate-300 text-xs leading-relaxed">
-                      We scanned your primary resume against {deck.length + 15} matching roles. You have excellent coverage in Frontend engineering, but cloud deployments and backend scaling keywords show mild gaps.
-                    </p>
-                    <div className="flex flex-wrap gap-3">
-                      <button 
-                        onClick={handleDownloadReport}
-                        className="px-4 py-2 bg-gradient-to-r from-violet-600 to-indigo-655 text-white rounded-xl text-[10px] font-black uppercase tracking-wider hover:scale-102 transition-all cursor-pointer shadow-md"
-                      >
-                        Download Full ATS Report
-                      </button>
-                      <Link 
-                        to="/profile"
-                        className="px-4 py-2 bg-slate-800 border border-white/10 hover:border-violet-500/30 text-slate-205 hover:text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer"
-                      >
-                        Upload Newer Resume
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Missing Keywords */}
-                  <div className="p-5 rounded-[20px] bg-slate-900 border border-white/5 shadow-xl space-y-4">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-violet-404 block border-b border-white/5 pb-2">Missing Keywords</span>
-                    <div className="flex flex-wrap gap-2">
-                      {["Kubernetes", "Docker", "CI/CD", "GraphQL", "TailwindCSS", "Redux Saga", "OAuth 2.0"].map((kw) => (
-                        <span key={kw} className="px-3 py-1.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-300 text-xxs font-black uppercase tracking-wider">
-                          + {kw}
-                        </span>
-                      ))}
-                    </div>
-                    <p className="text-[10px] text-slate-400 font-semibold leading-relaxed pt-2">
-                      Tip: Interspersing these keywords contextually in your project experience section will boost recruiter match alerts.
-                    </p>
-                  </div>
-
-                  {/* Skill Radar / Strengths */}
-                  <div className="p-5 rounded-[20px] bg-slate-900 border border-white/5 shadow-xl space-y-4">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-cyan-404 block border-b border-white/5 pb-2">Core Covered Skills</span>
-                    <div className="flex flex-wrap gap-2">
-                      {["React 19", "JavaScript (ES6+)", "Vite", "Axios", "CSS Grid/Flex", "Git", "REST APIs", "Jest", "Responsive Layouts"].map((sk) => (
-                        <span key={sk} className="px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xxs font-black uppercase tracking-wider">
-                          ✓ {sk}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Suggestions list */}
-                <div className="p-5 rounded-[24px] bg-slate-900 border border-white/5 shadow-xl space-y-4">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 block border-b border-white/5 pb-2">Suggestions & Recommendations</span>
-                  <div className="space-y-3">
-                    {[
-                      { title: "Quantify Impact", text: "Add metrics to bullet points (e.g., 'Optimized bundle size by 35% using code splitting')." },
-                      { title: "Project Architectural Keywords", text: "Integrate system design terms: 'state management slice', 'asynchronous hooks caching', and 'responsive canvas renders'." },
-                      { title: "Remove Double Blurs", text: "Ensure layout containers on profile settings use high-contrast text tags for better accessibility scans." }
-                    ].map((sug, idx) => (
-                      <div key={idx} className="p-3 bg-slate-955/40 border border-white/5 rounded-xl text-xs">
-                        <h4 className="font-extrabold text-white text-xs">{sug.title}</h4>
-                        <p className="text-slate-400 text-xxs mt-1 leading-relaxed">{sug.text}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
+              <AtsAnalyzer onAnalysisUpdate={handleAtsAnalysisUpdate} />
             )}
 
             {/* 3. AI Studio */}
@@ -1400,7 +1347,7 @@ export default function SwipeDiscovery() {
                   {[
                     { label: "Submitted Swipes", val: likesCount + matchesCount + 10, color: "text-violet-400" },
                     { label: "AI Matches Created", val: matchesCount, color: "text-cyan-400" },
-                    { label: "ATS Health Index", val: "92%", color: "text-emerald-400" },
+                    { label: "ATS Health Index", val: `${generalAtsAnalysis?.overall_score || 88}%`, color: "text-emerald-400" },
                     { label: "Active Swipe Goal", val: `${swipesGoal} / 15`, color: "text-fuchsia-405" }
                   ].map((stat, idx) => (
                     <div key={idx} className="p-4 rounded-2xl bg-slate-900 border border-white/5 shadow-md">
@@ -1420,28 +1367,28 @@ export default function SwipeDiscovery() {
                     <div className="space-y-3">
                       <div className="flex justify-between items-center text-xxs font-extrabold uppercase text-slate-400">
                         <span>Original Score (May)</span>
-                        <span>62%</span>
+                        <span>{Math.max(40, (generalAtsAnalysis?.overall_score || 88) - 26)}%</span>
                       </div>
                       <div className="w-full h-2 rounded-full bg-slate-950 overflow-hidden relative border border-white/5">
-                        <div className="h-full bg-slate-700 w-[62%]" />
+                        <div className="h-full bg-slate-700" style={{ width: `${Math.max(40, (generalAtsAnalysis?.overall_score || 88) - 26)}%` }} />
                       </div>
                       <div className="flex justify-between items-center text-xxs font-extrabold uppercase text-slate-400">
                         <span>Optimized Score (June)</span>
-                        <span>78%</span>
+                        <span>{Math.max(55, (generalAtsAnalysis?.overall_score || 88) - 10)}%</span>
                       </div>
                       <div className="w-full h-2 rounded-full bg-slate-955 overflow-hidden relative border border-white/5">
-                        <div className="h-full bg-indigo-500 w-[78%]" />
+                        <div className="h-full bg-indigo-500" style={{ width: `${Math.max(55, (generalAtsAnalysis?.overall_score || 88) - 10)}%` }} />
                       </div>
                       <div className="flex justify-between items-center text-xxs font-extrabold uppercase text-slate-400">
                         <span>Current AI Workspace Scan (July)</span>
-                        <span>88%</span>
+                        <span>{generalAtsAnalysis?.overall_score || 88}%</span>
                       </div>
                       <div className="w-full h-2 rounded-full bg-slate-955 overflow-hidden relative border border-white/5">
-                        <div className="h-full bg-gradient-to-r from-violet-500 to-cyan-500 w-[88%]" />
+                        <div className="h-full bg-gradient-to-r from-violet-500 to-cyan-500" style={{ width: `${generalAtsAnalysis?.overall_score || 88}%` }} />
                       </div>
                     </div>
                     <p className="text-[9px] text-slate-500 font-semibold leading-relaxed pt-2">
-                      Growth: +26% improvement achieved since adding custom state hooks system keywords.
+                      Growth: +{Math.max(5, (generalAtsAnalysis?.overall_score || 88) - Math.max(40, (generalAtsAnalysis?.overall_score || 88) - 26))}% improvement achieved since adding custom state hooks system keywords.
                     </p>
                   </div>
                 </div>

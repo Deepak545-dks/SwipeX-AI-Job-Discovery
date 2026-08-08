@@ -86,7 +86,17 @@ export default function Navbar() {
 
   const isActive = (path) => location.pathname === path;
 
-  if (location.pathname === '/swipe' || location.pathname === '/discover') {
+  const workspacePaths = [
+    '/swipe',
+    '/discover',
+    '/ats-analyzer',
+    '/ai-studio',
+    '/smart-search',
+    '/analytics',
+    '/saved-jobs'
+  ];
+
+  if (workspacePaths.includes(location.pathname)) {
     return null;
   }
 
