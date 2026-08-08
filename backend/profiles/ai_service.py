@@ -311,7 +311,7 @@ class AIService:
         grammar_score = min(100, max(0, grammar_score))
 
         # Calculate final weighted score (deterministic weighted scoring engine)
-        final_ats_score = int(
+        final_ats_score = int(round(
             (formatting_score * 0.15) +
             (keyword_score * 0.25) +
             (skills_score * 0.20) +
@@ -320,7 +320,7 @@ class AIService:
             (projects_score * 0.10) +
             (certification_score * 0.05) +
             (grammar_score * 0.05)
-        )
+        ))
         
         # Guarantee reasonable values for complete profiles
         if len(resume_text) > 200 and final_ats_score < 60:
