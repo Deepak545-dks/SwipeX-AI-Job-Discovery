@@ -87,6 +87,7 @@ class AIService:
             for p in parts:
                 if p and p not in user_skills:
                     user_skills.append(p)
+        user_skills.sort()
                     
         bio_text = (profile.bio or "").lower()
         resume_text_lower = (resume_text or "").lower()
@@ -98,6 +99,7 @@ class AIService:
         # Identify sections present in resume text
         headings = ["experience", "work", "education", "project", "skill", "contact", "summary", "achievements", "links", "certification"]
         found_sections = [h for h in headings if h in resume_text_lower]
+        found_sections.sort()
 
         # Log detailed parsing telemetry for development
         logger.info("================ ATS DEVELOPMENT LOGS ================")
@@ -186,8 +188,8 @@ class AIService:
                 hits = sum(1 for kw in kw_list if kw in normalized_combined)
                 domain_scores[dom] = hits
                 
-            # Select domain with highest overlap
-            best_domain = max(domain_scores, key=domain_scores.get)
+            # Select domain with highest overlap (with alphabetical tie-breaker to be 100% deterministic)
+            best_domain = max(sorted(domain_scores.keys()), key=domain_scores.get)
             domain_hits = domain_scores[best_domain]
             
             # Expected keywords: best domain keywords + user profile skills
@@ -204,7 +206,10 @@ class AIService:
         matched_kws = []
         missing_kws = []
         
-        for kw in expected_keywords:
+        # Sort expected_keywords to guarantee 100% deterministic iteration order
+        sorted_expected_keywords = sorted(list(expected_keywords))
+        
+        for kw in sorted_expected_keywords:
             if kw in normalized_combined:
                 matched_kws.append(kw)
             else:
